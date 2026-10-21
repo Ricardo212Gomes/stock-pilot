@@ -80,7 +80,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), var(--font-sans), sans-serif;
-  font-size: 13px;
+  font-size: 16px;
   line-height: 19.5px;
   -webkit-font-smoothing: antialiased;
 }
@@ -137,9 +137,9 @@ input:focus-visible {
 .sidebar-section-label {
   margin: 0 8px 4px;
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 15px;
+  line-height: 16.5px;
 }
 
 .sidebar-link {
@@ -151,7 +151,7 @@ input:focus-visible {
   border-left: 2px solid transparent;
   border-radius: var(--radius);
   color: var(--muted-foreground);
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -185,7 +185,7 @@ input:focus-visible {
   align-items: center;
   gap: 8px;
   color: var(--muted-foreground);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 600;
 }
 
@@ -199,8 +199,8 @@ input:focus-visible {
 .sidebar-note p {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 10.5px;
-  line-height: 16.5px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .sidebar-theme {
@@ -242,7 +242,7 @@ input:focus-visible {
 .header-context {
   min-width: max-content;
   color: var(--muted-foreground);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -261,7 +261,7 @@ input:focus-visible {
   border-radius: var(--radius);
   background: var(--primary);
   color: var(--primary-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -311,7 +311,7 @@ input:focus-visible {
   outline: 0;
   background: var(--card);
   color: var(--card-foreground);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .search-input-wrap input::placeholder {
@@ -327,8 +327,8 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: 2px;
   color: var(--muted-foreground);
-  font-size: 10px;
-  line-height: 15px;
+  font-size: 12px;
+  line-height: 16.5px;
 }
 
 .ticker-search button {
@@ -343,7 +343,7 @@ input:focus-visible {
   background: var(--primary);
   color: var(--primary-foreground);
   cursor: pointer;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -374,7 +374,7 @@ input:focus-visible {
   background: var(--secondary);
   color: var(--secondary-foreground);
   cursor: pointer;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -420,7 +420,7 @@ input:focus-visible {
   flex-wrap: wrap;
   gap: 12px;
   color: var(--muted-foreground);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .access-badge {
@@ -432,9 +432,9 @@ input:focus-visible {
   border-radius: 9999px;
   background: var(--secondary);
   color: var(--secondary-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 15px;
+  line-height: 16.5px;
 }
 
 .landing-intro h1 {
@@ -461,7 +461,7 @@ input:focus-visible {
   gap: 8px;
   margin-top: 20px;
   color: var(--muted-foreground);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 
 .ticker-examples > span {
@@ -477,7 +477,7 @@ input:focus-visible {
   border-radius: 9999px;
   background: var(--card);
   color: var(--card-foreground);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -516,9 +516,9 @@ input:focus-visible {
 .section-label {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 15px;
+  line-height: 16.5px;
 }
 
 .preview-heading h2 {
@@ -537,7 +537,7 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--accent);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .preview-list {
@@ -560,7 +560,7 @@ input:focus-visible {
 .preview-index,
 .preview-detail {
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
@@ -568,7 +568,7 @@ input:focus-visible {
 .preview-name {
   overflow: hidden;
   color: var(--card-foreground);
-  font-size: 11.5px;
+  font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -582,8 +582,8 @@ input:focus-visible {
 .preview-footnote {
   margin: 12px 0 0;
   color: var(--muted-foreground);
-  font-size: 9.5px;
-  line-height: 15px;
+  font-size: 11px;
+  line-height: 16.5px;
 }
 
 .research-section {
@@ -609,8 +609,8 @@ input:focus-visible {
   max-width: 340px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 11.5px;
-  line-height: 18px;
+  font-size: 13px;
+  line-height: 19.5px;
   text-align: right;
 }
 
@@ -635,19 +635,19 @@ input:focus-visible {
 .research-card-top {
   gap: 8px;
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 500;
 }
 
 .research-access {
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 600;
 }
 
 .research-card h3 {
   margin: 12px 0 4px;
   color: var(--card-foreground);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -655,8 +655,8 @@ input:focus-visible {
   max-width: 280px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 10.5px;
-  line-height: 16.5px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .research-rule {
@@ -675,7 +675,7 @@ input:focus-visible {
   padding: 12px max(20px, calc((100% - 1120px) / 2));
   border-top: 1px solid var(--border);
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
 }
 
 .dashboard-content {
@@ -687,7 +687,7 @@ input:focus-visible {
   gap: 8px;
   margin-bottom: 16px;
   color: var(--muted-foreground);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 
 .breadcrumb a:hover {
@@ -728,8 +728,8 @@ input:focus-visible {
 .company-subtitle {
   margin: 4px 0 0;
   color: var(--muted-foreground);
-  font-size: 11.5px;
-  line-height: 18px;
+  font-size: 13px;
+  line-height: 19.5px;
 }
 
 .ai-analysis-panel {
@@ -764,8 +764,8 @@ input:focus-visible {
 .ai-analysis-copy > p:last-child {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 11.5px;
-  line-height: 18px;
+  font-size: 13px;
+  line-height: 19.5px;
 }
 
 .ai-analysis-button {
@@ -777,7 +777,7 @@ input:focus-visible {
   background: var(--primary);
   color: var(--primary-foreground);
   cursor: pointer;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -796,7 +796,7 @@ input:focus-visible {
 .ai-analysis-status,
 .ai-analysis-error {
   margin: 12px 0 0;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .ai-analysis-status {
@@ -816,14 +816,14 @@ input:focus-visible {
 .ai-analysis-result h3 {
   margin: 0 0 8px;
   color: var(--card-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .ai-analysis-result p {
   margin: 0;
   color: var(--card-foreground);
-  font-size: 11.5px;
+  font-size: 13px;
   line-height: 19.5px;
   white-space: pre-line;
 }
@@ -831,8 +831,8 @@ input:focus-visible {
 .ai-analysis-disclaimer {
   margin: 12px 0 0;
   color: var(--muted-foreground);
-  font-size: 9.5px;
-  line-height: 15px;
+  font-size: 11px;
+  line-height: 16.5px;
 }
 
 .report-date {
@@ -844,20 +844,20 @@ input:focus-visible {
 
 .report-date span {
   color: var(--muted-foreground);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 600;
 }
 
 .report-date strong {
   color: var(--foreground);
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .report-date small {
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
 }
 
 .research-tabs {
@@ -874,7 +874,7 @@ input:focus-visible {
   align-items: center;
   border-bottom: 2px solid var(--background);
   color: var(--muted-foreground);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -911,9 +911,9 @@ input:focus-visible {
   gap: 8px;
   margin-bottom: 8px;
   color: var(--muted-foreground);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 500;
-  line-height: 16.5px;
+  line-height: 18px;
 }
 
 .metric-card-dot {
@@ -941,8 +941,8 @@ input:focus-visible {
   overflow: hidden;
   margin-top: 4px;
   color: var(--muted-foreground);
-  font-size: 9.5px;
-  line-height: 15px;
+  font-size: 11px;
+  line-height: 16.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -974,7 +974,7 @@ input:focus-visible {
 
 .table-hint {
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -1000,14 +1000,14 @@ input:focus-visible {
 .financial-table td {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
-  font-size: 10px;
-  line-height: 16.5px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .financial-table thead th {
   background: var(--muted);
   color: var(--muted-foreground);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -1060,9 +1060,9 @@ input:focus-visible {
 
 .table-date {
   color: var(--muted-foreground);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 400;
-  line-height: 12.75px;
+  line-height: 15px;
 }
 
 .positive-value {
@@ -1079,8 +1079,8 @@ input:focus-visible {
 .table-footnote {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 9.5px;
-  line-height: 15px;
+  font-size: 11px;
+  line-height: 16.5px;
 }
 
 .detail-grid {
@@ -1110,24 +1110,24 @@ input:focus-visible {
   border: 1px solid var(--destructive);
   border-radius: 9999px;
   color: var(--destructive);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .empty-state h2 {
   margin: 0 0 4px;
   color: var(--foreground);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 19.5px;
 }
 
 .empty-state p {
   max-width: 640px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: 13px;
+  line-height: 19.5px;
 }
 
 .visually-hidden {
@@ -1304,7 +1304,7 @@ input:focus-visible {
   }
 
   .landing-intro > p {
-    font-size: 13px;
+    font-size: 16px;
     line-height: 19.5px;
   }
 
@@ -1341,7 +1341,7 @@ input:focus-visible {
 
   .app-footer {
     align-items: flex-start;
-    font-size: 8.5px;
+    font-size: 10px;
   }
 
   .app-footer span:last-child {
@@ -1401,11 +1401,11 @@ input:focus-visible {
   }
 
   .metric-card strong {
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .metric-card small {
-    font-size: 8.5px;
+    font-size: 10px;
     white-space: normal;
   }
 
@@ -1422,7 +1422,7 @@ input:focus-visible {
   }
 
   .table-hint {
-    font-size: 8.5px;
+    font-size: 10px;
   }
 
   .financial-table {
