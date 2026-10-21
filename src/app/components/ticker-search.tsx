@@ -24,7 +24,7 @@ export function TickerSearch({
           aria-label="Stock ticker symbol"
           name="symbol"
           type="text"
-          placeholder="Search by ticker (e.g. AAPL)"
+          placeholder="Search ticker (e.g. AAPL)"
           defaultValue={value}
           autoCapitalize="characters"
           autoComplete="off"

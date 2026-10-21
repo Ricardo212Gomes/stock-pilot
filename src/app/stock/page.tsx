@@ -1,4 +1,4 @@
-import { TickerSearch } from "../components/ticker-search";
+import { AppShell } from "../components/app-shell";
 import {
   getCompanyFundamentals,
   normalizeTicker,
@@ -28,6 +28,12 @@ function formatMoney(value: number | null, currency: string, compact = true): st
 
 function formatPercent(value: number | null): string {
   return value === null ? "—" : `${(value * 100).toFixed(1)}%`;
+}
+
+function formatSignedPercent(value: number | null): string {
+  if (value === null) return "—";
+  const prefix = value > 0 ? "+" : "";
+  return `${prefix}${(value * 100).toFixed(1)}%`;
 }
 
 function formatMultiple(value: number | null): string {
@@ -117,7 +123,7 @@ function HistoryTable({ rows }: { rows: AnnualFinancialSummary[] }) {
               </th>
               <td>{formatMoney(row.revenue, row.currency)}</td>
               <td className={row.revenueGrowth === null ? "" : row.revenueGrowth >= 0 ? "positive-value" : "negative-value"}>
-                {formatPercent(row.revenueGrowth)}
+                {formatSignedPercent(row.revenueGrowth)}
               </td>
               <td>{formatPercent(row.grossMargin)}</td>
               <td>{formatPercent(row.operatingMargin)}</td>
@@ -144,18 +150,8 @@ export default async function StockPage({ searchParams }: StockPageProps) {
   const latest = rows[0];
 
   return (
-    <main className="dashboard-page">
-      <div className="page-shell">
-        <header className="topbar dashboard-topbar">
-          <a className="brand" href="/" aria-label="StockPilot home">
-            <span className="brand-mark" aria-hidden="true"><span /><span /><span /></span>
-            <span>stockpilot</span>
-          </a>
-          <TickerSearch compact value={symbol ?? ""} />
-        </header>
-
-        <div className="dashboard-content">
-          <div className="breadcrumb"><a href="/">Research</a><span>/</span><span>{symbol ?? "Company"}</span></div>
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""}>
+          {symbol && <div className="breadcrumb"><a href="/">Research</a><span>/</span><span>{symbol}</span></div>}
 
           {!result || !result.ok ? (
             <EmptyResults symbol={symbol} reason={result?.reason} />
@@ -163,10 +159,10 @@ export default async function StockPage({ searchParams }: StockPageProps) {
             <>
               <section className="company-heading">
                 <div>
-                  <p className="eyebrow"><span className="eyebrow-line" /> COMPANY FUNDAMENTALS</p>
+                  <p className="section-label">COMPANY FUNDAMENTALS</p>
                   <div className="company-title-row">
                     <h1>{result.data.symbol}</h1>
-                    <span className="annual-badge">ANNUAL · {rows.length} {rows.length === 1 ? "YEAR" : "YEARS"}</span>
+                    <span className="access-badge">ANNUAL · {rows.length} {rows.length === 1 ? "YEAR" : "YEARS"}</span>
                   </div>
                   <p className="company-subtitle">
                     Revenue, profitability, leverage and cash generation at a glance.
@@ -179,9 +175,15 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                 </div>
               </section>
 
+              <nav className="research-tabs" aria-label="Company sections">
+                <a className="research-tab" href="#summary">Summary</a>
+                <a className="research-tab" href="#financials">Financials</a>
+                <a className="research-tab" href="#balance-sheet">Balance &amp; cash flow</a>
+              </nav>
+
               {rows.length > 0 && (
                 <>
-                  <section className="overview-grid" aria-label="Latest annual metrics">
+                  <section className="overview-grid" id="summary" aria-label="Latest annual metrics">
                     <MetricCard
                       label="Revenue"
                       value={formatMoney(latest.revenue, latest.currency)}
@@ -205,10 +207,10 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                     />
                   </section>
 
-                  <section className="history-section" aria-labelledby="history-heading">
+                  <section className="history-section" id="financials" aria-labelledby="history-heading">
                     <div className="content-section-heading">
                       <div>
-                        <p className="eyebrow">FINANCIAL HISTORY</p>
+                        <p className="section-label">FINANCIAL HISTORY</p>
                         <h2 id="history-heading">Last {rows.length} fiscal years</h2>
                       </div>
                       <span className="table-hint">Scroll to see all metrics <span aria-hidden="true">→</span></span>
@@ -219,10 +221,10 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                     </p>
                   </section>
 
-                  <section className="details-section" aria-labelledby="details-heading">
+                  <section className="details-section" id="balance-sheet" aria-labelledby="details-heading">
                     <div className="content-section-heading">
                       <div>
-                        <p className="eyebrow">LATEST ANNUAL PERIOD</p>
+                        <p className="section-label">LATEST ANNUAL PERIOD</p>
                         <h2 id="details-heading">Balance sheet &amp; cash generation</h2>
                       </div>
                     </div>
@@ -239,16 +241,6 @@ export default async function StockPage({ searchParams }: StockPageProps) {
               )}
             </>
           )}
-        </div>
-
-        <footer className="dashboard-footer">
-          <a className="brand brand-small" href="/">
-            <span className="brand-mark" aria-hidden="true"><span /><span /><span /></span>
-            <span>stockpilot</span>
-          </a>
-          <span>Financial data provided by Financial Modeling Prep</span>
-        </footer>
-      </div>
-    </main>
+    </AppShell>
   );
 }
