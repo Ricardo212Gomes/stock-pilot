@@ -1,4 +1,5 @@
 import { AppShell } from "../components/app-shell";
+import { AIAnalysis } from "./ai-analysis";
 import {
   getCompanyFundamentals,
   normalizeTicker,
@@ -154,7 +155,10 @@ export default async function StockPage({ searchParams }: StockPageProps) {
           {symbol && <div className="breadcrumb"><a href="/">Research</a><span>/</span><span>{symbol}</span></div>}
 
           {!result || !result.ok ? (
-            <EmptyResults symbol={symbol} reason={result?.reason} />
+            <>
+              <EmptyResults symbol={symbol} reason={result?.reason} />
+              <AIAnalysis fundamentals={null} symbol={symbol} />
+            </>
           ) : (
             <>
               <section className="company-heading">
@@ -174,6 +178,8 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                   <small>Reported in {latest?.currency ?? "—"}</small>
                 </div>
               </section>
+
+              <AIAnalysis fundamentals={result.data} symbol={symbol} />
 
               <nav className="research-tabs" aria-label="Company sections">
                 <a className="research-tab" href="#summary">Summary</a>

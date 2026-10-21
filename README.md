@@ -8,9 +8,10 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 
 1. Copy `.env.example` to `.env.local` in the project root.
 2. Set `FMP_API_KEY` to the key from your FMP account.
-3. Restart the Next.js development server after changing the environment file.
+3. Set `GEMINI_API_KEY` to your Gemini API key to enable AI analysis. `GOOGLE_GENERATIVE_AI_API_KEY` is also accepted if you already use that name.
+4. Restart the Next.js development server after changing the environment file.
 
-The key is read only by server code and is not exposed to the browser. Do not commit `.env.local`.
+Both keys are read only by server code and are not exposed to the browser. Do not commit `.env.local`.
 
 ## Run locally
 
@@ -27,4 +28,4 @@ FMP data access depends on the endpoints and history included in your subscripti
 
 See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar currently contains the Company research tool and a light/dark theme switch; the top bar keeps a synchronized copy. The theme selector follows the system preference until a choice is saved.
 
-The current dashboard is focused on annual fundamentals. Live quotes, dividend data and valuation sections are not included yet.
+The current dashboard is focused on annual fundamentals. The **Analyze with AI** action sends a compact version of the displayed annual metrics to Gemini and shows an objective summary. Live quotes, dividend data and valuation sections are not included yet.

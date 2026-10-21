@@ -45,6 +45,7 @@ Use colors through their role variables. Do not add one-off colors or opacity va
 
 - Use a persistent sidebar for Company research. It is the only active tool today; the sidebar may grow as more features are built. On narrow screens, keep a compact icon rail visible.
 - Keep the top bar compact, with ticker search, a visible keyboard hint and a theme toggle. Also provide the theme toggle at the bottom of the sidebar; both controls stay synchronized.
+- Place an AI analysis action alongside a concise, clearly separated generated report on the company fundamentals page. Show loading and configuration/provider errors inline, and keep the report grounded in the supplied metrics.
 - Use editorial headings and concise copy. Avoid decorative gradients, large illustrations and oversized rounded cards.
 - Keep financial summaries compact. Align numeric columns to the right, use tabular numerals, mute table labels and separate rows with thin borders or muted stripes.
 - Use the accent token for positive values and the destructive token for negative values. Include a signed number or text label so color is never the only signal.
