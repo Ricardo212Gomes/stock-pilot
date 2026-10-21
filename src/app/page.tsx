@@ -1,69 +1,114 @@
-import Image from "next/image";
+import { TickerSearch } from "./components/ticker-search";
+
+const dataGroups = [
+  {
+    number: "01",
+    title: "Profitability",
+    detail: "Revenue, earnings and margins over time.",
+  },
+  {
+    number: "02",
+    title: "Balance sheet",
+    detail: "Debt, cash, equity and liquidity ratios.",
+  },
+  {
+    number: "03",
+    title: "Cash generation",
+    detail: "Operating cash flow and free cash flow.",
+  },
+];
+
+const sampleTickers = ["AAPL", "MSFT", "NVDA", "GOOGL"];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
+    <main className="landing-page">
+      <div className="page-shell">
+        <header className="topbar">
+          <a className="brand" href="/" aria-label="StockPilot home">
+            <span className="brand-mark" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            <span>stockpilot</span>
           </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          <span className="topbar-note">Company fundamentals, in one place</span>
+        </header>
+
+        <section className="hero-section">
+          <div className="hero-copy">
+            <p className="eyebrow"><span className="eyebrow-line" /> FUNDAMENTAL RESEARCH</p>
+            <h1>
+              Understand the
+              <br />
+              <span>business</span> behind
+              <br />
+              the ticker.
+            </h1>
+            <p className="hero-description">
+              Explore the numbers that shape a company: revenue, earnings,
+              margins, debt and cash flow across the last five years.
+            </p>
+
+            <TickerSearch />
+
+            <div className="popular-tickers" aria-label="Example stocks">
+              <span>Try a ticker</span>
+              {sampleTickers.map((ticker) => (
+                <a key={ticker} href={`/stock?symbol=${ticker}`}>
+                  {ticker}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="hero-visual" role="img" aria-label="The three financial statements used for analysis">
+            <div className="visual-orbit orbit-one" />
+            <div className="visual-orbit orbit-two" />
+            <div className="visual-center">
+              <span className="visual-center-kicker">COMPANY</span>
+              <span className="visual-center-title">Fundamentals</span>
+              <span className="visual-center-caption">A clearer view of financial health</span>
+            </div>
+            <div className="visual-node node-income">
+              <span className="node-icon node-icon-bars" aria-hidden="true"><i /><i /><i /></span>
+              <span><strong>Income</strong><small>Revenue &amp; profit</small></span>
+            </div>
+            <div className="visual-node node-balance">
+              <span className="node-icon node-icon-balance" aria-hidden="true"><i /></span>
+              <span><strong>Balance sheet</strong><small>Debt &amp; equity</small></span>
+            </div>
+            <div className="visual-node node-cash">
+              <span className="node-icon node-icon-cash" aria-hidden="true"><i /></span>
+              <span><strong>Cash flow</strong><small>Cash generation</small></span>
+            </div>
+            <span className="visual-caption">THREE STATEMENTS · ONE VIEW</span>
+          </div>
+        </section>
+
+        <section className="data-section" aria-labelledby="data-heading">
+          <div className="section-heading">
+            <p className="eyebrow">BUILT FOR THE FIRST PASS</p>
+            <h2 id="data-heading">The essentials for a deeper look.</h2>
+          </div>
+          <div className="data-groups">
+            {dataGroups.map((group) => (
+              <article className="data-group" key={group.number}>
+                <span className="data-group-number">{group.number}</span>
+                <h3>{group.title}</h3>
+                <p>{group.detail}</p>
+                <span className="data-group-arrow" aria-hidden="true">↗</span>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <footer className="landing-footer">
+          <span>StockPilot</span>
+          <span>Financial data provided by Financial Modeling Prep</span>
+        </footer>
+      </div>
+    </main>
   );
 }
