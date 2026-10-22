@@ -14,6 +14,12 @@
   --muted-foreground: #3c3a35;
   --accent: #047857;
   --accent-foreground: #ffffff;
+  --chart-1: #0b8f6b;
+  --chart-2: #2563eb;
+  --chart-3: #c17a18;
+  --chart-4: #d04b56;
+  --chart-5: #7653c7;
+  --chart-6: #168caa;
   --destructive: #dc2626;
   --border: #d4d0c8;
   --input: #d4d0c8;
@@ -39,6 +45,12 @@
   --muted-foreground: #b0ad9b;
   --accent: #047857;
   --accent-foreground: #ffffff;
+  --chart-1: #45c69b;
+  --chart-2: #75a7ff;
+  --chart-3: #f0b44d;
+  --chart-4: #ff7f87;
+  --chart-5: #b49aff;
+  --chart-6: #5bc7e2;
   --destructive: #dc2626;
   --border: #393622;
   --input: #393622;
@@ -888,6 +900,141 @@ input:focus-visible {
   line-height: 19.5px;
 }
 
+.stock-price-section,
+.price-history-unavailable {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  box-shadow: var(--shadow-subtle);
+}
+
+.stock-price-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.stock-price-heading h2,
+.price-history-unavailable h2 {
+  margin: 4px 0 0;
+  color: var(--card-foreground);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 19.5px;
+}
+
+.stock-price-caption {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 16.5px;
+}
+
+.stock-price-summary {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+}
+
+.stock-price-summary > span {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stock-price-summary strong {
+  color: var(--card-foreground);
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 24px;
+}
+
+.stock-price-summary small {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16.5px;
+}
+
+.stock-price-toolbar {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.stock-price-symbol {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stock-price-periods {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-price-periods button {
+  min-width: 38px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stock-price-periods button:hover {
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.stock-price-periods button.stock-price-period-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.stock-price-chart {
+  width: 100%;
+  height: 320px;
+}
+
+.stock-price-footnote {
+  margin: 8px 0 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.price-history-unavailable > div {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+
+.price-history-unavailable h2 {
+  margin: 0;
+}
+
+.price-history-unavailable p:last-child {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .ai-analysis-panel {
   margin: 0 0 16px;
   padding: 16px;
@@ -1296,6 +1443,230 @@ input:focus-visible {
   clip-path: inset(50%);
 }
 
+.fundamental-charts-section {
+  margin: 0 0 16px;
+  scroll-margin-top: 112px;
+}
+
+.fundamental-charts-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 12px;
+}
+
+.fundamental-charts-intro h2 {
+  margin: 4px 0 0;
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 25px;
+}
+
+.fundamental-charts-intro > div > p:last-child {
+  margin: 5px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.chart-period-badge {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fundamental-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fundamental-chart-card {
+  min-width: 0;
+  overflow: hidden;
+  padding: 14px 14px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--shadow-subtle);
+}
+
+.fundamental-chart-wide {
+  grid-column: 1 / -1;
+}
+
+.fundamental-chart-heading {
+  min-height: 42px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fundamental-chart-heading h3 {
+  margin: 0;
+  color: var(--card-foreground);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 18px;
+}
+
+.fundamental-chart-heading p {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.fundamental-chart-plot {
+  width: 100%;
+  height: 260px;
+  margin-top: 8px;
+}
+
+.fundamental-chart-wide .fundamental-chart-plot {
+  height: 300px;
+}
+
+.fundamental-chart-plot .recharts-legend-item-text {
+  color: var(--muted-foreground) !important;
+}
+
+.fundamental-chart-plot .recharts-cartesian-axis-tick-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.fundamental-charts-footnote,
+.chart-note {
+  margin: 9px 2px 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.chart-view-switch {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+}
+
+.chart-view-switch button {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 550;
+}
+
+.chart-view-switch button:hover,
+.chart-view-switch .chart-view-active {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-subtle);
+}
+
+.forward-pe-callout {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  flex: 0 0 auto;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+
+.forward-pe-callout span,
+.forward-pe-callout small {
+  color: var(--muted-foreground);
+  font-size: 9px;
+  line-height: 13px;
+}
+
+.forward-pe-callout strong {
+  color: var(--foreground);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  line-height: 17px;
+}
+
+.forward-pe-only {
+  min-height: 210px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+}
+
+.forward-pe-only .forward-pe-callout {
+  justify-items: start;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.forward-pe-only .forward-pe-callout strong {
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.forward-pe-only > p {
+  max-width: 280px;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+@media (max-width: 640px) {
+  .fundamental-charts-section {
+    scroll-margin-top: 16px;
+  }
+
+  .fundamental-charts-intro {
+    align-items: flex-start;
+  }
+
+  .fundamental-charts-intro h2 {
+    font-size: 18px;
+  }
+
+  .fundamental-charts-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fundamental-chart-wide {
+    grid-column: auto;
+  }
+
+  .fundamental-chart-card {
+    padding: 12px 10px 9px;
+  }
+
+  .fundamental-chart-plot,
+  .fundamental-chart-wide .fundamental-chart-plot {
+    height: 270px;
+  }
+
+  .chart-view-switch button {
+    padding: 4px 6px;
+    font-size: 9px;
+  }
+}
+
 @media (max-width: 900px) {
   .app-layout {
     grid-template-columns: 200px minmax(0, 1fr);
@@ -1565,6 +1936,39 @@ input:focus-visible {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .stock-price-section,
+  .price-history-unavailable {
+    padding: 12px;
+  }
+
+  .stock-price-heading {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stock-price-summary {
+    justify-items: start;
+  }
+
+  .stock-price-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+  }
+
+  .stock-price-periods {
+    width: 100%;
+  }
+
+  .stock-price-periods button {
+    flex: 1;
+  }
+
+  .stock-price-chart {
+    height: 260px;
   }
 
   .ai-analysis-heading {
