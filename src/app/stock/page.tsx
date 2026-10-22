@@ -1,7 +1,11 @@
 import { AppShell } from "../components/app-shell";
 import { AIAnalysis } from "./ai-analysis";
+import { FinancialCharts } from "./financial-charts";
+import { PriceHistoryChart } from "./price-history-chart";
 import {
   getCompanyFundamentals,
+  getFinancialChartExtras,
+  getStockPriceHistory,
   normalizeTicker,
   type AnnualFinancialSummary,
 } from "@/lib/fmp";
@@ -146,9 +150,20 @@ export default async function StockPage({ searchParams }: StockPageProps) {
   const params = await searchParams;
   const rawSymbol = Array.isArray(params.symbol) ? null : params.symbol;
   const symbol = rawSymbol ? normalizeTicker(rawSymbol) : null;
-  const result = symbol ? await getCompanyFundamentals(symbol) : null;
+  const [result, priceHistory, chartExtras] = await Promise.all([
+    symbol ? getCompanyFundamentals(symbol) : Promise.resolve(null),
+    symbol ? getStockPriceHistory(symbol) : Promise.resolve(null),
+    symbol
+      ? getFinancialChartExtras(symbol)
+      : Promise.resolve({ productSegments: [], geographicSegments: [], nextYearEps: null, nextYearDate: null }),
+  ]);
   const rows = result?.ok ? result.data.annualFinancials : [];
   const latest = rows[0];
+  const chartCurrency = result?.ok ? result.data.annualFinancials[0]?.currency ?? "USD" : "USD";
+  const latestClose = priceHistory?.ok ? priceHistory.data.at(-1)?.close ?? null : null;
+  const forwardPe = latestClose !== null && chartExtras.nextYearEps !== null && chartExtras.nextYearEps > 0
+    ? latestClose / chartExtras.nextYearEps
+    : null;
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""}>
@@ -156,6 +171,13 @@ export default async function StockPage({ searchParams }: StockPageProps) {
 
           {!result || !result.ok ? (
             <>
+              {symbol && priceHistory?.ok && (
+                <PriceHistoryChart
+                  symbol={symbol}
+                  currency={chartCurrency}
+                  prices={priceHistory.data}
+                />
+              )}
               <EmptyResults symbol={symbol} reason={result?.reason} />
               <AIAnalysis fundamentals={null} symbol={symbol} />
             </>
@@ -179,10 +201,31 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                 </div>
               </section>
 
+              {priceHistory?.ok ? (
+                <PriceHistoryChart
+                  symbol={result.data.symbol}
+                  currency={chartCurrency}
+                  prices={priceHistory.data}
+                />
+              ) : (
+                <section className="price-history-unavailable" role="status">
+                  <div>
+                    <p className="section-label">PRICE HISTORY</p>
+                    <h2>Price history unavailable</h2>
+                    <p>
+                      {priceHistory?.reason === "no-data"
+                        ? `No daily price history was found for ${result.data.symbol}.`
+                        : "FMP could not load daily price history. Check your API key, plan access and request limit."}
+                    </p>
+                  </div>
+                </section>
+              )}
+
               <AIAnalysis fundamentals={result.data} symbol={symbol} />
 
               <nav className="research-tabs" aria-label="Company sections">
                 <a className="research-tab" href="#summary">Summary</a>
+                <a className="research-tab" href="#company-charts">Charts</a>
                 <a className="research-tab" href="#financials">Financials</a>
                 <a className="research-tab" href="#balance-sheet">Balance &amp; cash flow</a>
               </nav>
@@ -212,6 +255,15 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                       note={`Debt / equity ${formatMultiple(latest.debtToEquity)}`}
                     />
                   </section>
+
+                  <FinancialCharts
+                    rows={rows}
+                    currency={chartCurrency}
+                    productSegments={chartExtras.productSegments}
+                    geographicSegments={chartExtras.geographicSegments}
+                    forwardPe={forwardPe}
+                    forwardPeDate={chartExtras.nextYearDate}
+                  />
 
                   <section className="history-section" id="financials" aria-labelledby="history-heading">
                     <div className="content-section-heading">

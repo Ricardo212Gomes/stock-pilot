@@ -29,6 +29,7 @@ Use colors through their role variables. Do not add one-off colors or opacity va
 
 - Body font: `Geist, "Geist Fallback"`.
 - Font sizes: `8.5px`, `9.5px`, `10px`, `10.5px`, `11px`, `11.5px`, `12px`, `13px`, `16px`, `44px`.
+- Readability sizing: use `16px` for body copy, `12px` or `13px` for controls and dense data, and keep secondary labels at `10px` or larger where possible. Reserve `44px` for the main page title.
 - Font weights: `400`, `500`, `600`, `700`.
 - Line heights: `19.5px`, `18px`, `16.5px`, `12.75px`, `15px`.
 - Corner radii: default `3px`; use `2px`, `3px`, `4px`, `6px` or `9999px` for pills.

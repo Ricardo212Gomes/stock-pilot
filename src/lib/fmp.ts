@@ -37,9 +37,25 @@ type FinancialRatios = FmpPeriod & {
   grossProfitMargin?: number | null;
   operatingProfitMargin?: number | null;
   netProfitMargin?: number | null;
+  priceToEarningsRatio?: number | null;
+  priceToSalesRatio?: number | null;
+  priceToFreeCashFlowRatio?: number | null;
+  dividendPerShare?: number | null;
+  dividendYield?: number | null;
+  dividendYieldPercentage?: number | null;
   debtToEquityRatio?: number | null;
   currentRatio?: number | null;
   interestCoverageRatio?: number | null;
+};
+
+type RevenueSegmentsResponse = FmpPeriod & {
+  fiscalYear?: string | number;
+  data?: Record<string, unknown>;
+};
+
+type AnalystEstimate = {
+  date?: string;
+  epsAvg?: number | null;
 };
 
 export type AnnualFinancialSummary = {
@@ -65,6 +81,24 @@ export type AnnualFinancialSummary = {
   interestCoverage: number | null;
   operatingCashFlow: number | null;
   freeCashFlow: number | null;
+  capitalExpenditure: number | null;
+  dividendPerShare: number | null;
+  dividendYield: number | null;
+  peRatio: number | null;
+  psRatio: number | null;
+  pfcfRatio: number | null;
+};
+
+export type RevenueSegmentPeriod = {
+  fiscalYear: string;
+  segments: { name: string; revenue: number }[];
+};
+
+export type FinancialChartExtras = {
+  productSegments: RevenueSegmentPeriod[];
+  geographicSegments: RevenueSegmentPeriod[];
+  nextYearEps: number | null;
+  nextYearDate: string | null;
 };
 
 export type CompanyFundamentals = {
@@ -74,6 +108,15 @@ export type CompanyFundamentals = {
 
 export type FundamentalsResult =
   | { ok: true; data: CompanyFundamentals }
+  | { ok: false; reason: "not-configured" | "no-data" | "provider-error" };
+
+export type StockPricePoint = {
+  date: string;
+  close: number;
+};
+
+export type StockPriceHistoryResult =
+  | { ok: true; data: StockPricePoint[] }
   | { ok: false; reason: "not-configured" | "no-data" | "provider-error" };
 
 function numeric(value: number | null | undefined): number | null {
@@ -170,6 +213,7 @@ export async function getCompanyFundamentals(symbol: string): Promise<Fundamenta
       const equity = numeric(balance?.totalStockholdersEquity);
       const netDebt = numeric(balance?.netDebt)
         ?? (totalDebt !== null && cash !== null ? totalDebt - cash : null);
+      const dividendYieldPercentage = numeric(ratio?.dividendYieldPercentage);
       const previousRevenue = numeric(sortedIncome[index + 1]?.revenue);
       const operatingCashFlow = numeric(cashFlow?.operatingCashFlow);
       const capitalExpenditure = numeric(cashFlow?.capitalExpenditure);
@@ -201,10 +245,140 @@ export async function getCompanyFundamentals(symbol: string): Promise<Fundamenta
           ?? (operatingCashFlow !== null && capitalExpenditure !== null
             ? operatingCashFlow + capitalExpenditure
             : null),
+        capitalExpenditure,
+        dividendPerShare: numeric(ratio?.dividendPerShare),
+        dividendYield: numeric(ratio?.dividendYield)
+          ?? (dividendYieldPercentage !== null
+            ? dividendYieldPercentage / 100
+            : null),
+        peRatio: numeric(ratio?.priceToEarningsRatio),
+        psRatio: numeric(ratio?.priceToSalesRatio),
+        pfcfRatio: numeric(ratio?.priceToFreeCashFlowRatio),
       };
     });
 
     return { ok: true, data: { symbol, annualFinancials } };
+  } catch {
+    return { ok: false, reason: "provider-error" };
+  }
+}
+
+async function fetchOptionalRows<T>(
+  endpoint: string,
+  symbol: string,
+  apiKey: string,
+  params: Record<string, string> = {},
+): Promise<T[]> {
+  try {
+    const url = new URL(`${FMP_BASE_URL}/${endpoint}`);
+    url.searchParams.set("symbol", symbol);
+    url.searchParams.set("apikey", apiKey);
+    for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!response.ok) return [];
+
+    const payload: unknown = await response.json();
+    return Array.isArray(payload) ? payload as T[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeSegments(rows: RevenueSegmentsResponse[]): RevenueSegmentPeriod[] {
+  return rows.flatMap((row): RevenueSegmentPeriod[] => {
+    if (!row.data || typeof row.data !== "object") return [];
+
+    const segments = Object.entries(row.data).flatMap(([name, value]) => {
+      const revenue = numeric(typeof value === "number" ? value : null);
+      return revenue === null ? [] : [{ name, revenue }];
+    });
+    if (segments.length === 0) return [];
+
+    return [{
+      fiscalYear: String(row.fiscalYear ?? row.date?.slice(0, 4) ?? "—"),
+      segments,
+    }];
+  }).sort((left, right) => left.fiscalYear.localeCompare(right.fiscalYear));
+}
+
+export async function getFinancialChartExtras(symbol: string): Promise<FinancialChartExtras> {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) {
+    return { productSegments: [], geographicSegments: [], nextYearEps: null, nextYearDate: null };
+  }
+
+  const [productRows, geographicRows, analystEstimates] = await Promise.all([
+    fetchOptionalRows<RevenueSegmentsResponse>("revenue-product-segmentation", symbol, apiKey, {
+      period: "annual",
+      structure: "flat",
+    }),
+    fetchOptionalRows<RevenueSegmentsResponse>("revenue-geographic-segmentation", symbol, apiKey, {
+      period: "annual",
+      structure: "flat",
+    }),
+    fetchOptionalRows<AnalystEstimate>("analyst-estimates", symbol, apiKey, {
+      period: "annual",
+      page: "0",
+      limit: "10",
+    }),
+  ]);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const nextEstimate = analystEstimates
+    .filter((estimate) => estimate.date && estimate.date >= today && numeric(estimate.epsAvg) !== null)
+    .sort((left, right) => (left.date ?? "").localeCompare(right.date ?? ""))[0];
+
+  return {
+    productSegments: normalizeSegments(productRows),
+    geographicSegments: normalizeSegments(geographicRows),
+    nextYearEps: numeric(nextEstimate?.epsAvg),
+    nextYearDate: nextEstimate?.date ?? null,
+  };
+}
+
+export async function getStockPriceHistory(symbol: string): Promise<StockPriceHistoryResult> {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return { ok: false, reason: "not-configured" };
+
+  const from = new Date();
+  from.setUTCFullYear(from.getUTCFullYear() - 5);
+
+  const url = new URL(`${FMP_BASE_URL}/historical-price-eod/full`);
+  url.searchParams.set("symbol", symbol);
+  url.searchParams.set("from", from.toISOString().slice(0, 10));
+  url.searchParams.set("apikey", apiKey);
+
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`FMP request failed with status ${response.status}`);
+    }
+
+    const payload: unknown = await response.json();
+    if (!Array.isArray(payload)) {
+      throw new Error("FMP returned an unexpected response.");
+    }
+
+    const prices = payload.flatMap((row): StockPricePoint[] => {
+      if (!row || typeof row !== "object") return [];
+      const record = row as { date?: unknown; close?: unknown };
+      const close = numeric(typeof record.close === "number" ? record.close : null);
+      if (typeof record.date !== "string" || close === null) return [];
+      return [{ date: record.date, close }];
+    });
+
+    if (prices.length === 0) return { ok: false, reason: "no-data" };
+
+    prices.sort((left, right) => left.date.localeCompare(right.date));
+    return { ok: true, data: prices };
   } catch {
     return { ok: false, reason: "provider-error" };
   }
