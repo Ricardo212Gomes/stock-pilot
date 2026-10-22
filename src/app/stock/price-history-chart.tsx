@@ -90,14 +90,14 @@ export function PriceHistoryChart({
       const styles = getComputedStyle(root);
       return {
         background: styles.getPropertyValue("--card").trim() || "#ffffff",
-        text: styles.getPropertyValue("--muted-foreground").trim() || "#3c3a35",
-        border: styles.getPropertyValue("--border").trim() || "#d4d0c8",
-        accent: styles.getPropertyValue("--accent").trim() || "#047857",
-        destructive: styles.getPropertyValue("--destructive").trim() || "#dc2626",
+        text: styles.getPropertyValue("--muted-foreground").trim() || "#4b5563",
+        border: styles.getPropertyValue("--border").trim() || "#e5e7eb",
+        positive: styles.getPropertyValue("--positive").trim() || "#15803d",
+        negative: styles.getPropertyValue("--negative").trim() || "#dc2626",
       };
     };
     const colors = getThemeColors();
-    const lineColor = isPositive ? colors.accent : colors.destructive;
+    const lineColor = isPositive ? colors.positive : colors.negative;
 
     const chart = createChart(container, {
       width: container.clientWidth,
@@ -105,8 +105,8 @@ export function PriceHistoryChart({
       layout: {
         background: { type: "solid", color: colors.background },
         textColor: colors.text,
-        fontFamily: 'Geist, "Geist Fallback", sans-serif',
-        fontSize: 11,
+        fontFamily: "ui-sans-serif, system-ui, sans-serif",
+        fontSize: 12,
         attributionLogo: true,
       },
       grid: {
