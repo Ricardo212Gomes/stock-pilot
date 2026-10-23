@@ -22,6 +22,7 @@ import {
   verdict,
   type ModelId,
 } from "@/lib/valuation/models";
+import { SparkIcon } from "../components/spark-icon";
 import { autofillAssumptions } from "./actions";
 import {
   AssumptionField,
@@ -237,7 +238,8 @@ export function ProjectionWorkbench({
 
           <div className="autofill-box">
             <button className="ai-analysis-button" type="button" onClick={runAutofill} disabled={isAutofilling}>
-              {isAutofilling ? "Thinking…" : "Autofill with AI"}
+              <SparkIcon />
+              <span>{isAutofilling ? "Thinking…" : "Autofill with AI"}</span>
             </button>
             <p>
               AI reviews the filings and suggests every forward-looking assumption, with a reason for each.

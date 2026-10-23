@@ -1099,6 +1099,10 @@ input:focus-visible {
 .ai-analysis-button {
   min-height: 36px;
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 6px 10px;
   border: 1px solid var(--primary);
   border-radius: var(--radius);
@@ -2091,6 +2095,27 @@ input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+.spark-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.ai-analysis-button:not(:disabled) .spark-icon {
+  transition: transform 160ms ease;
+}
+
+.ai-analysis-button:not(:disabled):hover .spark-icon {
+  transform: rotate(12deg) scale(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-analysis-button .spark-icon {
+    transition: none;
+    transform: none !important;
   }
 }
 

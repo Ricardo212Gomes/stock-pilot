@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { CompanyFundamentals } from "@/lib/fmp";
+import { SparkIcon } from "../components/spark-icon";
 import { analyzeFundamentals } from "./actions";
 
 export function AIAnalysis({
@@ -53,7 +54,8 @@ export function AIAnalysis({
           onClick={handleAnalyze}
           disabled={isPending || !fundamentals}
         >
-          {isPending ? "Analyzing…" : analysis ? "Analyze again" : "Analyze with AI"}
+          <SparkIcon />
+          <span>{isPending ? "Analyzing…" : analysis ? "Analyze again" : "Analyze with AI"}</span>
         </button>
       </div>
 
