@@ -39,14 +39,15 @@ Known contrast exceptions, kept from the source: in dark mode, the search placeh
 ## Type
 
 - Family: `ui-sans-serif, system-ui, sans-serif` plus the emoji fallbacks. No web font for text; Geist Mono stays available as `--font-mono`.
-- Body: 16px / 24px, weight 400.
+- Body: 16px / 24px, weight 400. Descriptions and supporting copy: 15px; nothing a reader needs is below 13px.
+- Content column: up to 1200px wide, as on StockAnalysis.
 - Page title (`h1`): 26px / 32px, bold; 20.8px / 28px on phones. Landing hero: 36px / 40px.
 - Section headings (`h2`): 20px / 24px, bold.
 - Large figures: latest close 36px / 40px bold; metric cards 20px semibold. Always tabular numerals.
-- Chart titles: 16px / 24px bold; axis ticks and legends 10–12px in `muted-foreground`.
+- Chart titles: 17px / 24px bold; axis ticks 12px and legends and tooltips 13px, in `muted-foreground`.
 - Table cells: 15.2px / 24px (14px on phones). Table headers: 14.4px / 20.8px, semibold, in `foreground` (not muted).
-- Nav items and controls: 14px / 20px, semibold.
-- Small labels and footnotes: 12–13px.
+- Nav items and controls: 15px / 21px, semibold.
+- Small labels, badges and footnotes: 13–14px. Line heights stay at least 1.4× the font size.
 
 ## Shape and spacing
 

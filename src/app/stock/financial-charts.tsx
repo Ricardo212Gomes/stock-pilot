@@ -120,7 +120,7 @@ const xAxisProps = {
   dataKey: "fiscalYear",
   axisLine: false,
   tickLine: false,
-  tick: { fill: "var(--muted-foreground)", fontSize: 11 },
+  tick: { fill: "var(--muted-foreground)", fontSize: 12 },
   tickMargin: 10,
 };
 
@@ -246,17 +246,17 @@ export function FinancialCharts({
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  width={64}
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
+                  width={72}
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                   tickFormatter={(value: number) => compactMoney(value, currency)}
                 />
                 <Tooltip
                   formatter={moneyTooltip(currency)}
                   contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }}
                   labelStyle={{ color: "var(--foreground)", fontWeight: 600 }}
-                  itemStyle={{ color: "var(--foreground)", fontSize: 12 }}
+                  itemStyle={{ color: "var(--foreground)", fontSize: 13 }}
                 />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke="var(--chart-1)" fill="url(#revenueFill)" strokeWidth={2.5} connectNulls />
                 <Line type="monotone" dataKey="grossProfit" name="Gross profit" stroke="var(--chart-2)" strokeWidth={2} dot={{ r: 3, fill: "var(--chart-2)" }} connectNulls />
                 <Line type="monotone" dataKey="operatingIncome" name="Operating income" stroke="var(--chart-3)" strokeWidth={2} dot={{ r: 3, fill: "var(--chart-3)" }} connectNulls />
@@ -280,9 +280,9 @@ export function FinancialCharts({
               >
                 <CartesianGrid {...gridProps} />
                 <XAxis {...xAxisProps} />
-                <YAxis axisLine={false} tickLine={false} width={64} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(value: number) => compactMoney(value, currency)} />
-                <Tooltip formatter={moneyTooltip(currency)} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <YAxis axisLine={false} tickLine={false} width={72} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickFormatter={(value: number) => compactMoney(value, currency)} />
+                <Tooltip formatter={moneyTooltip(currency)} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                 <Bar dataKey="cash" name="Cash &amp; investments" fill={palette[0]} radius={[3, 3, 0, 0]} maxBarSize={24} />
                 <Bar dataKey="totalDebt" name="Total debt" fill={palette[1]} radius={[3, 3, 0, 0]} maxBarSize={24} />
                 <Line type="monotone" dataKey="netCash" name="Net cash" stroke={palette[2]} strokeWidth={2.5} dot={{ r: 3, fill: palette[2] }} connectNulls />
@@ -297,9 +297,9 @@ export function FinancialCharts({
               <ComposedChart data={chronologicalRows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis {...xAxisProps} />
-                <YAxis axisLine={false} tickLine={false} width={64} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(value: number) => compactMoney(value, currency)} />
-                <Tooltip formatter={moneyTooltip(currency)} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <YAxis axisLine={false} tickLine={false} width={72} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickFormatter={(value: number) => compactMoney(value, currency)} />
+                <Tooltip formatter={moneyTooltip(currency)} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                 <Bar dataKey="operatingCashFlow" name="Operating cash flow" fill={palette[0]} radius={[3, 3, 0, 0]} maxBarSize={28} />
                 <Bar dataKey="capitalExpenditure" name="Capital expenditure" fill={palette[4]} radius={[3, 3, 0, 0]} maxBarSize={28} />
                 <Line type="monotone" dataKey="freeCashFlow" name="Free cash flow" stroke={palette[2]} strokeWidth={2.5} dot={{ r: 3, fill: palette[2] }} connectNulls />
@@ -314,9 +314,9 @@ export function FinancialCharts({
               <ComposedChart data={chronologicalRows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis {...xAxisProps} />
-                <YAxis axisLine={false} tickLine={false} width={48} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(value: number) => percent(value)} />
-                <Tooltip formatter={(value: unknown) => typeof value === "number" ? percent(value) : "—"} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <YAxis axisLine={false} tickLine={false} width={56} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickFormatter={(value: number) => percent(value)} />
+                <Tooltip formatter={(value: unknown) => typeof value === "number" ? percent(value) : "—"} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                 <Line type="monotone" dataKey="grossMargin" name="Gross margin" stroke={palette[0]} strokeWidth={2.5} dot={{ r: 3, fill: palette[0] }} connectNulls />
                 <Line type="monotone" dataKey="operatingMargin" name="Operating margin" stroke={palette[2]} strokeWidth={2.5} dot={{ r: 3, fill: palette[2] }} connectNulls />
                 <Line type="monotone" dataKey="netMargin" name="Net margin" stroke={palette[4]} strokeWidth={2.5} dot={{ r: 3, fill: palette[4] }} connectNulls />
@@ -343,9 +343,9 @@ export function FinancialCharts({
                 <ComposedChart data={valuationRows} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                   <CartesianGrid {...gridProps} />
                   <XAxis {...xAxisProps} />
-                  <YAxis axisLine={false} tickLine={false} width={48} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(value: number) => `${value}×`} />
-                  <Tooltip formatter={(value: unknown) => typeof value === "number" ? multiple(value) : "—"} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 12 }} />
-                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  <YAxis axisLine={false} tickLine={false} width={56} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickFormatter={(value: number) => `${value}×`} />
+                  <Tooltip formatter={(value: unknown) => typeof value === "number" ? multiple(value) : "—"} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 13 }} />
+                  <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                   <Line type="monotone" dataKey="peRatio" name="P/E" stroke={palette[0]} strokeWidth={2.5} dot={{ r: 3, fill: palette[0] }} connectNulls />
                   <Line type="monotone" dataKey="psRatio" name="P/S" stroke={palette[2]} strokeWidth={2.5} dot={{ r: 3, fill: palette[2] }} connectNulls />
                   <Line type="monotone" dataKey="pfcfRatio" name="P / free cash flow" stroke={palette[4]} strokeWidth={2.5} dot={{ r: 3, fill: palette[4] }} connectNulls />
@@ -370,10 +370,10 @@ export function FinancialCharts({
               <ComposedChart data={chronologicalRows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis {...xAxisProps} />
-                <YAxis yAxisId="dps" axisLine={false} tickLine={false} width={54} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(value: number) => preciseMoney(value, currency)} />
-                <YAxis yAxisId="yield" orientation="right" axisLine={false} tickLine={false} width={48} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(value: number) => percent(value)} />
-                <Tooltip formatter={(value: unknown, name: unknown) => typeof value === "number" ? name === "Dividend yield" ? percent(value) : preciseMoney(value, currency) : "—"} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <YAxis yAxisId="dps" axisLine={false} tickLine={false} width={62} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickFormatter={(value: number) => preciseMoney(value, currency)} />
+                <YAxis yAxisId="yield" orientation="right" axisLine={false} tickLine={false} width={56} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickFormatter={(value: number) => percent(value)} />
+                <Tooltip formatter={(value: unknown, name: unknown) => typeof value === "number" ? name === "Dividend yield" ? percent(value) : preciseMoney(value, currency) : "—"} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                 <Bar yAxisId="dps" dataKey="dividendPerShare" name="Dividend / share" fill={palette[0]} radius={[3, 3, 0, 0]} maxBarSize={30} />
                 <Line yAxisId="yield" type="monotone" dataKey="dividendYield" name="Dividend yield" stroke={palette[2]} strokeWidth={2.5} dot={{ r: 3, fill: palette[2] }} connectNulls />
               </ComposedChart>
@@ -392,9 +392,9 @@ export function FinancialCharts({
               <AreaChart data={segmentData.data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                 <CartesianGrid {...gridProps} />
                 <XAxis {...xAxisProps} />
-                <YAxis axisLine={false} tickLine={false} width={64} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={(value: number) => compactMoney(value, currency)} />
-                <Tooltip formatter={moneyTooltip(currency)} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <YAxis axisLine={false} tickLine={false} width={72} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickFormatter={(value: number) => compactMoney(value, currency)} />
+                <Tooltip formatter={moneyTooltip(currency)} contentStyle={{ background: "var(--card)", borderColor: "var(--border)", borderRadius: 4 }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} itemStyle={{ color: "var(--foreground)", fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                 {segmentData.keys.map((key, index) => (
                   <Area
                     key={key}

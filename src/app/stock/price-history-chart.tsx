@@ -106,7 +106,7 @@ export function PriceHistoryChart({
         background: { type: ColorType.Solid, color: colors.background },
         textColor: colors.text,
         fontFamily: "ui-sans-serif, system-ui, sans-serif",
-        fontSize: 12,
+        fontSize: 13,
         attributionLogo: true,
       },
       grid: {

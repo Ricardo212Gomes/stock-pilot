@@ -272,19 +272,19 @@ export function ProjectionChart({ rows, currency }: { rows: ProjectionRow[]; cur
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false} />
-          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickMargin={10} />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} tickMargin={10} />
           <YAxis
             axisLine={false}
             tickLine={false}
-            width={64}
-            tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+            width={72}
+            tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             tickFormatter={(value: number) => formatMoney(value, currency, true)}
           />
           <Tooltip
             formatter={(value: unknown) => (typeof value === "number" ? formatMoney(value, currency) : "—")}
             contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6 }}
           />
-          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Legend wrapperStyle={{ fontSize: 13 }} />
           {series.map(({ key, label, color }) => (
             <Line key={key} type="monotone" dataKey={key} name={label} stroke={color} strokeWidth={2} dot={{ r: 2 }} />
           ))}

@@ -113,7 +113,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 20px;
-  line-height: 24px;
+  line-height: 28px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -173,7 +173,7 @@ input:focus-visible {
 .sidebar-section-label {
   margin: 0 8px 4px;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 20px;
 }
@@ -187,9 +187,9 @@ input:focus-visible {
   border-left: 2px solid transparent;
   border-radius: var(--radius);
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 21px;
 }
 
 .sidebar-link svg {
@@ -222,7 +222,7 @@ input:focus-visible {
   align-items: center;
   gap: 8px;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -236,8 +236,8 @@ input:focus-visible {
 .sidebar-note p {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 21px;
 }
 
 .sidebar-theme {
@@ -279,7 +279,7 @@ input:focus-visible {
 .header-context {
   min-width: max-content;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
 }
 
@@ -298,7 +298,7 @@ input:focus-visible {
   border-radius: var(--radius);
   background: var(--primary);
   color: var(--primary-foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -348,7 +348,7 @@ input:focus-visible {
   outline: 0;
   background: transparent;
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .search-input-wrap input::placeholder {
@@ -364,8 +364,8 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: 2px;
   color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 21px;
 }
 
 .ticker-search button {
@@ -380,7 +380,7 @@ input:focus-visible {
   background: var(--primary);
   color: var(--primary-foreground);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -411,7 +411,7 @@ input:focus-visible {
   background: var(--secondary);
   color: var(--secondary-foreground);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   border-color: var(--border-strong);
   box-shadow: var(--shadow-subtle);
@@ -431,7 +431,7 @@ input:focus-visible {
 }
 
 .app-content {
-  width: min(1120px, calc(100% - 40px));
+  width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
   flex: 1;
 }
@@ -459,7 +459,7 @@ input:focus-visible {
   flex-wrap: wrap;
   gap: 12px;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .access-badge {
@@ -471,7 +471,7 @@ input:focus-visible {
   border-radius: 9999px;
   background: var(--secondary);
   color: var(--secondary-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 20px;
 }
@@ -482,14 +482,14 @@ input:focus-visible {
   color: var(--foreground);
   font-size: 36px;
   font-weight: 700;
-  line-height: 40px;
+  line-height: 50px;
 }
 
 .landing-intro > p {
   max-width: 520px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 400;
   line-height: 24px;
 }
@@ -501,7 +501,7 @@ input:focus-visible {
   gap: 8px;
   margin-top: 20px;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .ticker-examples > span {
@@ -517,7 +517,7 @@ input:focus-visible {
   border-radius: 9999px;
   background: var(--card);
   color: var(--card-foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -556,7 +556,7 @@ input:focus-visible {
 .section-label {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 20px;
 }
@@ -566,7 +566,7 @@ input:focus-visible {
   color: var(--card-foreground);
   font-size: 20px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .preview-icon {
@@ -600,7 +600,7 @@ input:focus-visible {
 .preview-index,
 .preview-detail {
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
@@ -608,7 +608,7 @@ input:focus-visible {
 .preview-name {
   overflow: hidden;
   color: var(--card-foreground);
-  font-size: 14px;
+  font-size: 15px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -622,7 +622,7 @@ input:focus-visible {
 .preview-footnote {
   margin: 12px 0 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -642,14 +642,14 @@ input:focus-visible {
   color: var(--foreground);
   font-size: 20px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .section-description {
   max-width: 340px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 24px;
   text-align: right;
 }
@@ -675,12 +675,12 @@ input:focus-visible {
 .research-card-top {
   gap: 8px;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .research-access {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -695,8 +695,8 @@ input:focus-visible {
   max-width: 280px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 21px;
 }
 
 .research-rule {
@@ -715,7 +715,7 @@ input:focus-visible {
   padding: 12px max(20px, calc((100% - 1120px) / 2));
   border-top: 1px solid var(--border);
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .dashboard-content {
@@ -739,13 +739,13 @@ input:focus-visible {
   color: var(--foreground);
   font-size: 26px;
   font-weight: 700;
-  line-height: 32px;
+  line-height: 36px;
 }
 
 .market-map-description {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 24px;
 }
 
@@ -770,7 +770,7 @@ input:focus-visible {
   border: 1px solid var(--accent);
   border-radius: 9999px;
   color: var(--accent);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -778,15 +778,15 @@ input:focus-visible {
   flex: 1;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 21px;
 }
 
 .market-map-limit strong {
   display: block;
   margin-bottom: 2px;
   color: var(--card-foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -797,7 +797,7 @@ input:focus-visible {
   gap: 6px;
   flex: 0 0 auto;
   color: var(--accent);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -828,7 +828,7 @@ input:focus-visible {
 .market-map-panel-heading h2 {
   margin: 3px 0 0;
   color: var(--card-foreground);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 24px;
 }
@@ -838,7 +838,7 @@ input:focus-visible {
   align-items: center;
   gap: 7px;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
@@ -871,7 +871,7 @@ input:focus-visible {
   padding: 8px 16px;
   border-top: 1px solid var(--border);
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .breadcrumb {
@@ -879,7 +879,7 @@ input:focus-visible {
   gap: 8px;
   margin-bottom: 16px;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .breadcrumb a:hover {
@@ -915,13 +915,13 @@ input:focus-visible {
   color: var(--foreground);
   font-size: 26px;
   font-weight: 700;
-  line-height: 32px;
+  line-height: 36px;
 }
 
 .company-subtitle {
   margin: 4px 0 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 24px;
 }
 
@@ -948,13 +948,13 @@ input:focus-visible {
   color: var(--card-foreground);
   font-size: 20px;
   font-weight: 600;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .stock-price-caption {
   margin: 4px 0 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -966,7 +966,7 @@ input:focus-visible {
 
 .stock-price-summary > span {
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -976,11 +976,11 @@ input:focus-visible {
   font-size: 36px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  line-height: 40px;
+  line-height: 50px;
 }
 
 .stock-price-summary small {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 20px;
 }
@@ -997,7 +997,7 @@ input:focus-visible {
 
 .stock-price-symbol {
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -1016,7 +1016,7 @@ input:focus-visible {
   background: transparent;
   color: var(--accent);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
 }
 
@@ -1039,8 +1039,8 @@ input:focus-visible {
 .stock-price-footnote {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .price-history-unavailable > div {
@@ -1056,8 +1056,8 @@ input:focus-visible {
 .price-history-unavailable p:last-child {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 21px;
 }
 
 .ai-analysis-panel {
@@ -1086,13 +1086,13 @@ input:focus-visible {
   color: var(--card-foreground);
   font-size: 20px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .ai-analysis-copy > p:last-child {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 24px;
 }
 
@@ -1109,7 +1109,7 @@ input:focus-visible {
   background: var(--primary);
   color: var(--primary-foreground);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   line-height: 24px;
   box-shadow: var(--shadow-subtle);
@@ -1130,7 +1130,7 @@ input:focus-visible {
 .ai-analysis-status,
 .ai-analysis-error {
   margin: 12px 0 0;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .ai-analysis-status {
@@ -1150,14 +1150,14 @@ input:focus-visible {
 .ai-analysis-result h3 {
   margin: 0 0 8px;
   color: var(--card-foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .ai-analysis-result p {
   margin: 0;
   color: var(--card-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 24px;
   white-space: pre-line;
 }
@@ -1165,7 +1165,7 @@ input:focus-visible {
 .ai-analysis-disclaimer {
   margin: 12px 0 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -1178,20 +1178,20 @@ input:focus-visible {
 
 .report-date span {
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .report-date strong {
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .report-date small {
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .research-tabs {
@@ -1208,7 +1208,7 @@ input:focus-visible {
   align-items: center;
   padding: 8px 16px;
   color: var(--accent);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 400;
   line-height: 24px;
 }
@@ -1247,9 +1247,9 @@ input:focus-visible {
   gap: 8px;
   margin-bottom: 8px;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  line-height: 20px;
+  line-height: 21px;
 }
 
 .metric-card-dot {
@@ -1267,20 +1267,17 @@ input:focus-visible {
   font-size: 20px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  line-height: 24px;
+  line-height: 28px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .metric-card small {
   display: block;
-  overflow: hidden;
   margin-top: 4px;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .history-section,
@@ -1305,12 +1302,12 @@ input:focus-visible {
   color: var(--card-foreground);
   font-size: 20px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .table-hint {
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
 }
 
@@ -1396,9 +1393,9 @@ input:focus-visible {
 
 .table-date {
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
-  line-height: 16px;
+  line-height: 18px;
 }
 
 .positive-value {
@@ -1417,7 +1414,7 @@ input:focus-visible {
 .table-footnote {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -1448,7 +1445,7 @@ input:focus-visible {
   border: 1px solid var(--destructive);
   border-radius: 9999px;
   color: var(--destructive);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -1457,14 +1454,14 @@ input:focus-visible {
   color: var(--foreground);
   font-size: 20px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .empty-state p {
   max-width: 640px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 24px;
 }
 
@@ -1496,14 +1493,14 @@ input:focus-visible {
   color: var(--foreground);
   font-size: 20px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .fundamental-charts-intro > div > p:last-child {
   margin: 5px 0 0;
   color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 21px;
 }
 
 .chart-period-badge {
@@ -1512,7 +1509,7 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1550,7 +1547,7 @@ input:focus-visible {
 .fundamental-chart-heading h3 {
   margin: 0;
   color: var(--card-foreground);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 24px;
 }
@@ -1558,8 +1555,8 @@ input:focus-visible {
 .fundamental-chart-heading p {
   margin: 3px 0 0;
   color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .fundamental-chart-plot {
@@ -1584,8 +1581,8 @@ input:focus-visible {
 .chart-note {
   margin: 9px 2px 0;
   color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .chart-view-switch {
@@ -1605,7 +1602,7 @@ input:focus-visible {
   background: transparent;
   color: var(--accent);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
 }
 
@@ -1628,15 +1625,15 @@ input:focus-visible {
 .forward-pe-callout span,
 .forward-pe-callout small {
   color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .forward-pe-callout strong {
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
-  line-height: 20px;
+  line-height: 21px;
 }
 
 .forward-pe-only {
@@ -1655,14 +1652,14 @@ input:focus-visible {
 
 .forward-pe-only .forward-pe-callout strong {
   font-size: 24px;
-  line-height: 30px;
+  line-height: 34px;
 }
 
 .forward-pe-only > p {
   max-width: 280px;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -1698,7 +1695,7 @@ input:focus-visible {
 
   .chart-view-switch button {
     padding: 4px 6px;
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 
@@ -1712,7 +1709,7 @@ input:focus-visible {
   }
 
   .app-content {
-    width: min(1120px, calc(100% - 32px));
+    width: min(1200px, calc(100% - 32px));
   }
 
   .ticker-search {
@@ -1867,12 +1864,12 @@ input:focus-visible {
   .landing-intro h1 {
     margin-top: 16px;
     font-size: 30px;
-    line-height: 36px;
+    line-height: 42px;
   }
 
   .landing-intro > p {
     font-size: 20px;
-    line-height: 24px;
+    line-height: 28px;
   }
 
   .research-preview {
@@ -1908,7 +1905,7 @@ input:focus-visible {
 
   .app-footer {
     align-items: flex-start;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .app-footer span:last-child {
@@ -2046,7 +2043,7 @@ input:focus-visible {
   }
 
   .metric-card small {
-    font-size: 12px;
+    font-size: 13px;
     white-space: normal;
   }
 
@@ -2063,7 +2060,7 @@ input:focus-visible {
   }
 
   .table-hint {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .financial-table {
@@ -2073,13 +2070,13 @@ input:focus-visible {
   .financial-table th,
   .financial-table td {
     padding: 5px 8px;
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 15px;
+    line-height: 21px;
   }
 
   .company-title-row h1 {
     font-size: 20.8px;
-    line-height: 28px;
+    line-height: 29px;
   }
 
   .detail-grid {
@@ -2130,7 +2127,7 @@ input:focus-visible {
   margin: 4px 0 8px;
   font-size: 26px;
   font-weight: 700;
-  line-height: 32px;
+  line-height: 36px;
 }
 
 .projection-start p:last-child {
@@ -2158,8 +2155,8 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 21px;
 }
 
 .projection-guide li::before {
@@ -2172,7 +2169,7 @@ input:focus-visible {
   border-radius: 9999px;
   background: var(--primary);
   color: var(--primary-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -2205,21 +2202,21 @@ input:focus-visible {
   margin: 4px 0 0;
   font-size: 20px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 28px;
 }
 
 .stock-type-card p,
 .projection-section-intro {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 22px;
 }
 
 .stock-type-reasons {
   margin: 8px 0 0;
   padding-left: 18px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 22px;
 }
 
@@ -2229,7 +2226,7 @@ input:focus-visible {
   margin: 8px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -2240,10 +2237,10 @@ input:focus-visible {
   border: 1px solid var(--border-strong);
   border-radius: 4px;
   color: var(--muted-foreground);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  line-height: 16px;
+  line-height: 17px;
   text-transform: uppercase;
   vertical-align: 1px;
 }
@@ -2276,7 +2273,7 @@ input:focus-visible {
   font-size: 36px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  line-height: 40px;
+  line-height: 50px;
 }
 
 .projection-summary-main small {
@@ -2284,7 +2281,7 @@ input:focus-visible {
   max-width: 520px;
   margin-top: 4px;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -2302,7 +2299,7 @@ input:focus-visible {
 .projection-summary-stats dt,
 .model-card-stats dt {
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -2321,7 +2318,7 @@ input:focus-visible {
   border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius) var(--radius) 0;
   background: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 22px;
 }
 
@@ -2361,7 +2358,7 @@ input:focus-visible {
   background: var(--secondary);
   color: var(--secondary-foreground);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -2380,7 +2377,7 @@ input:focus-visible {
 .autofill-box > p {
   margin: 8px 0 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -2396,7 +2393,7 @@ input:focus-visible {
 
 .assumption-group legend {
   padding: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 24px;
 }
@@ -2404,7 +2401,7 @@ input:focus-visible {
 .assumption-group-description {
   margin: 2px 0 8px;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -2421,15 +2418,15 @@ input:focus-visible {
 }
 
 .assumption-label-row label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 21px;
 }
 
 .assumption-source {
   flex: 0 0 auto;
   color: var(--muted-foreground);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -2465,7 +2462,7 @@ input:focus-visible {
   background: transparent;
   color: var(--foreground);
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-variant-numeric: tabular-nums;
   outline: none;
 }
@@ -2473,14 +2470,14 @@ input:focus-visible {
 .assumption-suffix {
   padding: 0 10px;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .assumption-short,
 .assumption-warning {
   margin: 4px 0 0;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 18px;
 }
 
@@ -2491,7 +2488,7 @@ input:focus-visible {
 .assumption-help,
 .model-explainer {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -2547,16 +2544,16 @@ input:focus-visible {
 
 .model-card-top h3 {
   margin: 6px 0 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 24px;
 }
 
 .model-card-top p {
   margin: 2px 0 0;
   color: var(--muted-foreground);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 .model-card-value {
@@ -2569,13 +2566,13 @@ input:focus-visible {
   font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  line-height: 28px;
+  line-height: 31px;
 }
 
 .model-card-value small {
   display: block;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2588,7 +2585,7 @@ input:focus-visible {
 
 .model-card-stats dd {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -2596,7 +2593,7 @@ input:focus-visible {
 .model-card-reason {
   margin: 10px 0 0;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .model-explainer {
@@ -2620,7 +2617,7 @@ input:focus-visible {
 
 .model-formula code {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -2666,7 +2663,7 @@ input:focus-visible {
   grid-template-columns: minmax(120px, 200px) minmax(0, 1fr) 84px;
   align-items: center;
   gap: 12px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .football-name {
@@ -2730,7 +2727,7 @@ input:focus-visible {
   gap: 4px 16px;
   margin-top: 4px;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .football-legend i {
@@ -2760,7 +2757,7 @@ input:focus-visible {
 
 .reverse-dcf-answer {
   margin: 10px 0 0;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 26px;
 }
 
@@ -2784,7 +2781,7 @@ input:focus-visible {
 .projection-disclaimer {
   margin: 0 2px 16px;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 18px;
 }
 
@@ -2819,7 +2816,7 @@ input:focus-visible {
 @media (max-width: 640px) {
   .projection-summary-main strong {
     font-size: 28px;
-    line-height: 34px;
+    line-height: 39px;
   }
 
   .projection-summary-stats {
@@ -2849,7 +2846,7 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--accent);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -2865,7 +2862,7 @@ input:focus-visible {
   border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius) var(--radius) 0;
   background: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 22px;
 }
 
@@ -2890,7 +2887,7 @@ input:focus-visible {
   align-items: center;
   gap: 4px 12px;
   color: var(--muted-foreground);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -2913,7 +2910,7 @@ input:focus-visible {
   flex: 0 0 auto;
   padding: 8px 16px;
   color: var(--accent);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 24px;
 }
 
@@ -2945,7 +2942,7 @@ input:focus-visible {
 .news-card > p {
   margin: 4px 0 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 22px;
 }
 
@@ -2964,7 +2961,7 @@ input:focus-visible {
   border-radius: 4px;
   background: var(--secondary);
   color: var(--accent);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 22px;
 }
@@ -2992,7 +2989,7 @@ input:focus-visible {
 .news-empty p {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 22px;
 }
 
@@ -3008,13 +3005,13 @@ input:focus-visible {
   justify-content: space-between;
   margin-top: 12px;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .news-footnote {
   margin: 12px 2px 16px;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 18px;
 }
 
@@ -3024,6 +3021,6 @@ input:focus-visible {
   }
 
   .news-card h2 {
-    font-size: 16px;
+    font-size: 17px;
   }
 }
