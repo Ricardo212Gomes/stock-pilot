@@ -31,6 +31,8 @@ The **Projections** page at `/projections?symbol=AAPL` estimates intrinsic value
 
 The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 
+The **Earnings** page at `/earnings` shows which companies report each day of the week, with analysts' estimates and, once results are out, the actual figures and surprises.
+
 The **News** page at `/news` shows global market, deal, forex and crypto headlines from Finnhub; `/news?symbol=AAPL` shows the company's headlines from the last 14 days.
 
 ## Documentation
@@ -42,6 +44,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/stock-overview.md`](./docs/stock-overview.md) | The stock overview page, company tabs, and where each statistic comes from |
 | [`docs/stock-projections.md`](./docs/stock-projections.md) | Intrinsic value models, stock types, default assumptions, scenarios, AI autofill, the 3-year projection and the DCF calculator |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The AI review buttons on financial sections: configuration, what's sent, prompt rules and errors |
+| [`docs/earnings.md`](./docs/earnings.md) | The earnings calendar: data, company names, filters and surprises |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
