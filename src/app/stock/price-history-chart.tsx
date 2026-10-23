@@ -6,7 +6,7 @@ Copyright (с) 2025 TradingView, Inc. https://www.tradingview.com/
 */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AreaSeries, createChart } from "lightweight-charts";
+import { AreaSeries, ColorType, createChart } from "lightweight-charts";
 import type { StockPricePoint } from "@/lib/fmp";
 
 type PricePeriod = "1M" | "6M" | "1Y" | "5Y";
@@ -103,7 +103,7 @@ export function PriceHistoryChart({
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: "solid", color: colors.background },
+        background: { type: ColorType.Solid, color: colors.background },
         textColor: colors.text,
         fontFamily: "ui-sans-serif, system-ui, sans-serif",
         fontSize: 12,
@@ -149,7 +149,7 @@ export function PriceHistoryChart({
       const nextColors = getThemeColors();
       chart.applyOptions({
         layout: {
-          background: { type: "solid", color: nextColors.background },
+          background: { type: ColorType.Solid, color: nextColors.background },
           textColor: nextColors.text,
         },
         grid: {

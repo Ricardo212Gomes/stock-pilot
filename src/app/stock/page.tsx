@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "../components/app-shell";
 import { AIAnalysis } from "./ai-analysis";
 import { FinancialCharts } from "./financial-charts";
@@ -181,7 +182,7 @@ export default async function StockPage({ searchParams }: StockPageProps) {
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""}>
-          {symbol && <div className="breadcrumb"><a href="/">Research</a><span>/</span><span>{symbol}</span></div>}
+          {symbol && <div className="breadcrumb"><Link href="/">Research</Link><span>/</span><span>{symbol}</span></div>}
 
           {!result || !result.ok ? (
             <>

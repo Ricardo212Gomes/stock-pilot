@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 const THEME_STORAGE_KEY = "stockpilot-theme";
 const THEME_CHANGE_EVENT = "stockpilot-theme-change";
 
+function subscribeToTheme(onChange: () => void) {
+  window.addEventListener(THEME_CHANGE_EVENT, onChange);
+  return () => window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+}
+
+function isDarkTheme() {
+  return document.documentElement.classList.contains("dark");
+}
+
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  // The <html> "dark" class is the source of truth; the server always renders light.
+  const isDark = useSyncExternalStore(subscribeToTheme, isDarkTheme, () => false);
 
   useEffect(() => {
     let savedTheme: string | null = null;
@@ -22,22 +32,12 @@ export function ThemeToggle() {
       : window.matchMedia("(prefers-color-scheme: dark)").matches;
 
     document.documentElement.classList.toggle("dark", useDarkTheme);
-    setIsDark(useDarkTheme);
-  }, []);
-
-  useEffect(() => {
-    function syncTheme() {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    }
-
-    window.addEventListener(THEME_CHANGE_EVENT, syncTheme);
-    return () => window.removeEventListener(THEME_CHANGE_EVENT, syncTheme);
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }, []);
 
   function toggleTheme() {
     const nextIsDark = !isDark;
     document.documentElement.classList.toggle("dark", nextIsDark);
-    setIsDark(nextIsDark);
     window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
 
     try {
