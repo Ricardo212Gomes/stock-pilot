@@ -16,6 +16,15 @@ The stock page charts up to the five annual periods already loaded for its finan
 | Dividends & yield | Dividend per share and dividend yield | Annual FMP ratios. This chart is omitted when neither metric is reported. |
 | Revenue by segment | Product or geographic revenue, switchable when both are present | FMP product and geographic segmentation endpoints. The six largest latest-year categories get individual colors; remaining categories are grouped as “Other segments.” Labels are kept as reported. |
 
+### Price history
+
+The stock price chart above the fundamentals uses TradingView Lightweight Charts (`lightweight-charts`), not Recharts. It plots daily closing prices from FMP's `historical-price-eod/full` endpoint, which returns up to five years of data.
+
+- Range buttons: 1M, 6M, 1Y (default) and 5Y, counted back from the latest close.
+- The header shows the latest close and the change over the selected range. The line is green when the change is zero or positive, and red otherwise.
+- Colours come from the `--card`, `--muted-foreground`, `--border`, `--positive` and `--negative` theme variables.
+- If prices fail to load, the page shows a "Price history unavailable" notice with the FMP failure reason (see [`docs/fmp-data.md`](./docs/fmp-data.md)).
+
 Missing values are not filled with zero. Optional segment and analyst-estimate requests fail independently, so unavailable optional data does not prevent the other charts from loading.
 
 ## FMP coverage and future work
@@ -31,4 +40,5 @@ Missing values are not filled with zero. Optional segment and analyst-estimate r
 
 - `src/lib/fmp.ts` maps annual statements and ratios, and fetches optional segment and estimate data.
 - `src/app/stock/financial-charts.tsx` renders the responsive Recharts visualizations.
+- `src/app/stock/price-history-chart.tsx` renders the daily price chart with Lightweight Charts.
 - `src/app/stock/page.tsx` loads the chart inputs and derives the current forward P/E callout.
