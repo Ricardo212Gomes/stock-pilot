@@ -121,7 +121,7 @@ export async function analyzeFundamentals(
     return { ok: false, error: "There are no usable financial metrics to analyze." };
   }
 
-  const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) {
     return {
       ok: false,
@@ -129,7 +129,7 @@ export async function analyzeFundamentals(
     };
   }
 
-  const model = process.env.GEMINI_MODEL ?? "gemini-3.5-flash-lite";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   const instructions = [
     "You are an objective equity research assistant reviewing historical company fundamentals.",
     "Use only the supplied metrics. Do not invent facts or infer causes that are not in the data.",
