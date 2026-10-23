@@ -3615,3 +3615,383 @@ input:focus-visible {
 .dcf-terminal-row td {
   font-weight: 700;
 }
+
+/* Earnings calendar: a week grid of company tiles, like dividend and earnings sites */
+
+.earnings-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.earnings-bar-nav,
+.earnings-bar-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.earnings-round {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 9999px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 22px;
+  line-height: 1;
+}
+
+a.earnings-round:hover,
+a.earnings-round:focus-visible {
+  background: var(--selected);
+  color: var(--selected-foreground);
+}
+
+.earnings-date-chip {
+  align-content: center;
+  gap: 1px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.earnings-date-chip strong {
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.earnings-bar-title {
+  margin-left: 10px;
+}
+
+.earnings-bar-title strong {
+  display: block;
+  font-size: 15px;
+}
+
+.earnings-bar-tools .chart-view-switch a {
+  padding: 5px 12px;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.earnings-bar-tools .chart-view-switch .chart-view-active {
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-weight: 600;
+}
+
+.earnings-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 200px;
+  padding: 0 10px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--input-background);
+}
+
+.earnings-search svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke: var(--muted-foreground);
+  stroke-width: 2;
+}
+
+.earnings-search input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.earnings-summary {
+  margin: 0 0 16px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--earnings-days, 5), minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.earnings-column {
+  min-width: 0;
+  padding: 0 10px 14px;
+  border-left: 1px solid var(--border);
+}
+
+.earnings-column:first-child {
+  border-left: 0;
+}
+
+.earnings-column-heading {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 0 -10px 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.earnings-column-heading strong {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.earnings-column-heading .earnings-today-date {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.earnings-section {
+  margin-top: 12px;
+}
+
+.earnings-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.earnings-section-heading svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+}
+
+.earnings-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 6px;
+}
+
+.earnings-tile {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.earnings-tile:hover,
+.earnings-tile:focus-visible {
+  background: var(--selected);
+  color: var(--selected-foreground);
+}
+
+.earnings-logo-box {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  /* Logos are drawn for light backgrounds, so the box stays white in both themes. */
+  background: #ffffff;
+}
+
+.earnings-logo {
+  max-width: 34px;
+  max-height: 34px;
+  object-fit: contain;
+}
+
+.earnings-logo-fallback {
+  color: #1f2937;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.earnings-result {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--card);
+  border-radius: 9999px;
+}
+
+.earnings-result-beat {
+  background: var(--positive);
+}
+
+.earnings-result-miss {
+  background: var(--negative);
+}
+
+.earnings-tile-symbol {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.earnings-more {
+  min-height: 66px;
+  align-content: center;
+  border: 1px dashed var(--border-strong);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.earnings-empty {
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-align: center;
+}
+
+.earnings-dialog {
+  width: min(440px, calc(100% - 32px));
+  /* Tailwind's reset removes the browser's styles that centre a modal dialog, so they're set here. */
+  position: fixed;
+  inset: 0;
+  height: fit-content;
+  max-height: calc(100% - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.earnings-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.earnings-dialog-body {
+  padding: 16px 18px 18px;
+}
+
+.earnings-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.earnings-dialog-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.earnings-dialog-heading p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.earnings-dialog-heading .ai-review-close {
+  align-self: flex-start;
+}
+
+.earnings-dialog-when {
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.earnings-dialog-figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 14px 0 0;
+}
+
+.earnings-dialog-figures dt {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.earnings-dialog-figures dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.earnings-dialog-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .earnings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .earnings-column {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .earnings-column:first-child {
+    border-top: 0;
+  }
+
+  .earnings-column-heading {
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: center;
+    padding: 10px 14px;
+  }
+
+  .earnings-search {
+    min-width: 0;
+    flex: 1;
+  }
+}

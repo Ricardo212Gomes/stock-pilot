@@ -7,7 +7,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | "projections" | "maps" | "news";
+  activeSection?: "research" | "projections" | "maps" | "news" | "earnings";
   // Overrides the top bar label, e.g. "AAPL overview".
   headerLabel?: string;
 };
@@ -15,6 +15,7 @@ type AppShellProps = {
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
   if (section === "maps") return "Market maps";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
+  if (section === "earnings") return "Earnings calendar";
   if (section === "projections") return ticker ? `${ticker} projections` : "Stock projections";
   return ticker ? `${ticker} fundamentals` : "Company fundamentals";
 }
@@ -85,11 +86,22 @@ export function AppShell({
               </svg>
               <span>News</span>
             </Link>
+            <Link
+              className={`sidebar-link${activeSection === "earnings" ? " sidebar-link-active" : ""}`}
+              href="/earnings"
+              title="Earnings calendar"
+              aria-current={activeSection === "earnings" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M4 5.5h12v10.5H4zM4 8.5h12M7.5 3.5v3M12.5 3.5v3M7 11.5h2M11 11.5h2M7 13.5h2" />
+              </svg>
+              <span>Earnings</span>
+            </Link>
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 4 TOOLS</span>
-            <p>Company research, projections, market maps and news.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 5 TOOLS</span>
+            <p>Company research, projections, market maps, news and earnings.</p>
           </div>
 
           <div className="sidebar-theme">
@@ -119,8 +131,8 @@ export function AppShell({
             <span>
               {activeSection === "maps"
                 ? "Market map by FINVIZ"
-                : activeSection === "news"
-                  ? "News provided by Finnhub"
+                : activeSection === "news" || activeSection === "earnings"
+                  ? `${activeSection === "news" ? "News" : "Earnings data"} provided by Finnhub`
                   : "Financial data provided by Financial Modeling Prep"}
             </span>
           </footer>
