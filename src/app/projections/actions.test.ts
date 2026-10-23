@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { autofillAssumptions } from "./actions";
+import { autofillAssumptions, autofillDcf, autofillThreeYear } from "./actions";
 
 const statements = {
   "income-statement": [
@@ -10,6 +10,7 @@ const statements = {
   "cash-flow-statement": [{ date: "2024-12-31", operatingCashFlow: 150, capitalExpenditure: -30 }],
   ratios: [{ date: "2024-12-31", priceToEarningsRatio: 20 }],
   profile: [{ symbol: "TEST", price: 25, beta: 1.1, sector: "Technology", industry: "Software", currency: "USD" }],
+  quote: [{ symbol: "TEST", name: "Test Corp", price: 25 }],
   "treasury-rates": [{ date: "2026-10-20", year10: 4.5 }],
 };
 
@@ -102,5 +103,69 @@ describe("autofillAssumptions", () => {
     mockServices({ gemini: () => json({}, 500) });
     result = await autofillAssumptions("TEST");
     expect(!result.ok && result.error).toMatch(/could not complete the autofill/);
+  });
+});
+
+describe("autofillThreeYear", () => {
+  it("rejects invalid tickers and explains FMP failures without calling Gemini", async () => {
+    let fetchMock = mockServices();
+    await expect(autofillThreeYear("<x>")).resolves.toEqual({ ok: false, error: "Enter a valid ticker symbol first." });
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fetchMock = mockServices({ fmpStatus: 429 });
+    const result = await autofillThreeYear("TEST");
+    expect(!result.ok && result.error).toMatch(/request limit/);
+    expect(fetchMock.mock.calls.some(([input]) => String(input).includes("generativelanguage"))).toBe(false);
+  });
+
+  it("asks for structured low and high cases built from server-side data", async () => {
+    const fetchMock = mockServices({
+      gemini: () => geminiReply(JSON.stringify({
+        summary: "Modest growth.",
+        assumptions: [
+          { key: "low.revenueGrowth", value: 0.03, rationale: "Below recent growth." },
+          { key: "high.peRatio", value: 24, rationale: "Near the recent P/E." },
+        ],
+      })),
+    });
+    await expect(autofillThreeYear("test")).resolves.toEqual({
+      ok: true,
+      summary: "Modest growth.",
+      suggestions: {
+        "low.revenueGrowth": { value: 0.03, rationale: "Below recent growth." },
+        "high.peRatio": { value: 24, rationale: "Near the recent P/E." },
+      },
+    });
+
+    const call = fetchMock.mock.calls.find(([input]) => String(input).includes("generativelanguage"));
+    const body = JSON.parse(String((call?.[1] as RequestInit).body)) as {
+      contents: { parts: { text: string }[] }[];
+      generationConfig: { responseMimeType: string };
+    };
+    expect(body.generationConfig.responseMimeType).toBe("application/json");
+    expect(body.contents[0].parts[0].text).toContain("3-year projection assumptions for TEST, currently priced at 25 USD");
+  });
+});
+
+describe("autofillDcf", () => {
+  it("rejects invalid tickers and builds the prompt from server-side data", async () => {
+    let fetchMock = mockServices();
+    await expect(autofillDcf("<x>")).resolves.toMatchObject({ ok: false });
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fetchMock = mockServices({
+      gemini: () => geminiReply(JSON.stringify({
+        summary: "Steady cash flows.",
+        assumptions: [{ key: "discountRate", value: 0.09, rationale: "Average risk." }],
+      })),
+    });
+    await expect(autofillDcf("test")).resolves.toEqual({
+      ok: true,
+      summary: "Steady cash flows.",
+      suggestions: { discountRate: { value: 0.09, rationale: "Average risk." } },
+    });
+    const call = fetchMock.mock.calls.find(([input]) => String(input).includes("generativelanguage"));
+    const body = JSON.parse(String((call?.[1] as RequestInit).body)) as { contents: { parts: { text: string }[] }[] };
+    expect(body.contents[0].parts[0].text).toContain("Suggest DCF assumptions for TEST, currently priced at 25 USD");
   });
 });

@@ -2313,6 +2313,8 @@ input:focus-visible {
 }
 
 .assumption-group {
+  /* Fieldsets default to min-width: min-content, which overflows a phone-width panel. */
+  min-width: 0;
   margin: 16px 0 0;
   padding: 0;
   border: 0;
@@ -3498,4 +3500,118 @@ input:focus-visible {
     transition: none;
     transform: none !important;
   }
+}
+
+/* 3-year projection */
+
+.projection-tabs {
+  margin-bottom: 16px;
+}
+
+.scenario-columns,
+.scenario-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scenario-columns {
+  margin-bottom: 2px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scenario-field {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.scenario-label {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+/* Grid items default to their content's width; inputs are ~20 characters wide by default,
+   so without this two of them overflow a phone-width panel. */
+.scenario-inputs > div {
+  min-width: 0;
+}
+
+.scenario-inputs .assumption-input-wrap {
+  margin-top: 0;
+}
+
+.scenario-inputs input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+.scenario-source {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.scenario-source.assumption-source-ai {
+  color: var(--accent);
+}
+
+.scenario-source.assumption-source-edited {
+  color: var(--foreground);
+}
+
+/* Five columns fit the results column; no need for the statement tables' 960px minimum. */
+.three-year-table {
+  min-width: 0;
+}
+
+.three-year-range span {
+  display: block;
+}
+
+.three-year-range .three-year-range-high {
+  font-weight: 600;
+}
+
+.three-year-steps {
+  margin: 10px 0 0;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 26px;
+}
+
+/* DCF calculator */
+
+.assumption-method-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.dcf-method-switch {
+  width: fit-content;
+}
+
+.dcf-breakdown th {
+  font-size: 15px;
+}
+
+.dcf-breakdown td {
+  font-size: 15px;
+}
+
+.dcf-terminal-row th,
+.dcf-terminal-row td {
+  font-weight: 700;
 }
