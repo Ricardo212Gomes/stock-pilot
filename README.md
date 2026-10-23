@@ -9,9 +9,10 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 1. Copy `.env.example` to `.env.local` (or `.env`) in the project root.
 2. Set `FMP_API_KEY` to the key from your FMP account.
 3. Set `GEMINI_API_KEY` to your Gemini API key to enable AI analysis. `GOOGLE_GENERATIVE_AI_API_KEY` is also accepted if you already use that name. Optionally set `GEMINI_MODEL` to override the default model.
-4. Restart the Next.js development server after changing the environment file.
+4. Set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io) API key to enable the News page. The Finnhub secret is not needed.
+5. Restart the Next.js development server after changing the environment file.
 
-Both keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
+All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 
 FMP responses are cached (24 hours for statements, 6 hours for prices) to stay within your plan's daily request limit. See [`docs/fmp-data.md`](./docs/fmp-data.md).
 
@@ -30,6 +31,8 @@ The **Projections** page at `/projections?symbol=AAPL` estimates intrinsic value
 
 The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 
+The **News** page at `/news` shows global market, deal, forex and crypto headlines from Finnhub; `/news?symbol=AAPL` shows the company's headlines from the last 14 days.
+
 ## Documentation
 
 | Doc | Covers |
@@ -37,6 +40,7 @@ The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 | [`docs/fmp-data.md`](./docs/fmp-data.md) | FMP endpoints, response caching, error reasons and troubleshooting |
 | [`docs/stock-projections.md`](./docs/stock-projections.md) | Intrinsic value models, stock types, default assumptions, scenarios and AI autofill |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The Gemini fundamentals review: configuration, what's sent, prompt rules and errors |
+| [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
 | [`DESIGN.md`](./DESIGN.md) | Design tokens and component rules |
@@ -44,7 +48,7 @@ The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 ## Check the project
 
 ```bash
-npm test           # Vitest unit tests (FMP client, valuation models, AI actions)
+npm test           # Vitest unit tests (FMP client, Finnhub news, valuation models, AI actions)
 npm run typecheck  # TypeScript
 npm run lint       # ESLint
 npm run build      # production build

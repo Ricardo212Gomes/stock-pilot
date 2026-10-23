@@ -58,11 +58,12 @@ Known contrast exceptions, kept from the source: in dark mode, the search placeh
 
 ## Components and behavior
 
-- Persistent sidebar (Company research, Projections, Markets › Maps), collapsing to an icon rail on narrow screens. The active item gets a `muted` fill and a 2px `primary` left rule.
+- Persistent sidebar (Company research, Projections, Markets › Maps, News), collapsing to an icon rail on narrow screens. The active item gets a `muted` fill and a 2px `primary` left rule.
 - Compact top bar with the pill ticker search, a keyboard hint and a theme toggle. A synced toggle sits at the bottom of the sidebar.
 - Financial tables: sticky left label column on a `muted` fill, numbers right-aligned in tabular numerals, `border-strong` rules between rows, and a `highlight` fill on row hover. No zebra striping on statements.
 - Price history: area chart drawn in `positive` when the period is up and `negative` when down, with a signed change and percentage beside the latest close. Period buttons (1M, 6M, 1Y, 5Y) and chart view switches use the tab treatment: `accent` text, `selected` block when active.
 - Fundamental charts sit in bordered cards with no shadow; series use `chart-1` onward. Missing values stay blank, never zero.
+- News: category tabs (Markets, Mergers & acquisitions, Forex, Crypto) use the tab treatment. Items sit in one bordered list with `border` rules between them and no thumbnails. Each shows the source in `foreground` semibold and the UTC time in `muted-foreground`, a bold headline that turns `accent` on hover, a plain-text summary, and ticker chips in `secondary`.
 - Market maps: the third-party embed sits in a bordered panel; the live dot uses `positive`, plan notices use an `accent` left rule.
 - The AI analysis panel sits beside the fundamentals with a `title-rule` top border; loading and errors show inline.
 - Projections: a sticky assumptions panel on the left (stacked under 1100px) and results on the right. Each input shows its source (From filings, AI suggestion, Your value) and a "What is this?" disclosure. Recommended models get a `title-rule` top border and a `primary` badge, cross-checks an `accent` outline badge. The football field uses `chart-1` bars, a `foreground` base marker and a dashed `negative` price line; the sensitivity table colours values above the price `positive` and below it `negative`.
