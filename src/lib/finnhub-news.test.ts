@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { finnhubSymbol } from "./finnhub";
 import {
-  finnhubSymbol,
   getCompanyNews,
   getMarketNews,
   isNewsCategory,

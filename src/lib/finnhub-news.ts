@@ -1,4 +1,5 @@
-const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
+import { fetchFinnhub, finnhubSymbol, type FinnhubFailureReason } from "./finnhub";
+
 // News moves quickly, but a short cache still keeps repeat visits well under the rate limit.
 const NEWS_REVALIDATE_SECONDS = 60 * 15;
 export const COMPANY_NEWS_DAYS = 14;
@@ -14,12 +15,7 @@ export const NEWS_CATEGORIES = [
 
 export type NewsCategory = (typeof NEWS_CATEGORIES)[number]["id"];
 
-export type NewsFailureReason =
-  | "not-configured"
-  | "rate-limited"
-  | "invalid-key"
-  | "plan-restricted"
-  | "provider-error";
+export type NewsFailureReason = FinnhubFailureReason;
 
 export type NewsItem = {
   id: string;
@@ -37,18 +33,6 @@ export type NewsResult =
   | { ok: true; items: NewsItem[] }
   | { ok: false; reason: NewsFailureReason };
 
-class FinnhubRequestError extends Error {
-  constructor(readonly reason: NewsFailureReason, message: string) {
-    super(message);
-  }
-}
-
-function reasonForStatus(status: number): NewsFailureReason {
-  if (status === 429) return "rate-limited";
-  if (status === 401) return "invalid-key";
-  if (status === 402 || status === 403) return "plan-restricted";
-  return "provider-error";
-}
 
 export function newsFailureMessage(reason: NewsFailureReason, subject: string): string {
   switch (reason) {
@@ -123,11 +107,6 @@ export function parseTickers(value: unknown): string[] {
   return [...new Set(tickers)];
 }
 
-// Finnhub writes share classes with a dot (BRK.B); StockPilot accepts BRK-B too.
-export function finnhubSymbol(symbol: string): string {
-  return symbol.toUpperCase().replace(/-/g, ".");
-}
-
 // The merger feed mixes in translated wire copies; this app's interface is English.
 const CJK = /[぀-ヿ㐀-鿿가-힯]/;
 
@@ -182,34 +161,15 @@ function newestFirst(items: NewsItem[]): NewsItem[] {
 }
 
 async function fetchNews(endpoint: string, params: Record<string, string>): Promise<NewsResult> {
-  const apiKey = process.env.FINNHUB_API_KEY;
-  if (!apiKey) return { ok: false, reason: "not-configured" };
+  const result = await fetchFinnhub(endpoint, params, NEWS_REVALIDATE_SECONDS);
+  if (!result.ok) return result;
+  if (!Array.isArray(result.payload)) return { ok: false, reason: "provider-error" };
 
-  const url = new URL(`${FINNHUB_BASE_URL}/${endpoint}`);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-
-  try {
-    // The key travels in a header, so it never appears in URLs or logs.
-    const response = await fetch(url, {
-      headers: { "X-Finnhub-Token": apiKey },
-      next: { revalidate: NEWS_REVALIDATE_SECONDS },
-      signal: AbortSignal.timeout(12_000),
-    });
-    if (!response.ok) {
-      throw new FinnhubRequestError(reasonForStatus(response.status), `Finnhub request failed with status ${response.status}`);
-    }
-
-    const payload: unknown = await response.json();
-    if (!Array.isArray(payload)) throw new Error("Finnhub returned an unexpected news response.");
-
-    const items = payload.flatMap((row) => {
-      const item = normalizeItem(row);
-      return item ? [item] : [];
-    });
-    return { ok: true, items: newestFirst(items) };
-  } catch (error) {
-    return { ok: false, reason: error instanceof FinnhubRequestError ? error.reason : "provider-error" };
-  }
+  const items = result.payload.flatMap((row) => {
+    const item = normalizeItem(row);
+    return item ? [item] : [];
+  });
+  return { ok: true, items: newestFirst(items) };
 }
 
 export function isNewsCategory(value: unknown): value is NewsCategory {
