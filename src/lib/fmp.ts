@@ -1,4 +1,4 @@
-const FMP_BASE_URL = "https://financialmodelingprep.com/stable";
+export const FMP_BASE_URL = "https://financialmodelingprep.com/stable";
 const ANNUAL_PERIODS = 5;
 // Cache successful FMP responses to stay within the plan's daily request limit.
 // Next only stores 200 responses, so errors like 429 are never cached.
@@ -135,6 +135,11 @@ export type CompanyProfile = {
   currency: string;
   sector: string | null;
   industry: string | null;
+  exchange: string | null;
+  description: string | null;
+  website: string | null;
+  ceo: string | null;
+  employees: number | null;
   isEtf: boolean;
   isFund: boolean;
 };
@@ -165,11 +170,11 @@ function reasonForStatus(status: number): FmpFailureReason {
   return "provider-error";
 }
 
-function failureReason(error: unknown): FmpFailureReason {
+export function failureReason(error: unknown): FmpFailureReason {
   return error instanceof FmpRequestError ? error.reason : "provider-error";
 }
 
-async function fetchFmp(url: URL, revalidate: number): Promise<unknown> {
+export async function fetchFmp(url: URL, revalidate: number): Promise<unknown> {
   const response = await fetch(url, {
     next: { revalidate },
     signal: AbortSignal.timeout(12_000),
@@ -185,7 +190,7 @@ async function fetchFmp(url: URL, revalidate: number): Promise<unknown> {
   return response.json();
 }
 
-function numeric(value: number | null | undefined): number | null {
+export function numeric(value: number | null | undefined): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
@@ -457,6 +462,11 @@ export async function getCompanyProfile(symbol: string): Promise<CompanyProfileR
         currency: normalizeCurrency(text(record.currency) ?? undefined),
         sector: text(record.sector),
         industry: text(record.industry),
+        exchange: text(record.exchange),
+        description: text(record.description),
+        website: text(record.website),
+        ceo: text(record.ceo),
+        employees: asNumber(typeof record.fullTimeEmployees === "string" ? Number(record.fullTimeEmployees) : record.fullTimeEmployees),
         isEtf: record.isEtf === true,
         isFund: record.isFund === true,
       },

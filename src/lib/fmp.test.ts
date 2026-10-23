@@ -288,6 +288,8 @@ describe("getCompanyProfile", () => {
       profile: [{
         symbol: "JPM", companyName: "JPMorgan Chase & Co.", price: 336.54, beta: 1.015, marketCap: 9e11,
         currency: "USD", sector: "Financial Services", industry: "Banks - Diversified", isEtf: false, isFund: false,
+        exchange: "NYSE", description: "A global bank.", website: "https://www.jpmorganchase.com", ceo: "James Dimon",
+        fullTimeEmployees: "317233",
       }],
     });
 
@@ -295,7 +297,9 @@ describe("getCompanyProfile", () => {
       ok: true,
       data: {
         symbol: "JPM", companyName: "JPMorgan Chase & Co.", price: 336.54, beta: 1.015, marketCap: 9e11,
-        currency: "USD", sector: "Financial Services", industry: "Banks - Diversified", isEtf: false, isFund: false,
+        currency: "USD", sector: "Financial Services", industry: "Banks - Diversified", exchange: "NYSE",
+        description: "A global bank.", website: "https://www.jpmorganchase.com", ceo: "James Dimon",
+        employees: 317233, isEtf: false, isFund: false,
       },
     });
     const [, init] = fetchMock.mock.calls[0] as unknown as [URL, { next?: { revalidate?: number } }];
