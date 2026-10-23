@@ -8,6 +8,7 @@ import {
   getStockPriceHistory,
   normalizeTicker,
   type AnnualFinancialSummary,
+  type FmpFailureReason,
 } from "@/lib/fmp";
 
 type StockPageProps = {
@@ -74,20 +75,33 @@ function MetricCard({
   );
 }
 
+function providerFailureMessage(reason: FmpFailureReason | undefined, subject: string): string {
+  switch (reason) {
+    case "rate-limited":
+      return `FMP's request limit for your plan has been reached, so ${subject} couldn't be loaded. It resets daily. Try again later or upgrade your FMP plan.`;
+    case "invalid-key":
+      return `FMP rejected the API key, so ${subject} couldn't be loaded. Check FMP_API_KEY in your environment file and restart the development server.`;
+    case "plan-restricted":
+      return `Your FMP plan doesn't include ${subject} for this ticker. Upgrade your plan or try a different company.`;
+    default:
+      return `FMP could not return ${subject}. Try again in a moment.`;
+  }
+}
+
 function EmptyResults({
   symbol,
   reason,
 }: {
   symbol: string | null;
-  reason?: "not-configured" | "no-data" | "provider-error";
+  reason?: FmpFailureReason;
 }) {
   const message = !symbol
     ? "Enter a valid ticker symbol to load its fundamentals."
     : reason === "not-configured"
-      ? "FMP is not connected yet. Add your FMP_API_KEY to .env.local and restart the development server."
+      ? "FMP is not connected yet. Add your FMP_API_KEY to .env and restart the development server."
       : reason === "no-data"
         ? `No annual financial statements were found for ${symbol}. Check the ticker or your FMP plan access.`
-        : "FMP could not return the financial statements. Check your API key, plan access and request limit, then try again.";
+        : providerFailureMessage(reason, "the financial statements");
 
   return (
     <section className="empty-state" role="status">
@@ -179,7 +193,6 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                 />
               )}
               <EmptyResults symbol={symbol} reason={result?.reason} />
-              <AIAnalysis fundamentals={null} symbol={symbol} />
             </>
           ) : (
             <>
@@ -215,7 +228,7 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                     <p>
                       {priceHistory?.reason === "no-data"
                         ? `No daily price history was found for ${result.data.symbol}.`
-                        : "FMP could not load daily price history. Check your API key, plan access and request limit."}
+                        : providerFailureMessage(priceHistory?.reason, "daily price history")}
                     </p>
                   </div>
                 </section>

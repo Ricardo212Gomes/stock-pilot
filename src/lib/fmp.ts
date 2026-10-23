@@ -1,5 +1,9 @@
 const FMP_BASE_URL = "https://financialmodelingprep.com/stable";
 const ANNUAL_PERIODS = 5;
+// Cache successful FMP responses to stay within the plan's daily request limit.
+// Next only stores 200 responses, so errors like 429 are never cached.
+const STATEMENTS_REVALIDATE_SECONDS = 60 * 60 * 24;
+const PRICES_REVALIDATE_SECONDS = 60 * 60 * 6;
 
 type FmpPeriod = {
   symbol?: string;
@@ -106,9 +110,17 @@ export type CompanyFundamentals = {
   annualFinancials: AnnualFinancialSummary[];
 };
 
+export type FmpFailureReason =
+  | "not-configured"
+  | "no-data"
+  | "rate-limited"
+  | "invalid-key"
+  | "plan-restricted"
+  | "provider-error";
+
 export type FundamentalsResult =
   | { ok: true; data: CompanyFundamentals }
-  | { ok: false; reason: "not-configured" | "no-data" | "provider-error" };
+  | { ok: false; reason: FmpFailureReason };
 
 export type StockPricePoint = {
   date: string;
@@ -117,7 +129,40 @@ export type StockPricePoint = {
 
 export type StockPriceHistoryResult =
   | { ok: true; data: StockPricePoint[] }
-  | { ok: false; reason: "not-configured" | "no-data" | "provider-error" };
+  | { ok: false; reason: FmpFailureReason };
+
+class FmpRequestError extends Error {
+  constructor(readonly reason: FmpFailureReason, message: string) {
+    super(message);
+  }
+}
+
+function reasonForStatus(status: number): FmpFailureReason {
+  if (status === 429) return "rate-limited";
+  if (status === 401) return "invalid-key";
+  if (status === 402 || status === 403) return "plan-restricted";
+  return "provider-error";
+}
+
+function failureReason(error: unknown): FmpFailureReason {
+  return error instanceof FmpRequestError ? error.reason : "provider-error";
+}
+
+async function fetchFmp(url: URL, revalidate: number): Promise<unknown> {
+  const response = await fetch(url, {
+    next: { revalidate },
+    signal: AbortSignal.timeout(12_000),
+  });
+
+  if (!response.ok) {
+    throw new FmpRequestError(
+      reasonForStatus(response.status),
+      `FMP request failed with status ${response.status}`,
+    );
+  }
+
+  return response.json();
+}
 
 function numeric(value: number | null | undefined): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -147,16 +192,7 @@ async function fetchAnnualRows<T extends FmpPeriod>(
   url.searchParams.set("period", "annual");
   url.searchParams.set("apikey", apiKey);
 
-  const response = await fetch(url, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(12_000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`FMP request failed with status ${response.status}`);
-  }
-
-  const payload: unknown = await response.json();
+  const payload = await fetchFmp(url, STATEMENTS_REVALIDATE_SECONDS);
   if (!Array.isArray(payload)) {
     throw new Error("FMP returned an unexpected response.");
   }
@@ -258,8 +294,8 @@ export async function getCompanyFundamentals(symbol: string): Promise<Fundamenta
     });
 
     return { ok: true, data: { symbol, annualFinancials } };
-  } catch {
-    return { ok: false, reason: "provider-error" };
+  } catch (error) {
+    return { ok: false, reason: failureReason(error) };
   }
 }
 
@@ -275,13 +311,7 @@ async function fetchOptionalRows<T>(
     url.searchParams.set("apikey", apiKey);
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-    const response = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(12_000),
-    });
-    if (!response.ok) return [];
-
-    const payload: unknown = await response.json();
+    const payload = await fetchFmp(url, STATEMENTS_REVALIDATE_SECONDS);
     return Array.isArray(payload) ? payload as T[] : [];
   } catch {
     return [];
@@ -353,16 +383,7 @@ export async function getStockPriceHistory(symbol: string): Promise<StockPriceHi
   url.searchParams.set("apikey", apiKey);
 
   try {
-    const response = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(12_000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`FMP request failed with status ${response.status}`);
-    }
-
-    const payload: unknown = await response.json();
+    const payload = await fetchFmp(url, PRICES_REVALIDATE_SECONDS);
     if (!Array.isArray(payload)) {
       throw new Error("FMP returned an unexpected response.");
     }
@@ -379,7 +400,7 @@ export async function getStockPriceHistory(symbol: string): Promise<StockPriceHi
 
     prices.sort((left, right) => left.date.localeCompare(right.date));
     return { ok: true, data: prices };
-  } catch {
-    return { ok: false, reason: "provider-error" };
+  } catch (error) {
+    return { ok: false, reason: failureReason(error) };
   }
 }
