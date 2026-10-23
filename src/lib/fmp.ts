@@ -4,6 +4,7 @@ const ANNUAL_PERIODS = 5;
 // Next only stores 200 responses, so errors like 429 are never cached.
 const STATEMENTS_REVALIDATE_SECONDS = 60 * 60 * 24;
 const PRICES_REVALIDATE_SECONDS = 60 * 60 * 6;
+const PROFILE_REVALIDATE_SECONDS = 60 * 60;
 
 type FmpPeriod = {
   symbol?: string;
@@ -19,6 +20,8 @@ type IncomeStatement = FmpPeriod & {
   operatingIncome?: number | null;
   netIncome?: number | null;
   eps?: number | null;
+  epsDiluted?: number | null;
+  weightedAverageShsOutDil?: number | null;
 };
 
 type BalanceSheet = FmpPeriod & {
@@ -76,6 +79,7 @@ export type AnnualFinancialSummary = {
   netIncome: number | null;
   netMargin: number | null;
   eps: number | null;
+  sharesDiluted: number | null;
   totalDebt: number | null;
   cash: number | null;
   netDebt: number | null;
@@ -120,6 +124,23 @@ export type FmpFailureReason =
 
 export type FundamentalsResult =
   | { ok: true; data: CompanyFundamentals }
+  | { ok: false; reason: FmpFailureReason };
+
+export type CompanyProfile = {
+  symbol: string;
+  companyName: string | null;
+  price: number | null;
+  beta: number | null;
+  marketCap: number | null;
+  currency: string;
+  sector: string | null;
+  industry: string | null;
+  isEtf: boolean;
+  isFund: boolean;
+};
+
+export type CompanyProfileResult =
+  | { ok: true; data: CompanyProfile }
   | { ok: false; reason: FmpFailureReason };
 
 export type StockPricePoint = {
@@ -267,7 +288,8 @@ export async function getCompanyFundamentals(symbol: string): Promise<Fundamenta
         operatingMargin: numeric(ratio?.operatingProfitMargin) ?? divide(operatingIncome, revenue),
         netIncome,
         netMargin: numeric(ratio?.netProfitMargin) ?? divide(netIncome, revenue),
-        eps: numeric(income.eps),
+        eps: numeric(income.epsDiluted) ?? numeric(income.eps),
+        sharesDiluted: numeric(income.weightedAverageShsOutDil),
         totalDebt,
         cash,
         netDebt,
@@ -402,5 +424,69 @@ export async function getStockPriceHistory(symbol: string): Promise<StockPriceHi
     return { ok: true, data: prices };
   } catch (error) {
     return { ok: false, reason: failureReason(error) };
+  }
+}
+
+function text(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+export async function getCompanyProfile(symbol: string): Promise<CompanyProfileResult> {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return { ok: false, reason: "not-configured" };
+
+  const url = new URL(`${FMP_BASE_URL}/profile`);
+  url.searchParams.set("symbol", symbol);
+  url.searchParams.set("apikey", apiKey);
+
+  try {
+    const payload = await fetchFmp(url, PROFILE_REVALIDATE_SECONDS);
+    const row: unknown = Array.isArray(payload) ? payload[0] : null;
+    if (!row || typeof row !== "object") return { ok: false, reason: "no-data" };
+
+    const record = row as Record<string, unknown>;
+    const asNumber = (value: unknown) => numeric(typeof value === "number" ? value : null);
+    return {
+      ok: true,
+      data: {
+        symbol,
+        companyName: text(record.companyName),
+        price: asNumber(record.price),
+        beta: asNumber(record.beta),
+        marketCap: asNumber(record.marketCap),
+        currency: normalizeCurrency(text(record.currency) ?? undefined),
+        sector: text(record.sector),
+        industry: text(record.industry),
+        isEtf: record.isEtf === true,
+        isFund: record.isFund === true,
+      },
+    };
+  } catch (error) {
+    return { ok: false, reason: failureReason(error) };
+  }
+}
+
+// Latest 10-year US Treasury yield as a decimal (0.0425 = 4.25%), or null when unavailable.
+export async function getRiskFreeRate(): Promise<number | null> {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return null;
+
+  const url = new URL(`${FMP_BASE_URL}/treasury-rates`);
+  url.searchParams.set("apikey", apiKey);
+
+  try {
+    const payload = await fetchFmp(url, STATEMENTS_REVALIDATE_SECONDS);
+    if (!Array.isArray(payload)) return null;
+
+    const latest = payload
+      .filter((row): row is { date: string; year10: number } =>
+        !!row && typeof row === "object"
+          && typeof row.date === "string"
+          && numeric(typeof row.year10 === "number" ? row.year10 : null) !== null,
+      )
+      .sort((left, right) => right.date.localeCompare(left.date))[0];
+    return latest && latest.year10 > 0 ? latest.year10 / 100 : null;
+  } catch {
+    return null;
   }
 }

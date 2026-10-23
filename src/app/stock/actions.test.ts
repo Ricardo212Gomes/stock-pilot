@@ -17,6 +17,7 @@ function period(overrides: Partial<AnnualFinancialSummary> = {}): AnnualFinancia
     netIncome: 15,
     netMargin: 0.15,
     eps: 1.2,
+    sharesDiluted: 12.5,
     totalDebt: 50,
     cash: 10,
     netDebt: 40,

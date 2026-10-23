@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getCompanyFundamentals,
+  getCompanyProfile,
   getFinancialChartExtras,
+  getRiskFreeRate,
   getStockPriceHistory,
   normalizeTicker,
 } from "./fmp";
@@ -277,5 +279,64 @@ describe("getFinancialChartExtras", () => {
       ...empty,
       geographicSegments: [{ fiscalYear: "2024", segments: [{ name: "Europe", revenue: 50 }] }],
     });
+  });
+});
+
+describe("getCompanyProfile", () => {
+  it("maps the profile fields used by projections, cached for an hour", async () => {
+    const fetchMock = mockFmp({
+      profile: [{
+        symbol: "JPM", companyName: "JPMorgan Chase & Co.", price: 336.54, beta: 1.015, marketCap: 9e11,
+        currency: "USD", sector: "Financial Services", industry: "Banks - Diversified", isEtf: false, isFund: false,
+      }],
+    });
+
+    await expect(getCompanyProfile("JPM")).resolves.toEqual({
+      ok: true,
+      data: {
+        symbol: "JPM", companyName: "JPMorgan Chase & Co.", price: 336.54, beta: 1.015, marketCap: 9e11,
+        currency: "USD", sector: "Financial Services", industry: "Banks - Diversified", isEtf: false, isFund: false,
+      },
+    });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [URL, { next?: { revalidate?: number } }];
+    expect(init.next?.revalidate).toBe(60 * 60);
+  });
+
+  it("tolerates missing fields and reports failures", async () => {
+    mockFmp({ profile: [{ symbol: "X", price: "n/a", currency: "dollars", sector: "" }] });
+    await expect(getCompanyProfile("X")).resolves.toMatchObject({
+      ok: true,
+      data: { price: null, beta: null, currency: "USD", sector: null, companyName: null },
+    });
+
+    mockFmp({ profile: [] });
+    await expect(getCompanyProfile("X")).resolves.toEqual({ ok: false, reason: "no-data" });
+
+    vi.stubGlobal("fetch", statusForAll(429));
+    await expect(getCompanyProfile("X")).resolves.toEqual({ ok: false, reason: "rate-limited" });
+  });
+});
+
+describe("getRiskFreeRate", () => {
+  it("returns the latest 10-year yield as a decimal", async () => {
+    mockFmp({
+      "treasury-rates": [
+        { date: "2026-10-19", year10: 5.15 },
+        { date: "2026-10-20", year10: 5.12 },
+        { date: "2026-10-21", year10: null },
+      ],
+    });
+    await expect(getRiskFreeRate()).resolves.toBeCloseTo(0.0512);
+  });
+
+  it("returns null without a key, on errors or without usable rows", async () => {
+    mockFmp({ "treasury-rates": [{ date: "2026-10-20" }] });
+    await expect(getRiskFreeRate()).resolves.toBeNull();
+
+    vi.stubGlobal("fetch", statusForAll(500));
+    await expect(getRiskFreeRate()).resolves.toBeNull();
+
+    vi.stubEnv("FMP_API_KEY", "");
+    await expect(getRiskFreeRate()).resolves.toBeNull();
   });
 });
