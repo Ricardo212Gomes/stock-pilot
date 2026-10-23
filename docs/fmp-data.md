@@ -11,8 +11,10 @@ Base URL: `https://financialmodelingprep.com/stable`. The key is sent as the `ap
 | `getCompanyFundamentals` | `income-statement`, `balance-sheet-statement`, `cash-flow-statement`, `ratios` (annual, last 5) | Yes; the page shows an error if any fail | 24 hours |
 | `getFinancialChartExtras` | `revenue-product-segmentation`, `revenue-geographic-segmentation`, `analyst-estimates` | No; each falls back to empty data on error | 24 hours |
 | `getStockPriceHistory` | `historical-price-eod/full` (last 5 years) | No; the page shows a notice instead of the chart | 6 hours |
+| `getCompanyProfile` | `profile` (price, beta, sector, industry) | No; projections ask the user for a price | 1 hour |
+| `getRiskFreeRate` | `treasury-rates` (latest 10-year yield) | No; projections fall back to 4.25% | 24 hours |
 
-An uncached company page costs about 8 FMP requests. A cached one costs none until its window expires.
+An uncached stock page costs about 8 FMP requests, and an uncached projections page 6 (it shares the 4 statement requests with the stock page). A cached page costs none until its window expires.
 
 ## Caching
 
@@ -20,12 +22,13 @@ An uncached company page costs about 8 FMP requests. A cached one costs none unt
 
 - `STATEMENTS_REVALIDATE_SECONDS` (24 hours). Annual statements change about once a year.
 - `PRICES_REVALIDATE_SECONDS` (6 hours). End-of-day prices change once per trading day.
+- `PROFILE_REVALIDATE_SECONDS` (1 hour). The profile carries the latest quote used by projections.
 
 Error responses are never cached. Next only stores responses with status 200, so after a 429 the next request goes to FMP again.
 
 ## Error reasons
 
-A non-OK response throws `FmpRequestError` with an `FmpFailureReason`. The page turns each reason into a message with `providerFailureMessage` in `src/app/stock/page.tsx`.
+A non-OK response throws `FmpRequestError` with an `FmpFailureReason`. The page turns each reason into a message with `providerFailureMessage` in `src/lib/fmp-messages.ts`, shared by the stock and projections pages.
 
 | FMP status | Reason | What the page tells the user |
 | --- | --- | --- |

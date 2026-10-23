@@ -26,6 +26,8 @@ Open [http://localhost:3000](http://localhost:3000), enter a ticker such as `AAP
 
 FMP data access depends on the endpoints and history included in your subscription. When FMP can't return the statements, the page says why: rate limit, invalid key, plan restriction or another provider error.
 
+The **Projections** page at `/projections?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models. It picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result.
+
 The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 
 ## Documentation
@@ -33,6 +35,7 @@ The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 | Doc | Covers |
 | --- | --- |
 | [`docs/fmp-data.md`](./docs/fmp-data.md) | FMP endpoints, response caching, error reasons and troubleshooting |
+| [`docs/stock-projections.md`](./docs/stock-projections.md) | Intrinsic value models, stock types, default assumptions, scenarios and AI autofill |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The Gemini fundamentals review: configuration, what's sent, prompt rules and errors |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
@@ -41,7 +44,7 @@ The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 ## Check the project
 
 ```bash
-npm test           # Vitest unit tests (FMP client, AI analysis action)
+npm test           # Vitest unit tests (FMP client, valuation models, AI actions)
 npm run typecheck  # TypeScript
 npm run lint       # ESLint
 npm run build      # production build

@@ -7,6 +7,7 @@ The **Analyze with AI** button on the stock page sends the loaded annual fundame
 - `src/app/stock/ai-analysis.tsx`: the client panel. It calls the server action and shows the pending, error and result states.
 - `src/app/stock/actions.ts`: the `analyzeFundamentals` server action. It validates the input, builds the prompt and calls Gemini.
 - `src/lib/ai-analysis-types.ts`: the `AIAnalysisResult` type shared by both.
+- `src/lib/gemini.ts`: the shared Gemini request helper, also used by the projections AI autofill (see [`stock-projections.md`](./stock-projections.md)).
 
 ## Configuration
 
