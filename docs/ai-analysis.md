@@ -1,6 +1,6 @@
 # AI analysis
 
-The **Analyze with AI** button on the stock page sends the loaded annual fundamentals to Google Gemini and shows a plain-text summary. The panel only appears once FMP fundamentals have loaded.
+The **Analyze with AI** button at the top of the charts-only Financials tab (`/stock/financials?symbol=AAPL`) sends the loaded annual fundamentals to Google Gemini and shows a plain-text summary. The panel only appears once FMP fundamentals have loaded.
 
 ## Files
 

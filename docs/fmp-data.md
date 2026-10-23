@@ -14,7 +14,7 @@ Base URL: `https://financialmodelingprep.com/stable`. The key is sent as the `ap
 | `getCompanyProfile` | `profile` (price, beta, sector, industry) | No; projections ask the user for a price | 1 hour |
 | `getRiskFreeRate` | `treasury-rates` (latest 10-year yield) | No; projections fall back to 4.25% | 24 hours |
 
-An uncached stock page costs about 8 FMP requests, and an uncached projections page 6 (it shares the 4 statement requests with the stock page). A cached page costs none until its window expires.
+An uncached Financials page costs about 9 FMP requests for the statements and quote (see [`financials.md`](./financials.md)), plus the segment and estimate requests for the charts below them, a projections page 6 (it shares the 4 statement requests with Financials), and an overview 11 (see [`stock-overview.md`](./stock-overview.md)). A cached page costs none until its window expires.
 
 ## Caching
 

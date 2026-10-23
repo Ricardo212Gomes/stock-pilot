@@ -1,6 +1,6 @@
 # News
 
-The `/news` page shows global market news by category, and company news for a ticker, from [Finnhub](https://finnhub.io). It's a server component with no client JavaScript. The sidebar links to it under Markets, and each stock page has a **News** tab.
+The `/news` page shows global market news by category, and company news for a ticker, from [Finnhub](https://finnhub.io). It's a server component with no client JavaScript. The sidebar links to it under Markets, and the company tabs (see [`stock-overview.md`](./stock-overview.md)) include **News**.
 
 ## Files
 
