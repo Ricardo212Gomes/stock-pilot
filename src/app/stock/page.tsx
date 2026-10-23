@@ -233,6 +233,9 @@ export default async function StockPage({ searchParams }: StockPageProps) {
                 <Link className="research-tab" href={`/projections?symbol=${result.data.symbol}`}>
                   Projections <span aria-hidden="true">→</span>
                 </Link>
+                <Link className="research-tab" href={`/news?symbol=${result.data.symbol}`}>
+                  News <span aria-hidden="true">→</span>
+                </Link>
               </nav>
 
               {rows.length > 0 && (

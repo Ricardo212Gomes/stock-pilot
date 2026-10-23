@@ -7,11 +7,12 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | "projections" | "maps";
+  activeSection?: "research" | "projections" | "maps" | "news";
 };
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
   if (section === "maps") return "Market maps";
+  if (section === "news") return ticker ? `${ticker} news` : "Market news";
   if (section === "projections") return ticker ? `${ticker} projections` : "Stock projections";
   return ticker ? `${ticker} fundamentals` : "Company fundamentals";
 }
@@ -70,11 +71,22 @@ export function AppShell({
               </svg>
               <span>Maps</span>
             </Link>
+            <Link
+              className={`sidebar-link${activeSection === "news" ? " sidebar-link-active" : ""}`}
+              href={tickerValue ? `/news?symbol=${tickerValue}` : "/news"}
+              title="News"
+              aria-current={activeSection === "news" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M4 4.5h10v11H5.5A1.5 1.5 0 0 1 4 14V4.5ZM14 7.5h2v6.5a1.5 1.5 0 0 1-3 0M6.5 7.5h5M6.5 10h5M6.5 12.5h3" />
+              </svg>
+              <span>News</span>
+            </Link>
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 3 TOOLS</span>
-            <p>Company research, projections and market maps.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 4 TOOLS</span>
+            <p>Company research, projections, market maps and news.</p>
           </div>
 
           <div className="sidebar-theme">
@@ -91,7 +103,7 @@ export function AppShell({
               <TickerSearch
                 compact
                 value={tickerValue}
-                action={activeSection === "projections" ? "/projections" : "/stock"}
+                action={activeSection === "projections" || activeSection === "news" ? `/${activeSection}` : "/stock"}
               />
               <ThemeToggle />
             </div>
@@ -104,7 +116,9 @@ export function AppShell({
             <span>
               {activeSection === "maps"
                 ? "Market map by FINVIZ"
-                : "Financial data provided by Financial Modeling Prep"}
+                : activeSection === "news"
+                  ? "News provided by Finnhub"
+                  : "Financial data provided by Financial Modeling Prep"}
             </span>
           </footer>
         </div>
