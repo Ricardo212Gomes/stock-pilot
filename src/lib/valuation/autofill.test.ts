@@ -51,6 +51,12 @@ describe("parseAutofillResponse", () => {
     expect(result?.suggestions.growthYears?.value).toBe(8);
   });
 
+  it("clamps an out-of-range decimal instead of reading it as a percentage", () => {
+    // 0.6 means 60%, above the 50% maximum: it is capped, not turned into 0.6%.
+    const result = parseAutofillResponse(reply([{ key: "growthRate", value: 0.6 }]));
+    expect(result?.suggestions.growthRate?.value).toBe(0.5);
+  });
+
   it("drops a terminal growth at or above the discount rate", () => {
     const result = parseAutofillResponse(reply([
       { key: "discountRate", value: 0.04 },

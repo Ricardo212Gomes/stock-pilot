@@ -120,9 +120,10 @@ function cleanText(value: unknown, limit: number): string {
 }
 
 // Models sometimes answer "8" for 8%; rescale when only the decimal reading fits the range.
+// Only numbers above 1 can be whole-number percentages: 0.6 already means 60%.
 function normalizePercent(key: AssumptionKey, value: number): number {
   const spec = ASSUMPTION_SPEC_BY_KEY[key];
-  if (spec.unit === "percent" && value > spec.max && value / 100 <= spec.max && value / 100 >= spec.min) {
+  if (spec.unit === "percent" && value > 1 && value > spec.max && value / 100 <= spec.max && value / 100 >= spec.min) {
     return value / 100;
   }
   return value;
