@@ -1,6 +1,6 @@
 # Financials
 
-`/stock/financials?symbol=AAPL` shows a company's statements in the style of StockAnalysis's Financials tab, under the company quote header and tabs. Its first sub-tab, **Financials**, opens with the AI-assisted review (see [`ai-analysis.md`](./ai-analysis.md)), then shows charts only: the four statement charts, then the valuation, dividend and segment charts. The statement sub-tabs show one chart and the full statement table.
+`/stock/financials?symbol=AAPL` shows a company's statements in the style of StockAnalysis's Financials tab, under the company quote header and tabs. Its first sub-tab, **Financials**, shows charts only: the four statement charts, then the valuation, dividend and segment charts. The Income Statement, Balance Sheet, Cash Flow and Ratios titles have a spark icon in front that explains that tab with AI, and each tab keeps its review while you stay in Financials (see [`ai-analysis.md`](./ai-analysis.md)). The statement sub-tabs show one chart and the full statement table.
 
 ## URLs
 

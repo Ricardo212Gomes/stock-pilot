@@ -41,7 +41,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/financials.md`](./docs/financials.md) | Income statement, balance sheet, cash flow and ratios: columns, TTM, growth and the chart |
 | [`docs/stock-overview.md`](./docs/stock-overview.md) | The stock overview page, company tabs, and where each statistic comes from |
 | [`docs/stock-projections.md`](./docs/stock-projections.md) | Intrinsic value models, stock types, default assumptions, scenarios and AI autofill |
-| [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The Gemini fundamentals review: configuration, what's sent, prompt rules and errors |
+| [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The AI review buttons on financial sections: configuration, what's sent, prompt rules and errors |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
@@ -62,4 +62,4 @@ Tests live next to the code as `*.test.ts` and mock `fetch`, so they never call 
 
 See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar currently contains the Company research tool and a light/dark theme switch; the top bar keeps a synchronized copy. The theme selector follows the system preference until a choice is saved.
 
-The current dashboard is focused on annual fundamentals, with a daily price history chart. The **Analyze with AI** action sends a compact version of the displayed annual metrics to Gemini and shows an objective summary. Live quotes and a dedicated dividend history are not included yet.
+On the Financials page, the spark button beside each section title asks Gemini to explain that section's figures in plain language. Intraday prices and a dedicated dividend history are not included yet.
