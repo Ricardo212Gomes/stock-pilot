@@ -7,8 +7,14 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | "maps";
+  activeSection?: "research" | "projections" | "maps";
 };
+
+function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
+  if (section === "maps") return "Market maps";
+  if (section === "projections") return ticker ? `${ticker} projections` : "Stock projections";
+  return ticker ? `${ticker} fundamentals` : "Company fundamentals";
+}
 
 export function AppShell({
   children,
@@ -38,6 +44,17 @@ export function AppShell({
               </svg>
               <span>Company research</span>
             </Link>
+            <Link
+              className={`sidebar-link${activeSection === "projections" ? " sidebar-link-active" : ""}`}
+              href={tickerValue ? `/projections?symbol=${tickerValue}` : "/projections"}
+              title="Stock projections"
+              aria-current={activeSection === "projections" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4" />
+              </svg>
+              <span>Projections</span>
+            </Link>
           </nav>
 
           <nav className="sidebar-nav sidebar-nav-markets" aria-label="Markets">
@@ -56,8 +73,8 @@ export function AppShell({
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 2 TOOLS</span>
-            <p>Company research and market maps.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 3 TOOLS</span>
+            <p>Company research, projections and market maps.</p>
           </div>
 
           <div className="sidebar-theme">
@@ -68,14 +85,14 @@ export function AppShell({
         <div className="app-main">
           <header className="topbar">
             <span className="header-context">
-              {activeSection === "maps"
-                ? "Market maps"
-                : tickerValue
-                  ? `${tickerValue} fundamentals`
-                  : "Company fundamentals"}
+              {headerContext(activeSection, tickerValue)}
             </span>
             <div className="header-actions">
-              <TickerSearch compact value={tickerValue} />
+              <TickerSearch
+                compact
+                value={tickerValue}
+                action={activeSection === "projections" ? "/projections" : "/stock"}
+              />
               <ThemeToggle />
             </div>
           </header>

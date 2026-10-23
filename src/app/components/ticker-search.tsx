@@ -1,14 +1,16 @@
 export function TickerSearch({
   value = "",
   compact = false,
+  action = "/stock",
 }: {
   value?: string;
   compact?: boolean;
+  action?: string;
 }) {
   return (
     <form
       className={`ticker-search${compact ? " ticker-search-compact" : ""}`}
-      action="/stock"
+      action={action}
       method="get"
     >
       <label className="visually-hidden" htmlFor={compact ? "ticker-compact" : "ticker-home"}>
