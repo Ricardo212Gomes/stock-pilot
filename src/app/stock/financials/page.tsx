@@ -3,9 +3,9 @@ import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
 import { QuoteHeader } from "../../components/quote-header";
 import { StockNav } from "../../components/stock-nav";
-import { AIAnalysis } from "../ai-analysis";
 import { FinancialCharts } from "../financial-charts";
 import { StatementChart } from "./statement-chart";
+import { AiHeading } from "./ai-review";
 import { getCompanyFundamentals, getFinancialChartExtras, normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
 import {
@@ -230,8 +230,6 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
         />
       ) : view === "overview" ? (
         <>
-          {fundamentals?.ok && <AIAnalysis fundamentals={fundamentals.data} symbol={symbol} />}
-
           <section className="statement-heading">
             <h2>{companyName} Financials Overview</h2>
             {subtitle(primary.data, false)}
@@ -270,8 +268,12 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
       ) : (
         <>
           <section className="statement-heading">
-            <h2>{companyName} {STATEMENTS.find((item) => item.id === view)!.title}</h2>
-            {subtitle(primary.data, view === "ratios")}
+            <AiHeading
+              target={{ symbol, statement: view, period, label: STATEMENTS.find((item) => item.id === view)!.title }}
+              subtitle={subtitle(primary.data, view === "ratios")}
+            >
+              <h2>{companyName} {STATEMENTS.find((item) => item.id === view)!.title}</h2>
+            </AiHeading>
           </section>
 
           <StatementChart

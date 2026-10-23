@@ -1060,42 +1060,6 @@ input:focus-visible {
   line-height: 21px;
 }
 
-.ai-analysis-panel {
-  margin: 0 0 16px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-top: 2px solid var(--title-rule);
-  border-radius: var(--radius);
-  background: var(--card);
-  color: var(--card-foreground);
-}
-
-.ai-analysis-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.ai-analysis-copy {
-  min-width: 0;
-}
-
-.ai-analysis-copy h2 {
-  margin: 4px 0;
-  color: var(--card-foreground);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 28px;
-}
-
-.ai-analysis-copy > p:last-child {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 15px;
-  line-height: 24px;
-}
-
 .ai-analysis-button {
   min-height: 36px;
   flex: 0 0 auto;
@@ -1139,34 +1103,6 @@ input:focus-visible {
 
 .ai-analysis-error {
   color: var(--destructive);
-}
-
-.ai-analysis-result {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.ai-analysis-result h3 {
-  margin: 0 0 8px;
-  color: var(--card-foreground);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.ai-analysis-result p {
-  margin: 0;
-  color: var(--card-foreground);
-  font-size: 15px;
-  line-height: 24px;
-  white-space: pre-line;
-}
-
-.ai-analysis-disclaimer {
-  margin: 12px 0 0;
-  color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
 }
 
 .report-date {
@@ -1368,8 +1304,6 @@ input:focus-visible {
   color: var(--card-foreground);
   font-variant-numeric: tabular-nums;
 }
-
-
 
 .financial-table tbody tr:last-child th,
 .financial-table tbody tr:last-child td {
@@ -2004,16 +1938,9 @@ input:focus-visible {
     height: 260px;
   }
 
-  .ai-analysis-heading {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 12px;
-  }
-
   .ai-analysis-button {
     width: 100%;
   }
-
 
   .report-date {
     align-items: flex-start;
@@ -3462,5 +3389,113 @@ input:focus-visible {
 @media (max-width: 1000px) {
   .financials-charts-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* AI review: a spark icon in front of the Income Statement, Balance Sheet and Cash Flow titles */
+
+.ai-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-review-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  margin-left: -6px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.ai-review-button:hover,
+.ai-review-button:focus-visible,
+.ai-review-button[aria-expanded="true"] {
+  background: var(--selected);
+  color: var(--selected-foreground);
+}
+
+.ai-review-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.ai-review-button .spark-icon {
+  width: 22px;
+  height: 22px;
+  transition: transform 160ms ease;
+}
+
+.ai-review-button:not(:disabled):hover .spark-icon {
+  transform: rotate(12deg) scale(1.08);
+}
+
+.ai-review-panel {
+  margin: 10px 0 14px;
+  padding: 12px 16px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.ai-review-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+}
+
+.ai-review-heading strong {
+  color: var(--foreground);
+  font-size: 15px;
+}
+
+.ai-review-heading span {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.ai-review-close {
+  margin-left: auto;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.ai-review-close:hover {
+  background: var(--selected);
+  color: var(--selected-foreground);
+}
+
+.ai-review-panel p {
+  max-width: 900px;
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.ai-review-panel .ai-review-disclaimer {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-review-button .spark-icon {
+    transition: none;
+    transform: none !important;
   }
 }
