@@ -1,304 +1,233 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { AppShell } from "../components/app-shell";
-import { AIAnalysis } from "./ai-analysis";
-import { FinancialCharts } from "./financial-charts";
+import { QuoteHeader } from "../components/quote-header";
+import { StockNav } from "../components/stock-nav";
 import { PriceHistoryChart } from "./price-history-chart";
-import {
-  getCompanyFundamentals,
-  getFinancialChartExtras,
-  getStockPriceHistory,
-  normalizeTicker,
-  type AnnualFinancialSummary,
-} from "@/lib/fmp";
+import { getStockPriceHistory, normalizeTicker } from "@/lib/fmp";
+import { providerFailureMessage } from "@/lib/fmp-messages";
+import { getStockOverview, type StockOverview } from "@/lib/stock-overview";
+
+export const metadata: Metadata = {
+  title: "Stock overview — StockPilot",
+  description: "Price, key statistics, analyst views and company profile for any stock.",
+};
+
+const ABOUT_LENGTH = 600;
 
 type StockPageProps = {
   searchParams: Promise<{ symbol?: string | string[] }>;
 };
 
-function formatMoney(value: number | null, currency: string, compact = true): string {
+function compactNumber(value: number | null): string {
+  if (value === null) return "—";
+  return new Intl.NumberFormat("en-US", { notation: "compact", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
+
+function money(value: number | null, currency: string): string {
   if (value === null) return "—";
   try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      notation: compact ? "compact" : "standard",
-      maximumFractionDigits: compact ? 1 : 0,
-    }).format(value);
+    return new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
   } catch {
-    return new Intl.NumberFormat("en-US", {
-      notation: compact ? "compact" : "standard",
-      maximumFractionDigits: compact ? 1 : 0,
-    }).format(value);
+    return value.toFixed(2);
   }
 }
 
-function formatPercent(value: number | null): string {
-  return value === null ? "—" : `${(value * 100).toFixed(1)}%`;
+function plain(value: number | null, digits = 2): string {
+  return value === null ? "—" : new Intl.NumberFormat("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 }
 
-function formatSignedPercent(value: number | null): string {
-  if (value === null) return "—";
-  const prefix = value > 0 ? "+" : "";
-  return `${prefix}${(value * 100).toFixed(1)}%`;
+function signedPercent(value: number | null, digits = 2): string {
+  if (value === null) return "";
+  return `${value > 0 ? "+" : ""}${(value * 100).toFixed(digits)}%`;
 }
 
-function formatMultiple(value: number | null): string {
-  return value === null ? "—" : `${value.toFixed(2)}×`;
+function formatDate(value: string | null): string {
+  if (!value) return "—";
+  const date = new Date(`${value}T12:00:00Z`);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(date);
 }
 
-function formattedPeriod(financial: AnnualFinancialSummary): string {
-  return financial.period === "FY"
-    ? financial.fiscalYear
-    : `${financial.fiscalYear} ${financial.period}`;
+
+function Growth({ value }: { value: number | null }) {
+  if (value === null) return null;
+  return <span className={value >= 0 ? "positive-value" : "negative-value"}> {signedPercent(value, 1)}</span>;
 }
 
-function MetricCard({
-  label,
-  value,
-  note,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  note: string;
-  accent?: boolean;
-}) {
+// A term with a plain-language explanation on hover, for readers new to the metric.
+function Term({ children, help }: { children: ReactNode; help?: string }) {
+  return help ? <span className="stat-term" title={help}>{children}</span> : <>{children}</>;
+}
+
+type Stat = { label: string; help?: string; value: ReactNode };
+
+function StatTable({ rows, label }: { rows: Stat[]; label: string }) {
   return (
-    <article className={`metric-card${accent ? " metric-card-accent" : ""}`}>
-      <div className="metric-card-top">
-        <span>{label}</span>
-        <span className="metric-card-dot" aria-hidden="true" />
-      </div>
-      <strong>{value}</strong>
-      <small>{note}</small>
-    </article>
+    <table className="overview-stat-table">
+      <caption className="visually-hidden">{label}</caption>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.label}>
+            <th scope="row"><Term help={row.help}>{row.label}</Term></th>
+            <td>{row.value}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
-function EmptyResults({
-  symbol,
-  reason,
-}: {
-  symbol: string | null;
-  reason?: "not-configured" | "no-data" | "provider-error";
-}) {
-  const message = !symbol
-    ? "Enter a valid ticker symbol to load its fundamentals."
-    : reason === "not-configured"
-      ? "FMP is not connected yet. Add your FMP_API_KEY to .env.local and restart the development server."
-      : reason === "no-data"
-        ? `No annual financial statements were found for ${symbol}. Check the ticker or your FMP plan access.`
-        : "FMP could not return the financial statements. Check your API key, plan access and request limit, then try again.";
+function statRows(data: StockOverview): [Stat[], Stat[]] {
+  const { currency } = data;
+  const range = (low: number | null, high: number | null) =>
+    low === null || high === null ? "—" : `${plain(low)} - ${plain(high)}`;
+
+  return [
+    [
+      { label: "Market Cap", help: "Share price times all shares outstanding: what the market values the whole company at.", value: compactNumber(data.marketCap) },
+      { label: "Revenue (ttm)", help: "Total sales over the trailing twelve months (the last four reported quarters).", value: <>{compactNumber(data.revenueTtm)}<Growth value={data.revenueGrowth} /></> },
+      { label: "Net Income (ttm)", help: "Profit after all expenses and taxes over the last four quarters.", value: compactNumber(data.netIncomeTtm) },
+      { label: "EPS (ttm)", help: "Earnings per share: net income divided by diluted shares, over the last four quarters.", value: <>{plain(data.epsTtm)}<Growth value={data.epsGrowth} /></> },
+      { label: "Shares Out", help: "Shares currently outstanding.", value: compactNumber(data.sharesOutstanding) },
+      { label: "PE Ratio", help: "Price divided by trailing EPS: how many years of current earnings the price pays for.", value: plain(data.peRatio) },
+      { label: "Forward PE", help: "Price divided by analysts' EPS estimate for the next fiscal year.", value: plain(data.forwardPe) },
+      {
+        label: "Dividend",
+        help: "The latest dividend times its yearly frequency, and its yield at today's price.",
+        value: data.dividendPerShare === null ? "n/a" : `${money(data.dividendPerShare, currency)} (${((data.dividendYield ?? 0) * 100).toFixed(2)}%)`,
+      },
+      { label: "Ex-Dividend Date", help: "Buy before this date to receive the next dividend.", value: formatDate(data.exDividendDate) },
+    ],
+    [
+      { label: "Volume", help: "Shares traded today.", value: data.volume === null ? "—" : new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(data.volume) },
+      { label: "Open", value: plain(data.open) },
+      { label: "Previous Close", value: plain(data.previousClose) },
+      { label: "Day's Range", value: range(data.dayLow, data.dayHigh) },
+      { label: "52-Week Range", help: "Lowest and highest price over the past year.", value: range(data.yearLow, data.yearHigh) },
+      { label: "Beta", help: "How much the stock moves with the market: 1 moves in line, above 1 swings more, below 1 less.", value: plain(data.beta) },
+      {
+        label: "Analysts",
+        help: data.analystCount ? `Consensus rating from ${data.analystCount} analysts.` : "Consensus analyst rating.",
+        value: data.analystConsensus ?? "—",
+      },
+      {
+        label: "Price Target",
+        help: "Average analyst price target, and how far it is from today's price.",
+        value: data.priceTarget === null ? "—" : <>{plain(data.priceTarget)} <span className={(data.priceTargetUpside ?? 0) >= 0 ? "positive-value" : "negative-value"}>({signedPercent(data.priceTargetUpside)})</span></>,
+      },
+      { label: "Earnings Date", help: "Next scheduled earnings report.", value: formatDate(data.earningsDate) },
+    ],
+  ];
+}
+
+function About({ data }: { data: StockOverview }) {
+  const profile = data.profile;
+  if (!profile?.description && !profile?.sector) return null;
+
+  const description = profile.description && profile.description.length > ABOUT_LENGTH
+    ? `${profile.description.slice(0, ABOUT_LENGTH).replace(/\s+\S*$/, "")}…`
+    : profile.description;
+  const website = profile.website && /^https?:\/\//.test(profile.website) ? profile.website : null;
 
   return (
-    <section className="empty-state" role="status">
-      <span className="empty-state-icon" aria-hidden="true">!</span>
-      <div>
-        <h2>{symbol ? "We couldn't load this company" : "Start with a ticker"}</h2>
-        <p>{message}</p>
-      </div>
+    <section className="overview-about" aria-labelledby="about-heading">
+      <h2 id="about-heading">About {data.name}</h2>
+      {description && <p>{description}</p>}
+      <dl>
+        {profile.sector && <div><dt>Sector</dt><dd>{profile.sector}</dd></div>}
+        {profile.industry && <div><dt>Industry</dt><dd>{profile.industry}</dd></div>}
+        {profile.ceo && <div><dt>CEO</dt><dd>{profile.ceo}</dd></div>}
+        {profile.employees !== null && <div><dt>Employees</dt><dd>{new Intl.NumberFormat("en-US").format(profile.employees)}</dd></div>}
+        {website && (
+          <div>
+            <dt>Website</dt>
+            <dd><a href={website} target="_blank" rel="noopener noreferrer">{website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a></dd>
+          </div>
+        )}
+      </dl>
     </section>
   );
 }
 
-function HistoryTable({ rows }: { rows: AnnualFinancialSummary[] }) {
-  return (
-    <div className="table-scroll">
-      <table className="financial-table">
-        <thead>
-          <tr>
-            <th scope="col">Fiscal year</th>
-            <th scope="col">Revenue</th>
-            <th scope="col">Growth</th>
-            <th scope="col">Gross margin</th>
-            <th scope="col">Operating margin</th>
-            <th scope="col">Net income</th>
-            <th scope="col">Net margin</th>
-            <th scope="col">Net debt</th>
-            <th scope="col">Debt / equity</th>
-            <th scope="col">Operating cash flow</th>
-            <th scope="col">Free cash flow</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={`${row.date}-${row.period}`}>
-              <th scope="row">
-                <span className="table-year">{formattedPeriod(row)}</span>
-                {row.date && <span className="table-date">{row.date}</span>}
-              </th>
-              <td>{formatMoney(row.revenue, row.currency)}</td>
-              <td className={row.revenueGrowth === null ? "" : row.revenueGrowth >= 0 ? "positive-value" : "negative-value"}>
-                {formatSignedPercent(row.revenueGrowth)}
-              </td>
-              <td>{formatPercent(row.grossMargin)}</td>
-              <td>{formatPercent(row.operatingMargin)}</td>
-              <td>{formatMoney(row.netIncome, row.currency)}</td>
-              <td>{formatPercent(row.netMargin)}</td>
-              <td>{formatMoney(row.netDebt, row.currency)}</td>
-              <td>{formatMultiple(row.debtToEquity)}</td>
-              <td>{formatMoney(row.operatingCashFlow, row.currency)}</td>
-              <td>{formatMoney(row.freeCashFlow, row.currency)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-export default async function StockPage({ searchParams }: StockPageProps) {
+export default async function StockOverviewPage({ searchParams }: StockPageProps) {
   const params = await searchParams;
   const rawSymbol = Array.isArray(params.symbol) ? null : params.symbol;
   const symbol = rawSymbol ? normalizeTicker(rawSymbol) : null;
-  const [result, priceHistory, chartExtras] = await Promise.all([
-    symbol ? getCompanyFundamentals(symbol) : Promise.resolve(null),
-    symbol ? getStockPriceHistory(symbol) : Promise.resolve(null),
-    symbol
-      ? getFinancialChartExtras(symbol)
-      : Promise.resolve({ productSegments: [], geographicSegments: [], nextYearEps: null, nextYearDate: null }),
-  ]);
-  const rows = result?.ok ? result.data.annualFinancials : [];
-  const latest = rows[0];
-  const chartCurrency = result?.ok ? result.data.annualFinancials[0]?.currency ?? "USD" : "USD";
-  const latestClose = priceHistory?.ok ? priceHistory.data.at(-1)?.close ?? null : null;
-  const forwardPe = latestClose !== null && chartExtras.nextYearEps !== null && chartExtras.nextYearEps > 0
-    ? latestClose / chartExtras.nextYearEps
-    : null;
+  const [overview, history] = symbol
+    ? await Promise.all([getStockOverview(symbol), getStockPriceHistory(symbol)])
+    : [null, null];
+
+  if (!symbol || !overview) {
+    return (
+      <AppShell contentClassName="dashboard-content">
+        <section className="projection-start">
+          <p className="section-label">STOCK OVERVIEW</p>
+          <h1>Look up a stock</h1>
+          <p>
+            {rawSymbol ? "That isn't a valid ticker. " : ""}
+            Search for a ticker above to see its price, key statistics, analyst views and company profile.
+          </p>
+        </section>
+      </AppShell>
+    );
+  }
+
+  if (!overview.ok) {
+    return (
+      <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} overview`}>
+        <StockNav symbol={symbol} active="overview" />
+        <section className="empty-state" role="status">
+          <span className="empty-state-icon" aria-hidden="true">!</span>
+          <div>
+            <h2>We couldn&apos;t load {symbol}</h2>
+            <p>
+              {overview.reason === "no-data"
+                ? `FMP has no quote for ${symbol}. Check the ticker.`
+                : overview.reason === "plan-restricted"
+                  // FMP answers 402 both for unknown tickers and for ones outside the plan.
+                  ? `FMP didn't return a quote for ${symbol}. Check the ticker: free FMP plans cover most large US-listed stocks, but not every company or exchange.`
+                  : providerFailureMessage(overview.reason, "the quote")}
+            </p>
+          </div>
+        </section>
+      </AppShell>
+    );
+  }
+
+  const data = overview.data;
+  const [left, right] = statRows(data);
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""}>
-          {symbol && <div className="breadcrumb"><a href="/">Research</a><span>/</span><span>{symbol}</span></div>}
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} overview`}>
+      <QuoteHeader quote={data} currency={data.currency} />
 
-          {!result || !result.ok ? (
-            <>
-              {symbol && priceHistory?.ok && (
-                <PriceHistoryChart
-                  symbol={symbol}
-                  currency={chartCurrency}
-                  prices={priceHistory.data}
-                />
-              )}
-              <EmptyResults symbol={symbol} reason={result?.reason} />
-              <AIAnalysis fundamentals={null} symbol={symbol} />
-            </>
+      <StockNav symbol={symbol} active="overview" />
+
+      <div className="overview-main">
+        <div className="overview-stats">
+          <StatTable rows={left} label={`${symbol} valuation and fundamentals`} />
+          <StatTable rows={right} label={`${symbol} trading and analyst data`} />
+        </div>
+        <div className="overview-chart">
+          {history?.ok ? (
+            <PriceHistoryChart symbol={symbol} currency={data.currency} prices={history.data} compact />
           ) : (
-            <>
-              <section className="company-heading">
-                <div>
-                  <p className="section-label">COMPANY FUNDAMENTALS</p>
-                  <div className="company-title-row">
-                    <h1>{result.data.symbol}</h1>
-                    <span className="access-badge">ANNUAL · {rows.length} {rows.length === 1 ? "YEAR" : "YEARS"}</span>
-                  </div>
-                  <p className="company-subtitle">
-                    Revenue, profitability, leverage and cash generation at a glance.
-                  </p>
-                </div>
-                <div className="report-date">
-                  <span>LATEST REPORT</span>
-                  <strong>{latest?.date || "—"}</strong>
-                  <small>Reported in {latest?.currency ?? "—"}</small>
-                </div>
-              </section>
-
-              {priceHistory?.ok ? (
-                <PriceHistoryChart
-                  symbol={result.data.symbol}
-                  currency={chartCurrency}
-                  prices={priceHistory.data}
-                />
-              ) : (
-                <section className="price-history-unavailable" role="status">
-                  <div>
-                    <p className="section-label">PRICE HISTORY</p>
-                    <h2>Price history unavailable</h2>
-                    <p>
-                      {priceHistory?.reason === "no-data"
-                        ? `No daily price history was found for ${result.data.symbol}.`
-                        : "FMP could not load daily price history. Check your API key, plan access and request limit."}
-                    </p>
-                  </div>
-                </section>
-              )}
-
-              <AIAnalysis fundamentals={result.data} symbol={symbol} />
-
-              <nav className="research-tabs" aria-label="Company sections">
-                <a className="research-tab" href="#summary">Summary</a>
-                <a className="research-tab" href="#company-charts">Charts</a>
-                <a className="research-tab" href="#financials">Financials</a>
-                <a className="research-tab" href="#balance-sheet">Balance &amp; cash flow</a>
-              </nav>
-
-              {rows.length > 0 && (
-                <>
-                  <section className="overview-grid" id="summary" aria-label="Latest annual metrics">
-                    <MetricCard
-                      label="Revenue"
-                      value={formatMoney(latest.revenue, latest.currency)}
-                      note={`${formattedPeriod(latest)} · ${formatPercent(latest.revenueGrowth)} year over year`}
-                      accent
-                    />
-                    <MetricCard
-                      label="Net income"
-                      value={formatMoney(latest.netIncome, latest.currency)}
-                      note={`${formattedPeriod(latest)} · ${formatPercent(latest.netMargin)} net margin`}
-                    />
-                    <MetricCard
-                      label="Operating margin"
-                      value={formatPercent(latest.operatingMargin)}
-                      note="Operating income as a share of revenue"
-                    />
-                    <MetricCard
-                      label="Net debt"
-                      value={formatMoney(latest.netDebt, latest.currency)}
-                      note={`Debt / equity ${formatMultiple(latest.debtToEquity)}`}
-                    />
-                  </section>
-
-                  <FinancialCharts
-                    rows={rows}
-                    currency={chartCurrency}
-                    productSegments={chartExtras.productSegments}
-                    geographicSegments={chartExtras.geographicSegments}
-                    forwardPe={forwardPe}
-                    forwardPeDate={chartExtras.nextYearDate}
-                  />
-
-                  <section className="history-section" id="financials" aria-labelledby="history-heading">
-                    <div className="content-section-heading">
-                      <div>
-                        <p className="section-label">FINANCIAL HISTORY</p>
-                        <h2 id="history-heading">Last {rows.length} fiscal years</h2>
-                      </div>
-                      <span className="table-hint">Scroll to see all metrics <span aria-hidden="true">→</span></span>
-                    </div>
-                    <HistoryTable rows={rows} />
-                    <p className="table-footnote">
-                      Ratios are shown as reported by FMP when available; margins are calculated from the statements otherwise. A dash means data was unavailable.
-                    </p>
-                  </section>
-
-                  <section className="details-section" id="balance-sheet" aria-labelledby="details-heading">
-                    <div className="content-section-heading">
-                      <div>
-                        <p className="section-label">LATEST ANNUAL PERIOD</p>
-                        <h2 id="details-heading">Balance sheet &amp; cash generation</h2>
-                      </div>
-                    </div>
-                    <div className="detail-grid">
-                      <MetricCard label="Total debt" value={formatMoney(latest.totalDebt, latest.currency)} note="Short- and long-term debt" />
-                      <MetricCard label="Cash & short-term investments" value={formatMoney(latest.cash, latest.currency)} note="Cash and short-term investments when available" />
-                      <MetricCard label="Shareholders’ equity" value={formatMoney(latest.equity, latest.currency)} note="Total stockholders’ equity" />
-                      <MetricCard label="Current ratio" value={formatMultiple(latest.currentRatio)} note="Current assets divided by liabilities" />
-                      <MetricCard label="Interest coverage" value={formatMultiple(latest.interestCoverage)} note="Operating income relative to interest expense" />
-                      <MetricCard label="Free cash flow" value={formatMoney(latest.freeCashFlow, latest.currency)} note={`${formatMoney(latest.operatingCashFlow, latest.currency)} operating cash flow`} />
-                    </div>
-                  </section>
-                </>
-              )}
-            </>
+            <p className="overview-chart-unavailable">
+              {providerFailureMessage(history?.reason, "the price history")}
+            </p>
           )}
+        </div>
+      </div>
+
+      <About data={data} />
+
+      <p className="news-footnote">
+        Quote and statistics from Financial Modeling Prep; growth rates from Finnhub. TTM means trailing twelve months.
+        Prices may be delayed. <Link href={`/stock/financials?symbol=${symbol}`}>See the full financials</Link>.
+      </p>
     </AppShell>
   );
 }

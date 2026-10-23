@@ -1,101 +1,80 @@
 # StockPilot design system
 
-StockPilot follows a restrained financial-research style based on the supplied Dividend Data references: a warm paper background, crisp typography, compact tables and color reserved for meaningful financial states. The explicit token table is canonical; the separately inferred palette is not applied where it differs from these tokens. The PocketUI scrape supports the use of Geist and restrained green/red financial cues, but its broad color list also captures embedded widgets and unrelated content, so it does not add tokens to this system.
+StockPilot uses a plain, data-first financial-research style modelled on StockAnalysis.com. The page is white (or neutral charcoal in dark mode), the type is the system UI stack, tables are dense with crisp grey rules, links and tabs are blue, and colour is otherwise reserved for gains and losses. The values below were read from StockAnalysis.com's live CSS in October 2026. Only the visual language is borrowed: StockPilot uses its own name, mark and copy, and never their logo, wordmark or icons.
 
 ## Color tokens
 
 | Role | Light | Dark | Use |
 |---|---|---|---|
-| `background` | `#f5f4ee` | `#1a180f` | Page canvas |
-| `foreground` | `#0f0e0c` | `#f8f8f6` | Default text |
-| `card` | `#ffffff` | `#232115` | Raised panels and cards |
-| `card-foreground` | `#0f0e0c` | `#f8f8f6` | Text on cards |
-| `primary` | `#0f0e0c` | `#ccc7bf` | Primary actions and selected states |
-| `primary-foreground` | `#ffffff` | `#111111` | Text on primary |
-| `secondary` | `#ffffff` | `#33301f` | Secondary controls |
-| `secondary-foreground` | `#0f0e0c` | `#f8f8f6` | Text on secondary |
-| `muted` | `#eceae2` | `#33301f` | Subtle fills and table stripes |
-| `muted-foreground` | `#3c3a35` | `#b0ad9b` | Captions and supporting text |
-| `accent` | `#047857` | `#047857` | Positive movement, links and highlights |
-| `accent-foreground` | `#ffffff` | `#ffffff` | Text on accent |
-| `destructive` | `#dc2626` | `#dc2626` | Negative movement and errors |
-| `border` | `#d4d0c8` | `#393622` | Borders and dividers |
-| `input` | `#d4d0c8` | `#393622` | Form control borders |
-| `ring` | `#0f0e0c` | `#ccc7bf` | Focus indicators |
+| `background` | `#ffffff` | `#262626` | Page canvas |
+| `foreground` | `#111827` | `#f5f5f5` | Default text |
+| `card` | `#ffffff` | `#262626` | Panels and cards (separated by borders, not fills) |
+| `card-foreground` | `#111827` | `#f5f5f5` | Text on cards |
+| `primary` | `#2c6288` | `#2c6288` | Primary buttons, brand mark, active sidebar rule |
+| `primary-foreground` | `#ffffff` | `#ffffff` | Text on primary (6.5:1) |
+| `secondary` | `#f3f4f6` | `#404040` | Secondary controls, toggles |
+| `secondary-foreground` | `#1f2937` | `#f5f5f5` | Text on secondary |
+| `muted` | `#f6f7f8` | `#313131` | Table header and sticky label column, subtle fills |
+| `muted-foreground` | `#4b5563` | `#a3a3a3` | Captions, labels, nav items |
+| `accent` | `#1e73ba` | `#8bb4f7` | Links, unselected tabs, dots and small highlights |
+| `accent-foreground` | `#ffffff` | `#111827` | Text on accent |
+| `positive` | `#15803d` | `#71c996` | Gains and positive growth |
+| `negative` | `#dc2626` | `#e28b81` | Losses and negative growth |
+| `destructive` | `#dc2626` | `#e28b81` | Errors |
+| `border` | `#e5e7eb` | `#3d3d3d` | Card borders and dividers |
+| `border-strong` | `#d1d5db` | `#525252` | Table rules, control borders |
+| `input` | `#d1d5db` | `#525252` | Form control borders |
+| `input-background` | `#f9fafb` | `#404040` | Search field fill |
+| `ring` | `#2c6288` | `#8bb4f7` | Focus outline |
+| `highlight` | `#f2f9ff` | `#404040` | Table row hover |
+| `selected` | `#eeeeee` | `#dfdfdf` | Hovered or selected tab block |
+| `selected-foreground` | `#111827` | `#242b39` | Text on `selected` |
+| `title-rule` | `#2c6288` | `#6b7280` | 2px top rule on featured panels and cards |
+| `chart-1` … `chart-6` | `#2c6288` `#15803d` `#c17a18` `#d04b56` `#7653c7` `#168caa` | `#8bb4f7` `#71c996` `#f0b44d` `#ff7f87` `#b49aff` `#5bc7e2` | Chart series, in order; `chart-1` leads with the brand blue |
 
-Use colors through their role variables. Do not add one-off colors or opacity variants.
+Use colours through their role variables; do not add one-off colours. Gains and losses always carry a sign (`+6.4%`, `-2.8%`), so colour is never the only signal.
 
-## Type, shape and spacing
+Known contrast exceptions, kept from the source: in dark mode, the search placeholder (`#a3a3a3` on `#404040`, 4.1:1) and negative values on a hovered row (`#e28b81` on `#404040`, 4.1:1) fall just under 4.5:1. If you need strict AA, change the dark `highlight` to `#313131`.
 
-- Body font: `Geist, "Geist Fallback"`.
-- Font sizes: `8.5px`, `9.5px`, `10px`, `10.5px`, `11px`, `11.5px`, `12px`, `13px`, `16px`, `44px`.
-- Readability sizing: use `16px` for body copy, `12px` or `13px` for controls and dense data, and keep secondary labels at `10px` or larger where possible. Reserve `44px` for the main page title.
-- Font weights: `400`, `500`, `600`, `700`.
-- Line heights: `19.5px`, `18px`, `16.5px`, `12.75px`, `15px`.
-- Corner radii: default `3px`; use `2px`, `3px`, `4px`, `6px` or `9999px` for pills.
-- Spacing scale: `4px`, `8px`, `12px`, `16px`, `20px`, `28px`, `32px`, `112px`.
-- Shadows: use only the three recipes below. The first is a fine border-like lift, the second a subtle control shadow, and the third a prominent panel shadow.
+## Type
 
-| Token | Recipe |
-|---|---|
-| Border lift | `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0 0 0 / 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px` |
-| Subtle | `rgba(15, 23, 42, 0.04) 0px 1px 2px 0px, rgba(15, 23, 42, 0.06) 0px 1px 3px 0px` |
-| Panel | `rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.02) 0px 1px 0px 0px, rgba(15, 14, 12, 0.04) 0px 2px 4px 0px, rgba(15, 14, 12, 0.06) 0px 8px 16px -8px` |
+- Family: `ui-sans-serif, system-ui, sans-serif` plus the emoji fallbacks. No web font for text; Geist Mono stays available as `--font-mono`.
+- Body: 16px / 24px, weight 400. Descriptions and supporting copy: 15px; nothing a reader needs is below 13px.
+- Content column: up to 1200px wide, as on StockAnalysis.
+- Page title (`h1`): 26px / 32px, bold; 20.8px / 28px on phones. Landing hero: 36px / 40px.
+- Section headings (`h2`): 20px / 24px, bold.
+- Large figures: latest close 36px / 40px bold; metric cards 20px semibold. Always tabular numerals.
+- Chart titles: 17px / 24px bold; axis ticks 12px and legends and tooltips 13px, in `muted-foreground`.
+- Table cells: 15.2px / 24px (14px on phones). Table headers: 14.4px / 20.8px, semibold, in `foreground` (not muted).
+- Nav items and controls: 15px / 21px, semibold.
+- Small labels, badges and footnotes: 13–14px. Line heights stay at least 1.4× the font size.
+
+## Shape and spacing
+
+- Radius: `--radius` 6px for buttons, cards and sidebar items; the search field is a 24px pill with a fully round button; tables are square.
+- Buttons: 6px 10px padding, 16px semibold, `0 1px 2px rgba(0,0,0,0.05)` shadow.
+- Tabs: 8px 16px blocks in `accent` text; hover or selected turns into a `selected` block with semibold text. No underline.
+- Spacing steps: 4, 6, 8, 10, 16, 24, 32px. Table cells pad 5px 10px; header cells 7px 10px.
+- Shadows: only `--shadow-subtle` (`0 1px 2px 0 rgba(0,0,0,0.05)`). Panels rely on borders.
 
 ## Components and behavior
 
-- Use a persistent sidebar for Company research. It is the only active tool today; the sidebar may grow as more features are built. On narrow screens, keep a compact icon rail visible.
-- Keep the top bar compact, with ticker search, a visible keyboard hint and a theme toggle. Also provide the theme toggle at the bottom of the sidebar; both controls stay synchronized.
-- Place an AI analysis action alongside a concise, clearly separated generated report on the company fundamentals page. Show loading and configuration/provider errors inline, and keep the report grounded in the supplied metrics.
-- Use editorial headings and concise copy. Avoid decorative gradients, large illustrations and oversized rounded cards.
-- Keep financial summaries compact. Align numeric columns to the right, use tabular numerals, mute table labels and separate rows with thin borders or muted stripes.
-- Use the accent token for positive values and the destructive token for negative values. Include a signed number or text label so color is never the only signal.
-- Use square, factual issuer identifiers when company identity data is available. Do not fabricate a logo or issuer details from a ticker.
-- The current StockPilot data view covers annual fundamentals. Navigation should link only to sections backed by available data; do not imply that quote, dividend or valuation data is present until it is fetched.
-- Ship both themes. Either theme toggle stores the selection and applies or removes `.dark` on the document `<html>` element.
-
-The PocketUI extraction is useful as a cross-check for the overall visual direction, not as a source of additional one-off colors. Use the canonical token table above for the sidebar, header and all data views.
+- Persistent sidebar (Company research, Projections, Markets › Maps, News)
+- Financials: the first sub-tab, Financials, is charts only, in a grid with the first chart (and a lone last chart) spanning both columns, stacking under 1000px. Statement sub-tabs and the Annual/Quarterly switch use `selected` blocks. The statement title is 26px bold. The chart sits in a bordered card with a centred legend; clicking a legend item toggles its series, and hidden series turn `muted-foreground`. The statement table has a sticky label column, right-aligned tabular numbers, bold totals, smaller indented growth rows coloured `positive` or `negative`, and uppercase section rows on a `muted` fill.
+- Company tabs (Overview, Financials, Projections, News) sit under the company header with a 2px `title-rule` underline; the active tab is a `selected` block. The overview header shows the name at 26px, the price at 36px bold with a 24px signed change, and the quote time in `muted-foreground`. Its stat tables use 15px rows with `border-strong` rules, labels in regular weight and values in semibold, right-aligned; terms with a hover explanation get a dotted underline., collapsing to an icon rail on narrow screens. The active item gets a `muted` fill and a 2px `primary` left rule.
+- Compact top bar with the pill ticker search, a keyboard hint and a theme toggle. A synced toggle sits at the bottom of the sidebar.
+- Financial tables: sticky left label column on a `muted` fill, numbers right-aligned in tabular numerals, `border-strong` rules between rows, and a `highlight` fill on row hover. No zebra striping on statements.
+- Price history: area chart drawn in `positive` when the period is up and `negative` when down, with a signed change and percentage beside the latest close. Period buttons (1M, 6M, 1Y, 5Y) and chart view switches use the tab treatment: `accent` text, `selected` block when active.
+- Fundamental charts sit in bordered cards with no shadow; series use `chart-1` onward. Missing values stay blank, never zero.
+- News: category tabs (Markets, Mergers & acquisitions, Forex, Crypto) use the tab treatment. Items sit in one bordered list with `border` rules between them and no thumbnails. Each shows the source in `foreground` semibold and the UTC time in `muted-foreground`, a bold headline that turns `accent` on hover, a plain-text summary, and ticker chips in `secondary`.
+- Market maps: the third-party embed sits in a bordered panel; the live dot uses `positive`, plan notices use an `accent` left rule.
+- AI actions carry the spark icon. On the Income Statement, Balance Sheet, Cash Flow and Ratios tabs, a plain 22px spark glyph in `accent` sits in front of the title, with no border; it gets a `selected` block on hover and while its review is open. The review opens under the title in a card with an `accent` left rule, a short "AI review · Annual" header, plain paragraphs and a muted disclaimer.
+- Projections has three tabs, Intrinsic value, 3-Year Projection and DCF Calculator, using the statement tab style. The DCF calculator's terminal value method is a two-option switch in the chart view switch style. The 3-year calculator shares the assumptions panel; its Low and High inputs sit side by side under each label, and the year-by-year table stacks the low value above the bold high value in each cell.
+- Projections: a sticky assumptions panel on the left (stacked under 1100px) and results on the right. Each input shows its source (From filings, AI suggestion, Your value) and a "What is this?" disclosure. Recommended models get a `title-rule` top border and a `primary` badge, cross-checks an `accent` outline badge. The football field uses `chart-1` bars, a `foreground` base marker and a dashed `negative` price line; the sensitivity table colours values above the price `positive` and below it `negative`.
+- Keep copy concise and headings factual. Avoid decorative gradients, illustrations and oversized rounded cards.
+- Do not fabricate company logos or details from a ticker; link only to sections backed by fetched data.
+- Ship both themes. Either toggle stores the choice and adds or removes `.dark` on `<html>`.
 
 ## Theme tokens
 
-```css
-:root {
-  --background: #f5f4ee;
-  --foreground: #0f0e0c;
-  --card: #ffffff;
-  --card-foreground: #0f0e0c;
-  --primary: #0f0e0c;
-  --primary-foreground: #ffffff;
-  --secondary: #ffffff;
-  --secondary-foreground: #0f0e0c;
-  --muted: #eceae2;
-  --muted-foreground: #3c3a35;
-  --accent: #047857;
-  --accent-foreground: #ffffff;
-  --destructive: #dc2626;
-  --border: #d4d0c8;
-  --input: #d4d0c8;
-  --ring: #0f0e0c;
-  --radius: 3px;
-  --font-sans: Geist, "Geist Fallback";
-}
-
-.dark {
-  --background: #1a180f;
-  --foreground: #f8f8f6;
-  --card: #232115;
-  --card-foreground: #f8f8f6;
-  --primary: #ccc7bf;
-  --primary-foreground: #111111;
-  --secondary: #33301f;
-  --secondary-foreground: #f8f8f6;
-  --muted: #33301f;
-  --muted-foreground: #b0ad9b;
-  --accent: #047857;
-  --accent-foreground: #ffffff;
-  --destructive: #dc2626;
-  --border: #393622;
-  --input: #393622;
-  --ring: #ccc7bf;
-}
-```
+The canonical values live in `src/app/globals.css` (`:root` and `.dark`), and are mapped to Tailwind colours in its `@theme inline` block (`bg-primary`, `text-positive`, `border-border-strong`, and so on).

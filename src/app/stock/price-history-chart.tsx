@@ -6,12 +6,14 @@ Copyright (с) 2025 TradingView, Inc. https://www.tradingview.com/
 */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AreaSeries, createChart } from "lightweight-charts";
+import { AreaSeries, ColorType, createChart } from "lightweight-charts";
 import type { StockPricePoint } from "@/lib/fmp";
 
-type PricePeriod = "1M" | "6M" | "1Y" | "5Y";
+type PricePeriod = "5D" | "1M" | "6M" | "YTD" | "1Y" | "5Y";
 
-const periods: PricePeriod[] = ["1M", "6M", "1Y", "5Y"];
+const periods: PricePeriod[] = ["5D", "1M", "6M", "YTD", "1Y", "5Y"];
+// Daily closes only: FMP intraday prices need a paid plan, so 5D shows the last five sessions.
+const TRADING_DAYS_IN_5D = 5;
 
 function formatMoney(value: number, currency: string): string {
   try {
@@ -44,8 +46,9 @@ function rgba(hexColor: string, alpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-function getRangeStart(latestDate: string, period: PricePeriod): number {
+function getRangeStart(latestDate: string, period: Exclude<PricePeriod, "5D">): number {
   const date = new Date(`${latestDate}T00:00:00Z`);
+  if (period === "YTD") return Date.UTC(date.getUTCFullYear(), 0, 1);
   const days = period === "1M" ? 30 : period === "6M" ? 182 : period === "1Y" ? 365 : 1825;
   date.setUTCDate(date.getUTCDate() - days);
   return date.getTime();
@@ -55,10 +58,13 @@ export function PriceHistoryChart({
   symbol,
   currency,
   prices,
+  compact = false,
 }: {
   symbol: string;
   currency: string;
   prices: StockPricePoint[];
+  // Hides the title and latest close when the page header already shows the price.
+  compact?: boolean;
 }) {
   const [period, setPeriod] = useState<PricePeriod>("1Y");
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +72,7 @@ export function PriceHistoryChart({
 
   const visiblePrices = useMemo(() => {
     if (!latestDate) return prices;
+    if (period === "5D") return prices.slice(-TRADING_DAYS_IN_5D);
     const rangeStart = getRangeStart(latestDate, period);
     const filtered = prices.filter(
       (price) => new Date(`${price.date}T00:00:00Z`).getTime() >= rangeStart,
@@ -90,23 +97,23 @@ export function PriceHistoryChart({
       const styles = getComputedStyle(root);
       return {
         background: styles.getPropertyValue("--card").trim() || "#ffffff",
-        text: styles.getPropertyValue("--muted-foreground").trim() || "#3c3a35",
-        border: styles.getPropertyValue("--border").trim() || "#d4d0c8",
-        accent: styles.getPropertyValue("--accent").trim() || "#047857",
-        destructive: styles.getPropertyValue("--destructive").trim() || "#dc2626",
+        text: styles.getPropertyValue("--muted-foreground").trim() || "#4b5563",
+        border: styles.getPropertyValue("--border").trim() || "#e5e7eb",
+        positive: styles.getPropertyValue("--positive").trim() || "#15803d",
+        negative: styles.getPropertyValue("--negative").trim() || "#dc2626",
       };
     };
     const colors = getThemeColors();
-    const lineColor = isPositive ? colors.accent : colors.destructive;
+    const lineColor = isPositive ? colors.positive : colors.negative;
 
     const chart = createChart(container, {
       width: container.clientWidth,
       height: container.clientHeight,
       layout: {
-        background: { type: "solid", color: colors.background },
+        background: { type: ColorType.Solid, color: colors.background },
         textColor: colors.text,
-        fontFamily: 'Geist, "Geist Fallback", sans-serif',
-        fontSize: 11,
+        fontFamily: "ui-sans-serif, system-ui, sans-serif",
+        fontSize: 13,
         attributionLogo: true,
       },
       grid: {
@@ -149,7 +156,7 @@ export function PriceHistoryChart({
       const nextColors = getThemeColors();
       chart.applyOptions({
         layout: {
-          background: { type: "solid", color: nextColors.background },
+          background: { type: ColorType.Solid, color: nextColors.background },
           textColor: nextColors.text,
         },
         grid: {
@@ -172,8 +179,12 @@ export function PriceHistoryChart({
   if (!firstPrice || !lastPrice) return null;
 
   return (
-    <section className="stock-price-section" aria-labelledby="price-history-title">
-      <div className="stock-price-heading">
+    <section
+      className={`stock-price-section${compact ? " stock-price-compact" : ""}`}
+      aria-labelledby={compact ? undefined : "price-history-title"}
+      aria-label={compact ? `${symbol} price chart` : undefined}
+    >
+      {!compact && <div className="stock-price-heading">
         <div>
           <p className="section-label">PRICE HISTORY</p>
           <h2 id="price-history-title">Stock price</h2>
@@ -186,10 +197,16 @@ export function PriceHistoryChart({
             {formatMoney(change, currency)} ({formatPercent(changePercent)}) · {period}
           </small>
         </div>
-      </div>
+      </div>}
 
       <div className="stock-price-toolbar">
-        <span className="stock-price-symbol">{symbol}</span>
+        {compact ? (
+          <span className={`stock-price-range-change ${isPositive ? "positive-value" : "negative-value"}`}>
+            {formatMoney(change, currency)} ({formatPercent(changePercent)}) over {period}
+          </span>
+        ) : (
+          <span className="stock-price-symbol">{symbol}</span>
+        )}
         <div className="stock-price-periods" role="group" aria-label="Price history range">
           {periods.map((option) => (
             <button

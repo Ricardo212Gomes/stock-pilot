@@ -7,14 +7,24 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | "maps";
+  activeSection?: "research" | "projections" | "maps" | "news";
+  // Overrides the top bar label, e.g. "AAPL overview".
+  headerLabel?: string;
 };
+
+function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
+  if (section === "maps") return "Market maps";
+  if (section === "news") return ticker ? `${ticker} news` : "Market news";
+  if (section === "projections") return ticker ? `${ticker} projections` : "Stock projections";
+  return ticker ? `${ticker} fundamentals` : "Company fundamentals";
+}
 
 export function AppShell({
   children,
   contentClassName,
   tickerValue = "",
   activeSection = "research",
+  headerLabel,
 }: AppShellProps) {
   return (
     <div className="site-page">
@@ -38,6 +48,17 @@ export function AppShell({
               </svg>
               <span>Company research</span>
             </Link>
+            <Link
+              className={`sidebar-link${activeSection === "projections" ? " sidebar-link-active" : ""}`}
+              href={tickerValue ? `/projections?symbol=${tickerValue}` : "/projections"}
+              title="Stock projections"
+              aria-current={activeSection === "projections" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4" />
+              </svg>
+              <span>Projections</span>
+            </Link>
           </nav>
 
           <nav className="sidebar-nav sidebar-nav-markets" aria-label="Markets">
@@ -53,11 +74,22 @@ export function AppShell({
               </svg>
               <span>Maps</span>
             </Link>
+            <Link
+              className={`sidebar-link${activeSection === "news" ? " sidebar-link-active" : ""}`}
+              href={tickerValue ? `/news?symbol=${tickerValue}` : "/news"}
+              title="News"
+              aria-current={activeSection === "news" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M4 4.5h10v11H5.5A1.5 1.5 0 0 1 4 14V4.5ZM14 7.5h2v6.5a1.5 1.5 0 0 1-3 0M6.5 7.5h5M6.5 10h5M6.5 12.5h3" />
+              </svg>
+              <span>News</span>
+            </Link>
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 2 TOOLS</span>
-            <p>Company research and market maps.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 4 TOOLS</span>
+            <p>Company research, projections, market maps and news.</p>
           </div>
 
           <div className="sidebar-theme">
@@ -68,14 +100,14 @@ export function AppShell({
         <div className="app-main">
           <header className="topbar">
             <span className="header-context">
-              {activeSection === "maps"
-                ? "Market maps"
-                : tickerValue
-                  ? `${tickerValue} fundamentals`
-                  : "Company fundamentals"}
+              {headerLabel ?? headerContext(activeSection, tickerValue)}
             </span>
             <div className="header-actions">
-              <TickerSearch compact value={tickerValue} />
+              <TickerSearch
+                compact
+                value={tickerValue}
+                action={activeSection === "projections" || activeSection === "news" ? `/${activeSection}` : "/stock"}
+              />
               <ThemeToggle />
             </div>
           </header>
@@ -87,7 +119,9 @@ export function AppShell({
             <span>
               {activeSection === "maps"
                 ? "Market map by FINVIZ"
-                : "Financial data provided by Financial Modeling Prep"}
+                : activeSection === "news"
+                  ? "News provided by Finnhub"
+                  : "Financial data provided by Financial Modeling Prep"}
             </span>
           </footer>
         </div>
