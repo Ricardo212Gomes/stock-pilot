@@ -117,3 +117,71 @@ A first visit to a ticker's page makes 6 requests: 4 statements, the profile and
 - Aswath Damodaran, [Country default spreads and risk premiums](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html), January 2026 (mature-market ERP 4.23%)
 - CFA Institute, *Equity Asset Valuation*: free cash flow, dividend discount and residual income models
 - Benjamin Graham, *The Intelligent Investor* (revised 1974 formula)
+
+## 3-Year Projection tab
+
+`/projections?symbol=AAPL&view=3y` is a second, simpler calculator in the style of quote sites' "what could this stock be worth in 3 years" tools (such as Jeremy Lefebvre's 1000xStocks, whose exact formula isn't public). It shows an **expected annual return**, not an intrinsic value, and doesn't discount anything. The Intrinsic value tab is unchanged and remains the default.
+
+| Step | Formula |
+| --- | --- |
+| Revenue | revenue today × (1 + growth)^years |
+| Net income | revenue × net margin |
+| EPS | net income ÷ (shares × (1 + share change)^years) |
+| Share price | EPS × P/E (no price when EPS isn't positive) |
+| Total return | future price ÷ price today − 1 |
+| Annual return | (future price ÷ price today)^(1/years) − 1, before dividends |
+| Buy below | future price ÷ (1 + target return)^years |
+
+There are two scenarios, **Low** and **High**, each with its own revenue growth, net margin and P/E. The share count change, horizon (1–10 years, default 3) and target return (default 15% a year) are shared.
+
+Defaults come from the same cached tables as the Financials page (`loadThreeYearData` in `src/app/projections/data.ts`):
+
+| Input | Default |
+| --- | --- |
+| Revenue, shares | TTM revenue and the latest diluted share count |
+| High growth | Fiscal-year revenue growth, capped between −10% and 40% |
+| Low growth | 4 points below the high case |
+| High margin | TTM net margin |
+| Low margin | 2 points below the high case |
+| P/E | Lowest and highest fiscal-year P/E; else today's P/E ± 20%; else 15× and 25× |
+| Share change | Fiscal-year change in diluted shares, capped at ±5% a year |
+
+**Autofill with AI** (`autofillThreeYear`) sends Gemini the revenue, growth, margin, share and P/E history with the data defaults and asks for improved low and high cases with a reason each. The answer is parsed by `parseThreeYearResponse`, which clamps each value to its range, rescales whole-number percentages, and swaps a low case that ends up above its high case.
+
+Files: `src/lib/three-year-projection.ts` (math and defaults), `src/lib/three-year-autofill.ts` (prompt and parsing), `src/app/projections/three-year-calculator.tsx` (the calculator).
+
+## DCF Calculator tab
+
+`/projections?symbol=AAPL&view=dcf` is a hands-on two-stage discounted cash flow calculator in the style used by investor YouTube channels such as Parkev Tatevosian's and by quote-site DCF tools. His exact spreadsheet is for paying channel members and isn't public, so this follows the standard structure rather than his file.
+
+| Step | Formula |
+| --- | --- |
+| Free cash flow, years 1–5 | FCF today × (1 + early growth)^year |
+| Free cash flow, years 6–10 | year-5 FCF × (1 + late growth)^(year − 5) |
+| Present value | FCF ÷ (1 + discount rate)^year |
+| Terminal value (perpetual growth) | year-10 FCF × (1 + g) ÷ (discount rate − g) |
+| Terminal value (exit multiple) | year-10 FCF × multiple |
+| Enterprise value | sum of the present values, including the terminal value discounted like year 10 |
+| Equity value | enterprise value + cash and short-term investments − total debt |
+| Intrinsic value per share | equity value ÷ diluted shares |
+
+It also shows the upside against the price, a buy-below price after the margin of safety, the terminal value's share of the total, the ten projected years, and a sensitivity grid (discount rate ±2 points against early growth ±4 points).
+
+| Input | Default |
+| --- | --- |
+| Free cash flow | TTM operating cash flow minus capital expenditures |
+| Cash, debt | The latest quarter's balance sheet |
+| Shares | Latest diluted share count |
+| Growth, years 1–5 | Fiscal-year revenue growth, between 0% and 25% (revenue is steadier than free cash flow) |
+| Growth, years 6–10 | Half of the early growth, at least 2% |
+| Discount rate | 10% |
+| Terminal value | Perpetual growth at 2.5%, or a 15× free cash flow exit multiple |
+| Margin of safety | 25% |
+
+Companies with negative free cash flow, including banks and insurers whose lending runs through cash flow, get an explanation instead of a value, pointing to the residual income model on the Intrinsic value tab.
+
+**Autofill with AI** (`autofillDcf`) suggests both growth rates, the discount rate, terminal growth and the exit multiple from revenue, margin and free cash flow history, with a reason for each. `parseDcfResponse` clamps each value; the ranges also keep terminal growth (at most 4%) below the discount rate (at least 5%).
+
+All three AI autofills only rescale a percentage written as a whole number (for example 9 for 9%) when it is above 1: an out-of-range decimal like 0.6 is capped at the field's maximum, not read as 0.6%.
+
+Files: `src/lib/simple-dcf.ts` (math and defaults), `src/lib/simple-dcf-autofill.ts` (prompt and parsing), `src/app/projections/dcf-calculator.tsx` (the calculator) and `src/app/projections/calculator-input.tsx` (the number input shared with the 3-year projection).

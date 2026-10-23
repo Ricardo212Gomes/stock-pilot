@@ -27,7 +27,7 @@ Open [http://localhost:3000](http://localhost:3000), enter a ticker such as `AAP
 
 FMP data access depends on the endpoints and history included in your subscription. When FMP can't return the statements, the page says why: rate limit, invalid key, plan restriction or another provider error.
 
-The **Projections** page at `/projections?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models. It picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result.
+The **Projections** page at `/projections?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models. It picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. Its **3-Year Projection** tab estimates the price and annual return in a low and a high case from revenue growth, net margin and P/E, and its **DCF Calculator** tab discounts ten years of free cash flow plus a terminal value to a value per share.
 
 The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
 
@@ -40,7 +40,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/fmp-data.md`](./docs/fmp-data.md) | FMP endpoints, response caching, error reasons and troubleshooting |
 | [`docs/financials.md`](./docs/financials.md) | Income statement, balance sheet, cash flow and ratios: columns, TTM, growth and the chart |
 | [`docs/stock-overview.md`](./docs/stock-overview.md) | The stock overview page, company tabs, and where each statistic comes from |
-| [`docs/stock-projections.md`](./docs/stock-projections.md) | Intrinsic value models, stock types, default assumptions, scenarios and AI autofill |
+| [`docs/stock-projections.md`](./docs/stock-projections.md) | Intrinsic value models, stock types, default assumptions, scenarios, AI autofill, the 3-year projection and the DCF calculator |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The AI review buttons on financial sections: configuration, what's sent, prompt rules and errors |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
