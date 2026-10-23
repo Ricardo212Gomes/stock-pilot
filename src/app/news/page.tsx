@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "../components/app-shell";
+import { StockNav } from "../components/stock-nav";
 import { normalizeTicker } from "@/lib/fmp";
 import {
   COMPANY_NEWS_DAYS,
@@ -201,6 +202,12 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""} activeSection="news">
+      {symbol && (
+        <div className="breadcrumb">
+          <Link href={`/stock?symbol=${symbol}`}>{symbol}</Link><span>/</span><span>News</span>
+        </div>
+      )}
+      {symbol && <StockNav symbol={symbol} active="news" />}
       <section className="company-heading">
         <div>
           <p className="section-label">{symbol ? "COMPANY NEWS" : "GLOBAL NEWS"}</p>
@@ -213,13 +220,6 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
               : "Global business, markets, deals, currency and crypto headlines. Search a ticker for company news."}
           </p>
         </div>
-        {symbol && (
-          <nav className="news-company-links" aria-label={`More on ${symbol}`}>
-            <Link href={`/stock?symbol=${symbol}`}>Fundamentals</Link>
-            <Link href={`/projections?symbol=${symbol}`}>Projections</Link>
-            <Link href="/news">All news</Link>
-          </nav>
-        )}
       </section>
 
       {rawSymbol && !symbol && <Notice>That isn&apos;t a valid ticker, so this shows market news.</Notice>}

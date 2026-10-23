@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../components/app-shell";
+import { StockNav } from "../components/stock-nav";
 import { normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
 import { loadProjectionData } from "./data";
@@ -28,6 +29,7 @@ export default async function ProjectionsPage({ searchParams }: ProjectionsPageP
           <Link href={`/stock?symbol=${symbol}`}>{symbol}</Link><span>/</span><span>Projections</span>
         </div>
       )}
+      {symbol && <StockNav symbol={symbol} active="projections" />}
 
       {!symbol || !loaded ? (
         <section className="projection-start">

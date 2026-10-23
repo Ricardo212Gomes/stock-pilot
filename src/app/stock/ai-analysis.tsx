@@ -42,7 +42,7 @@ export function AIAnalysis({
           {fundamentals ? (
             <p>
               Get a concise review of {fundamentals.symbol}&apos;s revenue, margins,
-              debt and cash generation from the annual data below.
+              debt and cash generation from its last {fundamentals.annualFinancials.length} annual reports.
             </p>
           ) : (
             <p>Load annual financial data for a company to enable its AI review.</p>

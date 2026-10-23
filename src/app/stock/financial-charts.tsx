@@ -159,6 +159,7 @@ export function FinancialCharts({
   geographicSegments,
   forwardPe,
   forwardPeDate,
+  extrasOnly = false,
 }: {
   rows: AnnualFinancialSummary[];
   currency: string;
@@ -166,6 +167,8 @@ export function FinancialCharts({
   geographicSegments: RevenueSegmentPeriod[];
   forwardPe: number | null;
   forwardPeDate: string | null;
+  // Shows only the charts the statement tables don't cover: valuation, dividends and segments.
+  extrasOnly?: boolean;
 }) {
   const [segmentView, setSegmentView] = useState<SegmentView>(
     productSegments.length > 0 ? "product" : "geographic",
@@ -178,10 +181,10 @@ export function FinancialCharts({
   const activeSegmentPeriods = segmentView === "product" ? productSegments : geographicSegments;
   const segmentData = useMemo(() => segmentChartData(activeSegmentPeriods), [activeSegmentPeriods]);
 
-  const showRevenue = hasValues(rows, ["revenue", "grossProfit", "operatingIncome", "netIncome"]);
-  const showBalance = hasValues(rows, ["cash", "totalDebt", "netDebt"]);
-  const showCashFlow = hasValues(rows, ["operatingCashFlow", "freeCashFlow", "capitalExpenditure"]);
-  const showMargins = hasValues(rows, ["grossMargin", "operatingMargin", "netMargin"]);
+  const showRevenue = !extrasOnly && hasValues(rows, ["revenue", "grossProfit", "operatingIncome", "netIncome"]);
+  const showBalance = !extrasOnly && hasValues(rows, ["cash", "totalDebt", "netDebt"]);
+  const showCashFlow = !extrasOnly && hasValues(rows, ["operatingCashFlow", "freeCashFlow", "capitalExpenditure"]);
+  const showMargins = !extrasOnly && hasValues(rows, ["grossMargin", "operatingMargin", "netMargin"]);
   const showValuationHistory = hasPositiveValues(rows, ["peRatio", "psRatio", "pfcfRatio"]);
   const forwardPeValue = forwardPe !== null && forwardPe > 0 ? forwardPe : null;
   const showForwardPe = forwardPeValue !== null;

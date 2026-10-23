@@ -2835,27 +2835,6 @@ input:focus-visible {
 
 /* News */
 
-.news-company-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.news-company-links a {
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--accent);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.news-company-links a:hover,
-.news-company-links a:focus-visible {
-  background: var(--selected);
-  color: var(--selected-foreground);
-}
-
 .news-notice {
   margin: 0 0 12px;
   padding: 8px 12px;
@@ -3015,6 +2994,11 @@ input:focus-visible {
   line-height: 18px;
 }
 
+.news-footnote a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .news-card {
     padding: 12px;
@@ -3022,5 +3006,461 @@ input:focus-visible {
 
   .news-card h2 {
     font-size: 17px;
+  }
+}
+
+/* Stock overview and company tabs */
+
+.stock-nav {
+  display: flex;
+  margin: 0 0 16px;
+  overflow-x: auto;
+  border-bottom: 2px solid var(--title-rule);
+}
+
+.stock-nav a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 8px 20px;
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.stock-nav a:hover,
+.stock-nav a:focus-visible,
+.stock-nav .stock-nav-active {
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-weight: 600;
+}
+
+.quote-header {
+  margin: 20px 0 16px;
+}
+
+.quote-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.quote-meta {
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.quote-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-top: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.quote-price strong {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 40px;
+}
+
+.quote-price span {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+}
+
+.quote-time {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.overview-main {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.overview-stat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-stat-table th,
+.overview-stat-table td {
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.overview-stat-table th {
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.overview-stat-table td {
+  font-weight: 600;
+  text-align: right;
+}
+
+.stat-term {
+  border-bottom: 1px dotted var(--muted-foreground);
+  cursor: help;
+}
+
+.overview-chart {
+  min-width: 0;
+}
+
+.overview-chart .stock-price-section {
+  margin: 0;
+}
+
+.stock-price-range-change {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-chart-unavailable {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.overview-about {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--title-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.overview-about h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.overview-about p {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.overview-about dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 16px 0 0;
+}
+
+.overview-about dt {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.overview-about dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.overview-about a {
+  color: var(--accent);
+}
+
+@media (max-width: 1100px) {
+  .overview-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .overview-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quote-header h1 {
+    font-size: 21px;
+    line-height: 28px;
+  }
+
+  .quote-price strong {
+    font-size: 30px;
+    line-height: 36px;
+  }
+
+  .quote-price span {
+    font-size: 19px;
+  }
+
+  .stock-nav a {
+    padding: 8px 14px;
+  }
+}
+
+/* Financial statements */
+
+.statement-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-bottom: 16px;
+}
+
+.statement-tabs {
+  display: flex;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.statement-tabs a {
+  flex: 0 0 auto;
+  padding: 6px 16px;
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.statement-tabs a:hover,
+.statement-tabs a:focus-visible,
+.statement-tabs .statement-tab-active {
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-weight: 600;
+}
+
+.statement-heading h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.statement-heading p {
+  margin: 4px 0 16px;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.statement-chart {
+  margin-bottom: 16px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.statement-chart-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statement-chart-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.statement-chart-plot {
+  width: 100%;
+  height: 340px;
+  margin-top: 8px;
+}
+
+.statement-chart-plot .recharts-cartesian-axis-tick-value,
+.statement-chart-plot .recharts-label-list {
+  font-variant-numeric: tabular-nums;
+}
+
+.statement-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+  margin-top: 8px;
+}
+
+.statement-chart-legend button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.statement-chart-legend button:hover {
+  background: var(--selected);
+  color: var(--selected-foreground);
+}
+
+.statement-chart-legend .statement-legend-off {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.statement-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+}
+
+.statement-legend-off .statement-legend-dot {
+  opacity: 0.35;
+}
+
+.statement-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.statement-table th,
+.statement-table td {
+  white-space: nowrap;
+}
+
+.statement-table thead th {
+  text-align: right;
+}
+
+.statement-table thead th:first-child,
+.statement-table tbody th,
+.statement-period-row th {
+  text-align: left;
+}
+
+.statement-table .statement-period-row th,
+.statement-table .statement-period-row td {
+  font-weight: 600;
+  text-align: right;
+}
+
+.statement-table .statement-row-emphasis th,
+.statement-table .statement-row-emphasis td {
+  font-weight: 700;
+}
+
+.statement-table .statement-row-growth th,
+.statement-table .statement-row-growth td {
+  font-size: 14px;
+}
+
+.statement-table .statement-row-growth th {
+  padding-left: 22px;
+  color: var(--muted-foreground);
+}
+
+.statement-table .statement-section-row th {
+  padding-top: 14px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.financials-more {
+  margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+  .statement-heading h2 {
+    font-size: 21px;
+    line-height: 28px;
+  }
+
+  .statement-chart-plot {
+    height: 280px;
+  }
+
+  /* Point labels crowd a narrow chart; the tooltip still shows each value. */
+  .statement-chart-plot .recharts-label-list {
+    display: none;
+  }
+
+  .statement-table tbody th,
+  .statement-table thead th:first-child {
+    min-width: 136px;
+    max-width: 150px;
+    white-space: normal;
+  }
+
+  .statement-tabs a {
+    padding: 6px 10px;
+    font-size: 15px;
+  }
+}
+
+/* Charts-only Financials tab: the first chart spans the width, the rest sit two by two. */
+.financials-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.financials-charts-grid > :first-child,
+.financials-charts-grid > :last-child:nth-child(even) {
+  grid-column: 1 / -1;
+}
+
+.financials-charts-grid .statement-chart {
+  margin-bottom: 0;
+}
+
+.financials-charts-grid h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+}
+
+.financials-charts-grid .statement-chart:not(:first-child) .statement-chart-plot {
+  height: 300px;
+}
+
+@media (max-width: 1000px) {
+  .financials-charts-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

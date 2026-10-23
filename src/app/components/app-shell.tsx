@@ -8,6 +8,8 @@ type AppShellProps = {
   contentClassName: string;
   tickerValue?: string;
   activeSection?: "research" | "projections" | "maps" | "news";
+  // Overrides the top bar label, e.g. "AAPL overview".
+  headerLabel?: string;
 };
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
@@ -22,6 +24,7 @@ export function AppShell({
   contentClassName,
   tickerValue = "",
   activeSection = "research",
+  headerLabel,
 }: AppShellProps) {
   return (
     <div className="site-page">
@@ -97,7 +100,7 @@ export function AppShell({
         <div className="app-main">
           <header className="topbar">
             <span className="header-context">
-              {headerContext(activeSection, tickerValue)}
+              {headerLabel ?? headerContext(activeSection, tickerValue)}
             </span>
             <div className="header-actions">
               <TickerSearch
