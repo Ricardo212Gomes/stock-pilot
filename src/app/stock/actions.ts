@@ -6,6 +6,7 @@ import {
   type CompanyFundamentals,
 } from "@/lib/fmp";
 import type { AIAnalysisResult } from "@/lib/ai-analysis-types";
+import { generateGeminiText } from "@/lib/gemini";
 
 type AnalysisPeriod = Pick<
   AnnualFinancialSummary,
@@ -36,12 +37,6 @@ type AnalysisPeriod = Pick<
 type CleanFundamentals = {
   symbol: string;
   annualFinancials: AnalysisPeriod[];
-};
-
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: { parts?: Array<{ text?: unknown }> };
-  }>;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -121,15 +116,6 @@ export async function analyzeFundamentals(
     return { ok: false, error: "There are no usable financial metrics to analyze." };
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!apiKey) {
-    return {
-      ok: false,
-      error: "Gemini is not configured. Add GEMINI_API_KEY to .env.local and restart the server.",
-    };
-  }
-
-  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   const instructions = [
     "You are an objective equity research assistant reviewing historical company fundamentals.",
     "Use only the supplied metrics. Do not invent facts or infer causes that are not in the data.",
@@ -141,47 +127,13 @@ export async function analyzeFundamentals(
 
   const prompt = `Review the following annual financial data for ${cleanData.symbol}. Margins and growth rates are decimals, so 0.12 means 12%. Debt-to-equity, current ratio, and interest coverage are multiples.\n\n${JSON.stringify(cleanData)}`;
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: "POST",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: instructions }] },
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 1200 },
-        }),
-        signal: AbortSignal.timeout(45_000),
-      },
-    );
+  const result = await generateGeminiText({
+    instructions,
+    prompt,
+    generationConfig: { temperature: 0.2, maxOutputTokens: 1200 },
+    subject: "analysis",
+  });
+  if (!result.ok) return result;
 
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        return { ok: false, error: "Gemini rejected the API key. Check that it is valid and enabled for the Gemini API." };
-      }
-      if (response.status === 429) {
-        return { ok: false, error: "Gemini's request limit was reached. Wait a moment and try again." };
-      }
-      return { ok: false, error: "Gemini could not complete the analysis. Please try again." };
-    }
-
-    const result = (await response.json()) as GeminiResponse;
-    const analysis = result.candidates?.[0]?.content?.parts
-      ?.map((part) => (typeof part.text === "string" ? part.text : ""))
-      .join("\n")
-      .trim();
-
-    if (!analysis) {
-      return { ok: false, error: "Gemini returned an empty analysis. Please try again." };
-    }
-
-    return { ok: true, analysis };
-  } catch {
-    return { ok: false, error: "Gemini could not be reached. Check your connection and try again." };
-  }
+  return { ok: true, analysis: result.text };
 }
