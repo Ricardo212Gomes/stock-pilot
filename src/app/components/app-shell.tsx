@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { VALUATION_TOOLS, type ValuationTool } from "../valuation/tools";
+import { SidebarToggle } from "./sidebar-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { TickerSearch } from "./ticker-search";
 import { UserMenu } from "./user-menu";
@@ -150,8 +151,8 @@ export function AppShell({
             <p>Company research, favorites, three valuation calculators, market maps, news, earnings and dividends.</p>
           </div>
 
-          <div className="sidebar-theme">
-            <ThemeToggle />
+          <div className="sidebar-collapse">
+            <SidebarToggle />
           </div>
         </aside>
 

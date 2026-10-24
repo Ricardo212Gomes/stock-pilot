@@ -152,6 +152,7 @@ input:focus-visible {
   display: flex;
   flex-direction: column;
   padding: 20px 12px 12px;
+  overflow-y: auto;
   border-right: 1px solid var(--border);
   background: var(--card);
 }
@@ -240,14 +241,95 @@ input:focus-visible {
   line-height: 21px;
 }
 
-.sidebar-theme {
+.sidebar-collapse {
   padding-top: 12px;
 }
 
-.sidebar-theme .theme-toggle {
+/* Short windows: the tool summary gives way so the collapse button stays on screen. */
+@media (max-height: 860px) and (min-width: 641px) {
+  .sidebar-note {
+    display: none;
+  }
+
+  .sidebar-collapse {
+    margin-top: auto;
+  }
+}
+
+.sidebar-collapse-button {
   width: 100%;
-  justify-content: flex-start;
-  padding: 0 12px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sidebar-collapse-button:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.sidebar-collapse-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Collapsed on a wide screen: the same icon rail phones get (see the 640px rules below). */
+@media (min-width: 641px) {
+  .sidebar-collapsed .app-layout {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .sidebar-collapsed .sidebar {
+    align-items: center;
+    padding: 20px 8px 12px;
+  }
+
+  .sidebar-collapsed .sidebar .brand {
+    padding: 0;
+  }
+
+  .sidebar-collapsed .sidebar .brand > span:last-child,
+  .sidebar-collapsed .sidebar-link span,
+  .sidebar-collapsed .sidebar-collapse-button span,
+  .sidebar-collapsed .sidebar-section-label,
+  .sidebar-collapsed .sidebar-note {
+    display: none;
+  }
+
+  .sidebar-collapsed .sidebar-nav {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .sidebar-collapsed .sidebar-link {
+    justify-content: center;
+    gap: 0;
+    padding: 8px 4px;
+  }
+
+  .sidebar-collapsed .sidebar-collapse {
+    width: 100%;
+    margin-top: auto;
+  }
+
+  .sidebar-collapsed .sidebar-collapse-button {
+    justify-content: center;
+    gap: 0;
+  }
 }
 
 .app-main {
@@ -1907,8 +1989,7 @@ input:focus-visible {
   }
 
   .sidebar .brand > span:last-child,
-  .sidebar-link span,
-  .sidebar-theme .theme-toggle span {
+  .sidebar-link span {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -1918,17 +1999,9 @@ input:focus-visible {
     white-space: nowrap;
   }
 
-  .sidebar-theme {
-    width: 100%;
-    margin-top: auto;
-  }
-
-  .sidebar-theme .theme-toggle {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    justify-content: center;
-    padding: 0;
+  /* Phones always show the rail, so there's nothing to collapse. */
+  .sidebar-collapse {
+    display: none;
   }
 
   .app-content {
