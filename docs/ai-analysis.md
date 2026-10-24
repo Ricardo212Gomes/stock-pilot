@@ -2,7 +2,7 @@
 
 On the Financials page, the **Income Statement**, **Balance Sheet**, **Cash Flow** and **Ratios** tabs have a spark icon in front of their title. Clicking it asks Google Gemini to explain that tab in plain language, for the selected period (annual or quarterly). The answer opens in a box under the title and subtitle; clicking the icon again, or ×, closes it. The charts-only Financials tab has no AI review.
 
-Each tab and period keeps its own review, open or closed, while you move around Financials: switching to another tab or period and back shows the same answer again without a new request. Leaving Financials (for the Overview, Projections or News) clears them.
+Each tab and period keeps its own review, open or closed, while you move around Financials: switching to another tab or period and back shows the same answer again without a new request. Leaving Financials (for the Overview, News or another page) clears them.
 
 Each statement has its own focus in the prompt:
 
@@ -19,7 +19,7 @@ Each statement has its own focus in the prompt:
 - `src/app/stock/financials/layout.tsx`: wraps Financials in `AiReviewProvider`. A Next.js layout stays mounted while only the URL's search parameters change, so reviews survive tab and period switches and are cleared when leaving Financials.
 - `src/app/stock/financials/actions.ts`: the `reviewFinancials` server action.
 - `src/lib/financial-review.ts`: which statements are reviewed, the per-statement instructions, the prompt, figure formatting and response cleanup.
-- `src/lib/gemini.ts`: the shared Gemini request helper, also used by the projections AI autofill (see [`stock-projections.md`](./stock-projections.md)).
+- `src/lib/gemini.ts`: the shared Gemini request helper, also used by the valuation tools' AI autofill (see [`valuation.md`](./valuation.md)).
 - `src/app/components/spark-icon.tsx`: the spark icon used on every AI action.
 
 ## Configuration

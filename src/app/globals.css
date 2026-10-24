@@ -3504,82 +3504,72 @@ input:focus-visible {
 
 /* 3-year projection */
 
-.projection-tabs {
-  margin-bottom: 16px;
+.scenario-switch {
+  flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 
-.scenario-columns,
-.scenario-inputs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.scenario-columns {
-  margin-bottom: 2px;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.scenario-field {
-  padding: 10px 0;
-  border-top: 1px solid var(--border);
-}
-
-.scenario-label {
-  display: inline-block;
-  margin-bottom: 6px;
+.scenario-switch button {
   font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
 }
 
-/* Grid items default to their content's width; inputs are ~20 characters wide by default,
-   so without this two of them overflow a phone-width panel. */
-.scenario-inputs > div {
+/* A handful of columns fit the results column; no need for the statement tables' 960px minimum. */
+.three-year-table,
+.scenario-table,
+.history-table {
   min-width: 0;
 }
 
-.scenario-inputs .assumption-input-wrap {
-  margin-top: 0;
+.three-year-table th,
+.three-year-table td {
+  padding-right: 8px;
+  padding-left: 8px;
+  white-space: nowrap;
 }
 
-.scenario-inputs input {
-  width: 100%;
-  min-width: 0;
-  padding: 6px 8px;
+.projection-range {
+  display: inline-flex;
+  gap: 4px;
+  white-space: nowrap;
 }
 
-.scenario-source {
-  display: block;
-  margin-top: 4px;
+.projection-range > span[aria-hidden] {
   color: var(--muted-foreground);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
-.scenario-source.assumption-source-ai {
+.scenario-row-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
-.scenario-source.assumption-source-edited {
+.scenario-row-selected th,
+.scenario-row-selected td {
+  background: var(--highlight);
+}
+
+.scenario-row-selected .scenario-row-button {
   color: var(--foreground);
+  font-weight: 700;
 }
 
-/* Five columns fit the results column; no need for the statement tables' 960px minimum. */
-.three-year-table {
-  min-width: 0;
+.three-year-growth th,
+.three-year-growth td {
+  color: var(--muted-foreground);
+  font-size: 14px;
 }
 
-.three-year-range span {
-  display: block;
+.three-year-growth th {
+  padding-left: 22px;
 }
 
-.three-year-range .three-year-range-high {
-  font-weight: 600;
+.three-year-total th,
+.three-year-total td {
+  font-weight: 700;
 }
 
 .three-year-steps {
@@ -3614,4 +3604,504 @@ input:focus-visible {
 .dcf-terminal-row th,
 .dcf-terminal-row td {
   font-weight: 700;
+}
+
+/* Earnings calendar: a week grid of company tiles, like dividend and earnings sites */
+
+.earnings-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.earnings-bar-nav,
+.earnings-bar-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.earnings-round {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 9999px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 22px;
+  line-height: 1;
+}
+
+a.earnings-round:hover,
+a.earnings-round:focus-visible {
+  background: var(--selected);
+  color: var(--selected-foreground);
+}
+
+.earnings-date-chip {
+  align-content: center;
+  gap: 1px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.earnings-date-chip strong {
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.earnings-bar-title {
+  margin-left: 10px;
+}
+
+.earnings-bar-title strong {
+  display: block;
+  font-size: 15px;
+}
+
+.earnings-bar-tools .chart-view-switch a {
+  padding: 5px 12px;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.earnings-bar-tools .chart-view-switch .chart-view-active {
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-weight: 600;
+}
+
+.earnings-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 200px;
+  padding: 0 10px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--input-background);
+}
+
+.earnings-search svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke: var(--muted-foreground);
+  stroke-width: 2;
+}
+
+.earnings-search input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.earnings-summary {
+  margin: 0 0 16px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--earnings-days, 5), minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.earnings-column {
+  min-width: 0;
+  padding: 0 10px 14px;
+  border-left: 1px solid var(--border);
+}
+
+.earnings-column:first-child {
+  border-left: 0;
+}
+
+.earnings-column-heading {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 0 -10px 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.earnings-column-heading strong {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.earnings-column-heading .earnings-today-date {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.earnings-section {
+  margin-top: 12px;
+}
+
+.earnings-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.earnings-section-heading svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+}
+
+.earnings-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 6px;
+}
+
+.earnings-tile {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.earnings-tile:hover,
+.earnings-tile:focus-visible {
+  background: var(--selected);
+  color: var(--selected-foreground);
+}
+
+.earnings-logo-box {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  /* Logos are drawn for light backgrounds, so the box stays white in both themes. */
+  background: #ffffff;
+}
+
+.earnings-logo {
+  max-width: 34px;
+  max-height: 34px;
+  object-fit: contain;
+}
+
+.earnings-logo-fallback {
+  color: #1f2937;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.earnings-result {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--card);
+  border-radius: 9999px;
+}
+
+.earnings-result-beat {
+  background: var(--positive);
+}
+
+.earnings-result-miss {
+  background: var(--negative);
+}
+
+.earnings-tile-symbol {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.earnings-more {
+  min-height: 66px;
+  align-content: center;
+  border: 1px dashed var(--border-strong);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.earnings-empty {
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-align: center;
+}
+
+.earnings-dialog {
+  width: min(440px, calc(100% - 32px));
+  /* Tailwind's reset removes the browser's styles that centre a modal dialog, so they're set here. */
+  position: fixed;
+  inset: 0;
+  height: fit-content;
+  max-height: calc(100% - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.earnings-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.earnings-dialog-body {
+  padding: 16px 18px 18px;
+}
+
+.earnings-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.earnings-dialog-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.earnings-dialog-heading p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.earnings-dialog-heading .ai-review-close {
+  align-self: flex-start;
+}
+
+.earnings-dialog-when {
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.earnings-dialog-figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 14px 0 0;
+}
+
+.earnings-dialog-figures dt {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.earnings-dialog-figures dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.earnings-dialog-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .earnings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .earnings-column {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .earnings-column:first-child {
+    border-top: 0;
+  }
+
+  .earnings-column-heading {
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: center;
+    padding: 10px 14px;
+  }
+
+  .earnings-search {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+.market-map-tabs {
+  margin-bottom: 12px;
+}
+
+/* Dividend calendar: a Monday-to-Friday month grid */
+
+.dividend-month {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.dividend-weekdays,
+.dividend-week {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.dividend-weekdays span {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-align: center;
+}
+
+.dividend-day {
+  min-width: 0;
+  min-height: 132px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.dividend-day:first-child {
+  border-left: 0;
+}
+
+.dividend-week:last-child .dividend-day {
+  border-bottom: 0;
+}
+
+.dividend-day-outside {
+  background: var(--muted);
+}
+
+.dividend-day-outside .dividend-day-number {
+  color: var(--muted-foreground);
+}
+
+.dividend-day-number {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dividend-day-number.earnings-today-date {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.dividend-day-weekday {
+  display: none;
+}
+
+.dividend-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dividend-amount {
+  color: var(--positive);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dividend-frequency {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  /* On phones the month becomes a list of the days that have dividends. */
+  .dividend-weekdays {
+    display: none;
+  }
+
+  .dividend-week {
+    display: block;
+  }
+
+  .dividend-day {
+    min-height: 0;
+    border-left: 0;
+  }
+
+  .dividend-day-empty {
+    display: none;
+  }
+
+  .dividend-day-number {
+    width: auto;
+    height: auto;
+    display: inline-block;
+    padding: 2px 8px;
+  }
+
+  .dividend-day-weekday {
+    display: inline;
+  }
 }

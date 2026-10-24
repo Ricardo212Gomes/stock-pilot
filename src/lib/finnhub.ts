@@ -47,3 +47,18 @@ export async function fetchFinnhub(
 export function finnhubSymbol(symbol: string): string {
   return symbol.toUpperCase().replace(/-/g, ".");
 }
+
+export function finnhubFailureMessage(reason: FinnhubFailureReason, subject: string): string {
+  switch (reason) {
+    case "not-configured":
+      return `Finnhub is not connected yet, so ${subject} can't be loaded. Add your FINNHUB_API_KEY to .env and restart the development server.`;
+    case "rate-limited":
+      return `Finnhub's request limit has been reached, so ${subject} couldn't be loaded. It resets within a minute; try again shortly.`;
+    case "invalid-key":
+      return `Finnhub rejected the API key, so ${subject} couldn't be loaded. Check FINNHUB_API_KEY in your environment file and restart the development server.`;
+    case "plan-restricted":
+      return `Your Finnhub plan doesn't include ${subject}.`;
+    default:
+      return `Finnhub could not return ${subject}. Try again in a moment.`;
+  }
+}

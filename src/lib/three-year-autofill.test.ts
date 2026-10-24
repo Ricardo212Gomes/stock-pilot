@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StatementTable } from "./financial-statements";
 import { THREE_YEAR_KEYS, buildThreeYearPrompt, parseThreeYearResponse } from "./three-year-autofill";
+import { buildProjectionDefaults } from "./three-year-projection";
 
 function reply(entries: { key: string; value: unknown; rationale?: string }[]) {
   return JSON.stringify({ summary: "Steady growth.", assumptions: entries.map((entry) => ({ rationale: "Because.", ...entry })) });
@@ -9,30 +10,32 @@ function reply(entries: { key: string; value: unknown; rationale?: string }[]) {
 describe("parseThreeYearResponse", () => {
   it("reads suggestions, rescales whole-number percentages and clamps to range", () => {
     const parsed = parseThreeYearResponse(reply([
-      { key: "high.revenueGrowth", value: 8, rationale: "Revenue grew about 8% a year." },
-      { key: "high.peRatio", value: 400 },
-      { key: "sharesChange", value: -0.02 },
+      { key: "neutral.revenueGrowth", value: 8, rationale: "Revenue grew about 8% a year." },
+      { key: "neutral.peHigh", value: 400 },
       { key: "price", value: 1 },
     ]));
     expect(parsed?.summary).toBe("Steady growth.");
-    expect(parsed?.suggestions["high.revenueGrowth"]).toEqual({ value: 0.08, rationale: "Revenue grew about 8% a year." });
-    expect(parsed?.suggestions["high.peRatio"]?.value).toBe(150);
-    expect(parsed?.suggestions.sharesChange?.value).toBe(-0.02);
+    expect(parsed?.suggestions["neutral.revenueGrowth"]).toEqual({ value: 0.08, rationale: "Revenue grew about 8% a year." });
+    expect(parsed?.suggestions["neutral.peHigh"]?.value).toBe(150);
     expect(Object.keys(parsed?.suggestions ?? {})).not.toContain("price");
   });
 
-  it("clamps an out-of-range decimal instead of reading it as a percentage", () => {
-    const parsed = parseThreeYearResponse(reply([{ key: "high.netMargin", value: 0.8 }]));
-    expect(parsed?.suggestions["high.netMargin"]?.value).toBe(0.6);
+  it("clamps values below the range", () => {
+    const parsed = parseThreeYearResponse(reply([{ key: "ultraBearish.revenueGrowth", value: -0.8 }, { key: "bearish.peLow", value: 0 }]));
+    expect(parsed?.suggestions["ultraBearish.revenueGrowth"]?.value).toBe(-0.5);
+    expect(parsed?.suggestions["bearish.peLow"]?.value).toBe(1);
   });
 
-  it("swaps a low case that ends up above the high case", () => {
+  it("swaps a low P/E above the high P/E, and keeps the scenarios in order", () => {
     const parsed = parseThreeYearResponse(reply([
-      { key: "low.peRatio", value: 30 },
-      { key: "high.peRatio", value: 20 },
+      { key: "neutral.peLow", value: 30 },
+      { key: "neutral.peHigh", value: 20 },
+      { key: "bearish.revenueGrowth", value: 0.09, rationale: "Higher." },
+      { key: "bullish.revenueGrowth", value: 0.02, rationale: "Lower." },
     ]));
-    expect(parsed?.suggestions["low.peRatio"]?.value).toBe(20);
-    expect(parsed?.suggestions["high.peRatio"]?.value).toBe(30);
+    expect([parsed?.suggestions["neutral.peLow"]?.value, parsed?.suggestions["neutral.peHigh"]?.value]).toEqual([20, 30]);
+    expect(parsed?.suggestions["bearish.revenueGrowth"]).toEqual({ value: 0.02, rationale: "Lower." });
+    expect(parsed?.suggestions["bullish.revenueGrowth"]).toEqual({ value: 0.09, rationale: "Higher." });
   });
 
   it("rejects unreadable replies", () => {
@@ -48,20 +51,21 @@ describe("buildThreeYearPrompt", () => {
       period: "annual",
       currency: "USD",
       fiscalYear: null,
-      columns: [{ id: "ttm", label: "TTM", periodEnding: "2026-06-27" }],
-      rows: [{ id: "revenue", label: "Revenue", format: "money", emphasis: true, section: null, help: null, values: [466e9] }],
+      columns: [{ id: "ttm", label: "TTM", periodEnding: "2026-06-27" }, { id: "2025-09-27", label: "FY 2025", periodEnding: "2025-09-27" }],
+      rows: [
+        { id: "revenue", label: "Revenue", format: "money", emphasis: true, section: null, help: null, values: [466e9, 416e9] },
+        { id: "netIncome", label: "Net Income", format: "money", emphasis: true, section: null, help: null, values: [129e9, 112e9] },
+        { id: "shares", label: "Shares", format: "shares", emphasis: false, section: null, help: null, values: [14.75e9, 14.9e9] },
+      ],
       chart: { title: "", labels: [], series: [], defaults: [] },
     };
-    const defaults = {
-      price: 346, revenue: 466e9, shares: 14.75e9, years: 3, sharesChange: -0.02, targetReturn: 0.15,
-      low: { revenueGrowth: 0.03, netMargin: 0.25, peRatio: 25 },
-      high: { revenueGrowth: 0.07, netMargin: 0.27, peRatio: 35 },
-    };
+    const defaults = buildProjectionDefaults({ income, ratios: null, price: 346, currentYear: 2026 });
     const prompt = buildThreeYearPrompt({ symbol: "AAPL", income, ratios: null, defaults });
 
-    expect(prompt).toContain("3-year projection assumptions for AAPL, currently priced at 346 USD");
+    expect(prompt).toContain("assumptions for AAPL for fiscal years 2026 to 2030, starting from fiscal 2025. It is currently priced at 346 USD");
+    expect(THREE_YEAR_KEYS).toHaveLength(20);
     for (const key of THREE_YEAR_KEYS) expect(prompt).toContain(`"key":"${key}"`);
-    expect(prompt).toContain('"key":"high.peRatio","min":1,"max":150,"dataDefault":35');
-    expect(prompt).toContain('"revenue":[["TTM",466000000000]]');
+    expect(prompt).toContain('"key":"neutral.revenueGrowth","min":-0.5,"max":1,"dataDefault":0.05');
+    expect(prompt).toContain('"revenue":[["TTM",466000000000],["FY 2025",416000000000]]');
   });
 });

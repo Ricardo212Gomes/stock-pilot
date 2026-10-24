@@ -1,26 +1,23 @@
 import type { StatementTable } from "./financial-statements";
-import type { ProjectionInputs, ScenarioId, ScenarioInputs } from "./three-year-projection";
+import { SCENARIOS, type ProjectionDefaults, type ScenarioId, type ScenarioInputs } from "./three-year-projection";
 
-export type ThreeYearKey = `${ScenarioId}.${keyof ScenarioInputs}` | "sharesChange";
+export type ThreeYearKey = `${ScenarioId}.${keyof ScenarioInputs}`;
 
-export const THREE_YEAR_KEYS: ThreeYearKey[] = [
-  "low.revenueGrowth", "low.netMargin", "low.peRatio",
-  "high.revenueGrowth", "high.netMargin", "high.peRatio",
-  "sharesChange",
-];
+const FIELDS: (keyof ScenarioInputs)[] = ["revenueGrowth", "netIncomeGrowth", "peLow", "peHigh"];
 
-// Allowed ranges, with percentages as decimals.
-export const THREE_YEAR_RANGES: Record<ThreeYearKey, [number, number]> = {
-  "low.revenueGrowth": [-0.3, 1],
-  "high.revenueGrowth": [-0.3, 1],
-  "low.netMargin": [-0.5, 0.6],
-  "high.netMargin": [-0.5, 0.6],
-  "low.peRatio": [1, 150],
-  "high.peRatio": [1, 150],
-  sharesChange: [-0.1, 0.1],
+export const THREE_YEAR_KEYS: ThreeYearKey[] = SCENARIOS.flatMap(({ id }) => FIELDS.map((field) => `${id}.${field}` as ThreeYearKey));
+
+// Allowed ranges per field, with percentages as decimals.
+const FIELD_RANGES: Record<keyof ScenarioInputs, [number, number]> = {
+  revenueGrowth: [-0.5, 1],
+  netIncomeGrowth: [-0.6, 1.5],
+  peLow: [1, 150],
+  peHigh: [1, 150],
 };
 
-const PERCENT_KEYS = new Set<ThreeYearKey>(THREE_YEAR_KEYS.filter((key) => !key.endsWith("peRatio")));
+export function threeYearRange(key: ThreeYearKey): [number, number] {
+  return FIELD_RANGES[key.split(".")[1] as keyof ScenarioInputs];
+}
 
 export type ThreeYearSuggestions = {
   summary: string;
@@ -28,10 +25,11 @@ export type ThreeYearSuggestions = {
 };
 
 export const THREE_YEAR_INSTRUCTIONS = [
-  "You are a careful equity analyst setting assumptions for a revenue × net margin × P/E projection of a stock's price.",
-  "Give a low case and a high case that a reasonable investor could defend; the low case must not be above the high case.",
+  "You are a careful equity analyst filling in a five-scenario stock projection template.",
+  "From the last fiscal year, revenue and net income each grow at a yearly rate for five years, and the price is EPS times a low and a high P/E.",
+  "Give ultra bearish, bearish, neutral, bullish and ultra bullish cases that a reasonable investor could defend. Each case must be at least as optimistic as the one before, and each low P/E must not be above its high P/E.",
   "Use only the supplied company data and widely accepted practice. Do not invent news or guidance.",
-  "Growth fades for large companies, margins rarely jump without a reason in the data, and P/E multiples usually shrink as growth slows.",
+  "Growth fades for large companies, net income growing much faster than revenue keeps widening the margin and needs a reason in the data, and P/E multiples usually shrink as growth slows.",
   "Give percentages as decimals (0.08 means 8%) and P/E as a plain number.",
   "Explain each value in one plain sentence that refers to the data. Do not recommend buying or selling.",
 ].join(" ");
@@ -70,27 +68,27 @@ export function buildThreeYearPrompt({
   symbol: string;
   income: StatementTable;
   ratios: StatementTable | null;
-  defaults: ProjectionInputs;
+  defaults: ProjectionDefaults;
 }): string {
   const history = {
     revenue: series(income, "revenue"),
     revenueGrowth: series(income, "revenueGrowth"),
+    netIncome: series(income, "netIncome"),
+    netIncomeGrowth: series(income, "netIncomeGrowth"),
     netMargin: series(income, "profitMargin"),
-    dilutedShares: series(income, "shares"),
     peRatio: series(ratios, "pe"),
   };
   const fields = THREE_YEAR_KEYS.map((key) => {
-    const [min, max] = THREE_YEAR_RANGES[key];
-    const [scenario, field] = key.includes(".") ? key.split(".") as [ScenarioId, keyof ScenarioInputs] : [null, null];
-    const dataDefault = scenario && field ? defaults[scenario][field] : defaults.sharesChange;
-    return { key, min, max, dataDefault: Number(dataDefault.toFixed(4)) };
+    const [min, max] = threeYearRange(key);
+    const [scenario, field] = key.split(".") as [ScenarioId, keyof ScenarioInputs];
+    return { key, min, max, dataDefault: Number(defaults.inputs.scenarios[scenario][field].toFixed(4)) };
   });
 
   return [
-    `Suggest ${defaults.years}-year projection assumptions for ${symbol}, currently priced at ${defaults.price ?? "unknown"} ${income.currency}.`,
-    `Fields (the "dataDefault" values come mechanically from the filings; improve on them where the data supports it, for example when recent growth or margins differ from the long-run average): ${JSON.stringify(fields)}`,
+    `Suggest projection assumptions for ${symbol} for fiscal years ${defaults.baseYear + 1} to ${defaults.baseYear + 5}, starting from fiscal ${defaults.baseYear}. It is currently priced at ${defaults.inputs.price ?? "unknown"} ${income.currency}.`,
+    `Fields (the "dataDefault" values come mechanically from the historical averages; improve on them where the data supports it, for example when recent growth differs from the average): ${JSON.stringify(fields)}`,
     `Company history, newest first: ${JSON.stringify(history)}`,
-    "Also return a two-sentence summary of the outlook your assumptions describe.",
+    "Also return a two-sentence summary of the range of outcomes your scenarios describe.",
   ].join("\n\n");
 }
 
@@ -116,22 +114,27 @@ export function parseThreeYearResponse(text: string): ThreeYearSuggestions | nul
     if (typeof key !== "string" || !(THREE_YEAR_KEYS as string[]).includes(key)) continue;
     if (typeof value !== "number" || !Number.isFinite(value)) continue;
     const typedKey = key as ThreeYearKey;
-    const [min, max] = THREE_YEAR_RANGES[typedKey];
+    const [min, max] = threeYearRange(typedKey);
     // "8" for 8%: only numbers above 1 can be whole-number percentages; 0.9 already means 90%.
-    const scaled = PERCENT_KEYS.has(typedKey) && value > 1 && value > max && value / 100 <= max ? value / 100 : value;
+    const isPercent = !typedKey.includes(".pe");
+    const scaled = isPercent && value > 1 && value > max && value / 100 <= max ? value / 100 : value;
     suggestions[typedKey] = { value: Math.min(max, Math.max(min, scaled)), rationale: cleanText(rationale, 320) };
   }
 
-  // Keep each low case at or below its high case.
-  for (const field of ["revenueGrowth", "netMargin", "peRatio"] as const) {
-    const low = suggestions[`low.${field}`];
-    const high = suggestions[`high.${field}`];
+  // Keep each low P/E at or below its high P/E.
+  for (const { id } of SCENARIOS) {
+    const low = suggestions[`${id}.peLow`];
+    const high = suggestions[`${id}.peHigh`];
     if (low && high && low.value > high.value) {
-      [suggestions[`low.${field}`], suggestions[`high.${field}`]] = [
-        { ...low, value: high.value },
-        { ...high, value: low.value },
-      ];
+      [suggestions[`${id}.peLow`], suggestions[`${id}.peHigh`]] = [{ ...low, value: high.value }, { ...high, value: low.value }];
     }
+  }
+
+  // Keep the scenarios in order, from ultra bearish up: sort each field's values across them.
+  for (const field of FIELDS) {
+    const keys = SCENARIOS.map(({ id }) => `${id}.${field}` as ThreeYearKey).filter((key) => suggestions[key]);
+    const sorted = keys.map((key) => suggestions[key]!).sort((left, right) => left.value - right.value);
+    keys.forEach((key, index) => { suggestions[key] = sorted[index]; });
   }
 
   if (Object.keys(suggestions).length === 0) return null;

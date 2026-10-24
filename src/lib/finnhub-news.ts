@@ -1,4 +1,4 @@
-import { fetchFinnhub, finnhubSymbol, type FinnhubFailureReason } from "./finnhub";
+import { fetchFinnhub, finnhubFailureMessage, finnhubSymbol, type FinnhubFailureReason } from "./finnhub";
 
 // News moves quickly, but a short cache still keeps repeat visits well under the rate limit.
 const NEWS_REVALIDATE_SECONDS = 60 * 15;
@@ -34,20 +34,8 @@ export type NewsResult =
   | { ok: false; reason: NewsFailureReason };
 
 
-export function newsFailureMessage(reason: NewsFailureReason, subject: string): string {
-  switch (reason) {
-    case "not-configured":
-      return "News is not connected yet. Add your FINNHUB_API_KEY to .env and restart the development server.";
-    case "rate-limited":
-      return `Finnhub's request limit has been reached, so ${subject} couldn't be loaded. It resets within a minute; try again shortly.`;
-    case "invalid-key":
-      return `Finnhub rejected the API key, so ${subject} couldn't be loaded. Check FINNHUB_API_KEY in your environment file and restart the development server.`;
-    case "plan-restricted":
-      return `Your Finnhub plan doesn't include ${subject}.`;
-    default:
-      return `Finnhub could not return ${subject}. Try again in a moment.`;
-  }
-}
+// Kept for the news page; the message itself lives with the shared Finnhub client.
+export const newsFailureMessage = finnhubFailureMessage;
 
 const ENTITIES: Record<string, string> = {
   amp: "&",

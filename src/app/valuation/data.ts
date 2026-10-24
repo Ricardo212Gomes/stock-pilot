@@ -67,8 +67,8 @@ export type ThreeYearDataResult =
   | { ok: true; data: ThreeYearData }
   | { ok: false; reason: FmpFailureReason };
 
-// The same cached statement tables as the Financials page: TTM revenue, net income and shares,
-// plus the fiscal-year P/E history.
+// The same cached statement tables as the Financials page: the last fiscal year's revenue, net
+// income and shares, their growth history, and the fiscal-year P/E history.
 export async function loadThreeYearData(symbol: string): Promise<ThreeYearDataResult> {
   const [income, ratios, quote] = await Promise.all([
     getStatementTable(symbol, "income", "annual"),
@@ -87,6 +87,7 @@ export async function loadThreeYearData(symbol: string): Promise<ThreeYearDataRe
         income: income.data,
         ratios: ratiosTable,
         price: quote.ok ? quote.data.price : null,
+        currentYear: new Date().getUTCFullYear(),
       }),
     },
   };

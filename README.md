@@ -23,13 +23,17 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), enter a ticker such as `AAPL` in the top search, and select **Search**. Each company has four tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL`, **Projections** and **News**.
+Open [http://localhost:3000](http://localhost:3000), enter a ticker such as `AAPL` in the top search, and select **Search**. Each company has three tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL` and **News**.
 
 FMP data access depends on the endpoints and history included in your subscription. When FMP can't return the statements, the page says why: rate limit, invalid key, plan restriction or another provider error.
 
-The **Projections** page at `/projections?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models. It picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. Its **3-Year Projection** tab estimates the price and annual return in a low and a high case from revenue growth, net margin and P/E, and its **DCF Calculator** tab discounts ten years of free cash flow plus a terminal value to a value per share.
+The sidebar's **Valuation** section has three calculators. **Intrinsic value** at `/valuation/intrinsic-value?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models; it picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. **3-Year Projection** at `/valuation/three-year-projection` follows Jeremy Lefebvre's projection template, estimating the price and annual return in five scenarios from revenue growth, net income growth and a P/E range. **DCF Calculator** at `/valuation/dcf-calculator` discounts ten years of free cash flow plus a terminal value to a value per share.
 
-The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
+The **Market maps** page at `/maps` embeds the FINVIZ one-day heat maps of the S&P 500, the Nasdaq 100 and the largest cryptocurrencies.
+
+The **Earnings** page at `/earnings` shows which companies report each day of the week, with analysts' estimates and, once results are out, the actual figures and surprises.
+
+The **Dividends** page at `/dividends` shows a month of dividends on their ex-dividend or payment date, with the amount, yield and key dates. On the free FMP plan it covers about 25 large US companies, from about four weeks ago onward.
 
 The **News** page at `/news` shows global market, deal, forex and crypto headlines from Finnhub; `/news?symbol=AAPL` shows the company's headlines from the last 14 days.
 
@@ -40,8 +44,10 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/fmp-data.md`](./docs/fmp-data.md) | FMP endpoints, response caching, error reasons and troubleshooting |
 | [`docs/financials.md`](./docs/financials.md) | Income statement, balance sheet, cash flow and ratios: columns, TTM, growth and the chart |
 | [`docs/stock-overview.md`](./docs/stock-overview.md) | The stock overview page, company tabs, and where each statistic comes from |
-| [`docs/stock-projections.md`](./docs/stock-projections.md) | Intrinsic value models, stock types, default assumptions, scenarios, AI autofill, the 3-year projection and the DCF calculator |
+| [`docs/valuation.md`](./docs/valuation.md) | The three valuation tools: intrinsic value models, stock types, default assumptions, scenarios, AI autofill, the 3-year projection and the DCF calculator |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The AI review buttons on financial sections: configuration, what's sent, prompt rules and errors |
+| [`docs/earnings.md`](./docs/earnings.md) | The earnings calendar: data, company names, filters and surprises |
+| [`docs/dividends.md`](./docs/dividends.md) | The dividend calendar: data, free-plan limits and the two date views |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
