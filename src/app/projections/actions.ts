@@ -88,11 +88,11 @@ export async function autofillThreeYear(rawSymbol: unknown): Promise<ThreeYearAu
       symbol,
       income: loaded.data.income,
       ratios: loaded.data.ratios,
-      defaults: loaded.data.defaults.inputs,
+      defaults: loaded.data.defaults,
     }),
     generationConfig: {
       temperature: 0.2,
-      maxOutputTokens: 1500,
+      maxOutputTokens: 3000,
       responseMimeType: "application/json",
       responseSchema: THREE_YEAR_SCHEMA,
     },

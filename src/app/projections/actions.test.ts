@@ -118,13 +118,13 @@ describe("autofillThreeYear", () => {
     expect(fetchMock.mock.calls.some(([input]) => String(input).includes("generativelanguage"))).toBe(false);
   });
 
-  it("asks for structured low and high cases built from server-side data", async () => {
+  it("asks for structured scenarios built from server-side data", async () => {
     const fetchMock = mockServices({
       gemini: () => geminiReply(JSON.stringify({
         summary: "Modest growth.",
         assumptions: [
-          { key: "low.revenueGrowth", value: 0.03, rationale: "Below recent growth." },
-          { key: "high.peRatio", value: 24, rationale: "Near the recent P/E." },
+          { key: "bearish.revenueGrowth", value: 0.03, rationale: "Below recent growth." },
+          { key: "bullish.peHigh", value: 24, rationale: "Near the recent P/E." },
         ],
       })),
     });
@@ -132,8 +132,8 @@ describe("autofillThreeYear", () => {
       ok: true,
       summary: "Modest growth.",
       suggestions: {
-        "low.revenueGrowth": { value: 0.03, rationale: "Below recent growth." },
-        "high.peRatio": { value: 24, rationale: "Near the recent P/E." },
+        "bearish.revenueGrowth": { value: 0.03, rationale: "Below recent growth." },
+        "bullish.peHigh": { value: 24, rationale: "Near the recent P/E." },
       },
     });
 
@@ -143,7 +143,7 @@ describe("autofillThreeYear", () => {
       generationConfig: { responseMimeType: string };
     };
     expect(body.generationConfig.responseMimeType).toBe("application/json");
-    expect(body.contents[0].parts[0].text).toContain("3-year projection assumptions for TEST, currently priced at 25 USD");
+    expect(body.contents[0].parts[0].text).toMatch(/Suggest projection assumptions for TEST for fiscal years \d{4} to \d{4}.*currently priced at 25 USD/);
   });
 });
 

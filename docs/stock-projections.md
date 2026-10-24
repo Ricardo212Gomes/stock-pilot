@@ -120,33 +120,34 @@ A first visit to a ticker's page makes 6 requests: 4 statements, the profile and
 
 ## 3-Year Projection tab
 
-`/projections?symbol=AAPL&view=3y` is a second, simpler calculator in the style of quote sites' "what could this stock be worth in 3 years" tools (such as Jeremy Lefebvre's 1000xStocks, whose exact formula isn't public). It shows an **expected annual return**, not an intrinsic value, and doesn't discount anything. The Intrinsic value tab is unchanged and remains the default.
+`/projections?symbol=AAPL&view=3y` follows Jeremy Lefebvre's (1000xStocks) projection template, an Excel sheet with one tab per scenario. It shows an **expected annual return**, not an intrinsic value, and doesn't discount anything. The Intrinsic value tab is unchanged and remains the default.
 
 | Step | Formula |
 | --- | --- |
-| Revenue | revenue today × (1 + growth)^years |
-| Net income | revenue × net margin |
-| EPS | net income ÷ (shares × (1 + share change)^years) |
-| Share price | EPS × P/E (no price when EPS isn't positive) |
-| Total return | future price ÷ price today − 1 |
-| Annual return | (future price ÷ price today)^(1/years) − 1, before dividends |
-| Buy below | future price ÷ (1 + target return)^years |
+| Revenue | last fiscal year's revenue × (1 + revenue growth)^n, for n = 1…5 |
+| Net income | last fiscal year's net income × (1 + net income growth)^n |
+| Net margin | net income ÷ revenue, shown as a check on the two growth rates |
+| EPS | net income ÷ today's shares outstanding (the same count every year) |
+| Share price | EPS × P/E low, and EPS × P/E high |
+| Return / yr | (future price ÷ price today)^(1/years) − 1, before dividends |
 
-There are two scenarios, **Low** and **High**, each with its own revenue growth, net margin and P/E. The share count change, horizon (1–10 years, default 3) and target return (default 15% a year) are shared.
+The projection covers the five fiscal years after the last reported one. "Years" in the return is the fiscal year minus the current calendar year, as in the template: with fiscal 2025 as the base and 2026 as today, 2029 gives the 3-year return and 2030 the 4-year return. Years ending within a year of today show no return. The summary table shows the price range and return for the year three years out and for the last year.
 
-Defaults come from the same cached tables as the Financials page (`loadThreeYearData` in `src/app/projections/data.ts`):
+There are five scenarios, **Ultra Bearish**, **Bearish**, **Neutral**, **Bullish** and **Ultra Bullish**, each with its own revenue growth, net income growth, P/E low and P/E high. The template leaves every input to the user; here they start from the filings:
 
 | Input | Default |
 | --- | --- |
-| Revenue, shares | TTM revenue and the latest diluted share count |
-| High growth | Fiscal-year revenue growth, capped between −10% and 40% |
-| Low growth | 4 points below the high case |
-| High margin | TTM net margin |
-| Low margin | 2 points below the high case |
-| P/E | Lowest and highest fiscal-year P/E; else today's P/E ± 20%; else 15× and 25× |
-| Share change | Fiscal-year change in diluted shares, capped at ±5% a year |
+| Revenue, net income, shares | The last fiscal year (not TTM, so the start matches a full year) |
+| Neutral revenue growth | Average fiscal-year revenue growth, capped between −20% and 50%; 5% without history |
+| Neutral net income growth | Average fiscal-year net income growth, capped between −30% and 60%; the revenue rate without history |
+| Neutral P/E low and high | Lowest and highest fiscal-year P/E; else today's P/E ± 20%; else 15× and 25× |
+| Other scenarios | Growth −10, −5, +5 and +10 points; P/E range × 0.6, 0.8, 1.2 and 1.4 |
 
-**Autofill with AI** (`autofillThreeYear`) sends Gemini the revenue, growth, margin, share and P/E history with the data defaults and asks for improved low and high cases with a reason each. The answer is parsed by `parseThreeYearResponse`, which clamps each value to its range, rescales whole-number percentages, and swaps a low case that ends up above its high case.
+The **History** table repeats the template's reference block: each fiscal year's revenue growth, net income growth and net margin, with their averages.
+
+Net income needs to be positive, because a growth rate can't be applied to a loss. When net income grows much faster than revenue the margin keeps widening, and a margin above 60% is shown in red.
+
+**Autofill with AI** (`autofillThreeYear`) sends Gemini the revenue, net income, growth, margin and P/E history with the data defaults and asks for all five scenarios with a reason each. The answer is parsed by `parseThreeYearResponse`, which clamps each value to its range, rescales whole-number percentages, swaps a P/E low above its P/E high, and sorts each field across the scenarios so they stay in order from ultra bearish to ultra bullish.
 
 Files: `src/lib/three-year-projection.ts` (math and defaults), `src/lib/three-year-autofill.ts` (prompt and parsing), `src/app/projections/three-year-calculator.tsx` (the calculator).
 

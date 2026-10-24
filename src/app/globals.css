@@ -3508,78 +3508,72 @@ input:focus-visible {
   margin-bottom: 16px;
 }
 
-.scenario-columns,
-.scenario-inputs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+.scenario-switch {
+  flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 
-.scenario-columns {
-  margin-bottom: 2px;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.scenario-field {
-  padding: 10px 0;
-  border-top: 1px solid var(--border);
-}
-
-.scenario-label {
-  display: inline-block;
-  margin-bottom: 6px;
+.scenario-switch button {
   font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
 }
 
-/* Grid items default to their content's width; inputs are ~20 characters wide by default,
-   so without this two of them overflow a phone-width panel. */
-.scenario-inputs > div {
+/* A handful of columns fit the results column; no need for the statement tables' 960px minimum. */
+.three-year-table,
+.scenario-table,
+.history-table {
   min-width: 0;
 }
 
-.scenario-inputs .assumption-input-wrap {
-  margin-top: 0;
+.three-year-table th,
+.three-year-table td {
+  padding-right: 8px;
+  padding-left: 8px;
+  white-space: nowrap;
 }
 
-.scenario-inputs input {
-  width: 100%;
-  min-width: 0;
-  padding: 6px 8px;
+.projection-range {
+  display: inline-flex;
+  gap: 4px;
+  white-space: nowrap;
 }
 
-.scenario-source {
-  display: block;
-  margin-top: 4px;
+.projection-range > span[aria-hidden] {
   color: var(--muted-foreground);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
-.scenario-source.assumption-source-ai {
+.scenario-row-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
-.scenario-source.assumption-source-edited {
+.scenario-row-selected th,
+.scenario-row-selected td {
+  background: var(--highlight);
+}
+
+.scenario-row-selected .scenario-row-button {
   color: var(--foreground);
+  font-weight: 700;
 }
 
-/* Five columns fit the results column; no need for the statement tables' 960px minimum. */
-.three-year-table {
-  min-width: 0;
+.three-year-growth th,
+.three-year-growth td {
+  color: var(--muted-foreground);
+  font-size: 14px;
 }
 
-.three-year-range span {
-  display: block;
+.three-year-growth th {
+  padding-left: 22px;
 }
 
-.three-year-range .three-year-range-high {
-  font-weight: 600;
+.three-year-total th,
+.three-year-total td {
+  font-weight: 700;
 }
 
 .three-year-steps {
