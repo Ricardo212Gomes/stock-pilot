@@ -11,7 +11,8 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 3. Set `GEMINI_API_KEY` to your Gemini API key to enable AI analysis. `GOOGLE_GENERATIVE_AI_API_KEY` is also accepted if you already use that name. Optionally set `GEMINI_MODEL` to override the default model.
 4. Set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io) API key to enable the News page. The Finnhub secret is not needed.
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
-6. Restart the Next.js development server after changing the environment file.
+6. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**; see [`docs/favorites.md`](./docs/favorites.md).
+7. Restart the Next.js development server after changing the environment file.
 
 All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 
@@ -36,6 +37,8 @@ The **Earnings** page at `/earnings` shows which companies report each day of th
 
 The **Dividends** page at `/dividends` shows a month of dividends on their ex-dividend or payment date, with the amount, yield and key dates. On the free FMP plan it covers about 25 large US companies, from about four weeks ago onward.
 
+The **Favorites** page at `/favorites` lists the companies you've starred from their overview, with the latest price and links to each tool. It needs Google sign-in and a Postgres database.
+
 The **News** page at `/news` shows global market, deal, forex and crypto headlines from Finnhub; `/news?symbol=AAPL` shows the company's headlines from the last 14 days.
 
 ## Documentation
@@ -52,6 +55,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`docs/auth.md`](./docs/auth.md) | Google sign-in: setup, session cookie and the top bar menu |
+| [`docs/favorites.md`](./docs/favorites.md) | Favorites: the Postgres database, schema setup, the star button and the list |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
 | [`DESIGN.md`](./DESIGN.md) | Design tokens and component rules |
 

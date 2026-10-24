@@ -9,12 +9,13 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
+  activeSection?: "research" | "favorites" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL overview".
   headerLabel?: string;
 };
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
+  if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
   if (section === "earnings") return "Earnings calendar";
@@ -62,6 +63,17 @@ export function AppShell({
                 <path d="M3 16.5h14M4.5 14V9.5M8.2 14V5.5M11.8 14v-3M15.5 14V7" />
               </svg>
               <span>Company research</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "favorites" ? " sidebar-link-active" : ""}`}
+              href="/favorites"
+              title="Favorites"
+              aria-current={activeSection === "favorites" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m10 2.8 2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7L10 2.8Z" />
+              </svg>
+              <span>Favorites</span>
             </Link>
           </nav>
 
@@ -134,8 +146,8 @@ export function AppShell({
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 8 TOOLS</span>
-            <p>Company research, three valuation calculators, market maps, news, earnings and dividends.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 9 TOOLS</span>
+            <p>Company research, favorites, three valuation calculators, market maps, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-theme">

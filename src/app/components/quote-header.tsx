@@ -1,4 +1,5 @@
 import type { StockQuote } from "@/lib/stock-overview";
+import { FavoriteToggle } from "./favorite-toggle";
 
 function price(value: number): string {
   return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
@@ -22,7 +23,10 @@ export function QuoteHeader({ quote, currency }: { quote: HeaderQuote; currency:
 
   return (
     <section className="quote-header">
-      <h1>{quote.name} ({quote.symbol})</h1>
+      <div className="quote-title-row">
+        <h1>{quote.name} ({quote.symbol})</h1>
+        <FavoriteToggle symbol={quote.symbol} />
+      </div>
       <p className="quote-meta">
         {[quote.exchange ? `${quote.exchange}: ${quote.symbol}` : quote.symbol, currency].join(" · ")}
       </p>

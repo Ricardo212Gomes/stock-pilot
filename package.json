@@ -8,12 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:setup": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/setup-db.mjs"
   },
   "dependencies": {
     "lightweight-charts": "^5.2.1",
     "next": "16.4.2",
     "next-auth": "^5.0.0-beta.32",
+    "postgres": "^3.4.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "recharts": "^3.10.1"
