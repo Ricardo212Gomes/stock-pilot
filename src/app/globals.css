@@ -368,6 +368,61 @@ input:focus-visible {
   line-height: 21px;
 }
 
+/* Suggestions open under the whole search pill. */
+.ticker-search {
+  position: relative;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: min(420px, 70vh);
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  list-style: none;
+}
+
+.search-suggestions li[role="option"] {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.search-suggestion-active {
+  background: var(--highlight);
+}
+
+.search-suggestions strong {
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.search-suggestions li > span {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-suggestion-status {
+  padding: 8px 10px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
 .ticker-search button {
   min-width: 72px;
   display: flex;
@@ -4358,4 +4413,17 @@ a.earnings-round:focus-visible {
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
+}
+
+/* On phones the search pill is narrow, so suggestions span the whole sticky top bar instead. */
+@media (max-width: 640px) {
+  .ticker-search {
+    position: static;
+  }
+
+  .search-suggestions {
+    top: calc(100% - 4px);
+    left: 8px;
+    right: 8px;
+  }
 }

@@ -14,6 +14,17 @@
 
 Search, the home page examples and breadcrumbs land on the Overview.
 
+## Search
+
+The top bar search (`src/app/components/ticker-search.tsx`) takes a company name or a ticker. Matching runs in the browser over `src/data/us-stocks.json`, a list of about 5,900 US-listed stocks, so typing makes no API requests. The list is a separate ~70 KB (compressed) chunk, loaded the first time the search box gets focus.
+
+- Results, up to 8: an exact ticker first, then names starting with the query, tickers starting with it, a word starting with it, and names containing it. Ties go to Nasdaq Global Select and NYSE listings, then the shorter name, so "apple" lists Apple Inc. before Apple Hospitality REIT. Case and punctuation are ignored ("coca cola" finds Coca-Cola).
+- A few brands listed under another name are mapped by hand: Google and YouTube to GOOGL and GOOG, Facebook, Instagram and WhatsApp to META, and so on (`BRAND_ALIASES` in `src/lib/stock-search.ts`).
+- Arrow keys move through the suggestions; Enter opens the highlighted one, else the best match, else what was typed as a ticker.
+- On the Valuation tools and News, the search stays on that page for the new ticker.
+
+`npm run symbols:update` rebuilds the list from Nasdaq's public symbol directory (`nasdaqlisted.txt` and `otherlisted.txt`; no key needed). It keeps common stocks and ADRs, and drops ETFs, test issues, warrants, rights, units, preferred shares and notes. Share classes use a dash, as FMP does (BRK-B). Run it now and then to pick up new listings, and commit the updated file.
+
 ## Files
 
 - `src/app/stock/page.tsx`: the overview page, stat tables and About section.
