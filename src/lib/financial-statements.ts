@@ -1,4 +1,6 @@
-import { FMP_BASE_URL, failureReason, fetchFmp, numeric, type FmpFailureReason } from "./fmp";
+import { fetchFinnhub, finnhubSymbol } from "./finnhub";
+import { FMP_BASE_URL, canUseFallback, failureReason, fetchFmp, numeric, type FmpFailureReason, type StatementSource } from "./fmp";
+import { getSecStatements } from "./sec";
 
 const STATEMENT_REVALIDATE_SECONDS = 60 * 60 * 24;
 // The free FMP plan returns at most 5 rows per request.
@@ -58,6 +60,7 @@ export type ChartSeries = { id: string; label: string; format: ValueFormat; valu
 export type StatementTable = {
   statement: StatementId;
   period: StatementPeriod;
+  source: StatementSource;
   currency: string;
   fiscalYear: string | null;
   columns: { id: string; label: string; periodEnding: string | null }[];
@@ -269,9 +272,11 @@ export function buildStatementTable({
   quarterlyBalance,
   quarterlyCash,
   ratiosTtm,
+  source = "fmp",
 }: {
   statement: StatementId;
   period: StatementPeriod;
+  source?: StatementSource;
   income: Row[];
   balance: Row[];
   cash: Row[];
@@ -367,6 +372,7 @@ export function buildStatementTable({
   return {
     statement,
     period,
+    source,
     currency: typeof currencySource?.reportedCurrency === "string" ? currencySource.reportedCurrency : "USD",
     fiscalYear: fiscalYearLabel(period === "annual" ? income : quarterlyIncome),
     columns: columns.map(({ id, label, periodEnding }) => ({ id, label, periodEnding })),
@@ -416,7 +422,10 @@ export async function getStatementTable(
   try {
     income = await rows("income-statement", params);
   } catch (error) {
-    return { ok: false, reason: failureReason(error) };
+    const reason = failureReason(error);
+    // Companies FMP's plan doesn't cover, or any company once its daily limit is reached, still
+    // have SEC filings.
+    return canUseFallback(reason) ? (await secStatementTable(symbol, statement, period)) ?? { ok: false, reason } : { ok: false, reason };
   }
   if (income.length === 0) return { ok: false, reason: "no-data" };
 
@@ -445,6 +454,44 @@ export async function getStatementTable(
       quarterlyBalance,
       quarterlyCash,
       ratiosTtm: stripTtmSuffix(ratiosTtm[0]),
+    }),
+  };
+}
+
+// Trailing ratios from Finnhub's free metrics, for companies whose statements come from the SEC
+// (which has no prices). Named like FMP's ratios so the same line items read them.
+async function finnhubRatiosTtm(symbol: string): Promise<Row | null> {
+  const result = await fetchFinnhub("stock/metric", { symbol: finnhubSymbol(symbol), metric: "all" }, STATEMENT_REVALIDATE_SECONDS);
+  const metric = result.ok ? (result.payload as { metric?: Row } | null)?.metric : null;
+  if (!metric) return null;
+  const yieldPercent = num(metric.currentDividendYieldTTM);
+  return {
+    priceToEarningsRatio: num(metric.peTTM),
+    priceToSalesRatio: num(metric.psTTM),
+    priceToBookRatio: num(metric.pbQuarterly) ?? num(metric.pbAnnual),
+    priceToFreeCashFlowRatio: num(metric.pfcfShareTTM),
+    dividendYield: yieldPercent !== null ? yieldPercent / 100 : null,
+  };
+}
+
+async function secStatementTable(symbol: string, statement: StatementId, period: StatementPeriod): Promise<StatementResult | null> {
+  const [sec, ratiosTtm] = await Promise.all([getSecStatements(symbol), finnhubRatiosTtm(symbol)]);
+  if (!sec.ok) return null;
+  const rowsFor = period === "annual" ? sec.data.annual : sec.data.quarterly;
+  return {
+    ok: true,
+    data: buildStatementTable({
+      statement,
+      period,
+      income: rowsFor.income,
+      balance: rowsFor.balance,
+      cash: rowsFor.cash,
+      ratios: [],
+      quarterlyIncome: sec.data.quarterly.income,
+      quarterlyBalance: sec.data.quarterly.balance,
+      quarterlyCash: sec.data.quarterly.cash,
+      ratiosTtm,
+      source: "sec",
     }),
   };
 }

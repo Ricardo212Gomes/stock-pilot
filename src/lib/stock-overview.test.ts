@@ -159,6 +159,27 @@ describe("getStockOverview", () => {
     expect(new URL(finnhubCall![0]).searchParams.get("symbol")).toBe("BRK.B");
   });
 
+  it("takes the quote from Finnhub and trailing figures from the SEC when FMP's plan doesn't cover the company", async () => {
+    const restricted = () => json({ "Error Message": "Premium Query Parameter" }, 402);
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
+      void init;
+      const url = new URL(input);
+      if (url.hostname === "financialmodelingprep.com") return restricted();
+      if (url.pathname.endsWith("/quote")) return json({ c: 257.57, d: 19.63, dp: 8.25, h: 257.91, l: 234.79, o: 239.29, pc: 237.94, t: 1792785600 });
+      if (url.pathname.endsWith("/profile2")) return json({ name: "CrowdStrike Holdings Inc", exchange: "NASDAQ NMS - GLOBAL MARKET", marketCapitalization: 64000 });
+      if (url.pathname.endsWith("/metric")) return json({ metric: { "52WeekLow": 200, "52WeekHigh": 260 } });
+      return json({}, 404);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await getStockOverview("CRWD", TODAY);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.data).toMatchObject({
+      quoteSource: "finnhub", name: "CrowdStrike Holdings Inc", exchange: "NASDAQ", price: 257.57, change: 19.63,
+      changePercent: 0.0825, marketCap: 64e9, yearLow: 200, yearHigh: 260, volume: null,
+    });
+  });
+
   it("fails when the quote fails or has no price", async () => {
     mockServices({ quote: () => json({ "Error Message": "Limit Reach" }, 429) });
     await expect(getStockOverview("AAPL", TODAY)).resolves.toEqual({ ok: false, reason: "rate-limited" });

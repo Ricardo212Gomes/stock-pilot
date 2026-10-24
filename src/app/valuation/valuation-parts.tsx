@@ -44,6 +44,17 @@ export function ToolStart({ tool, title, children }: { tool: ValuationTool; titl
   );
 }
 
+// Shown when the statements came from SEC filings instead of FMP.
+export function SecSourceNote({ source }: { source: "fmp" | "sec" }) {
+  if (source !== "sec") return null;
+  return (
+    <p className="news-footnote">
+      FMP couldn&apos;t provide this company (its free plan doesn&apos;t cover every company and has a daily limit), so
+      the figures come from its SEC filings and the quote from Finnhub.
+    </p>
+  );
+}
+
 export function LoadError({ symbol, reason }: { symbol: string; reason: Parameters<typeof providerFailureMessage>[0] | "no-data" }) {
   return (
     <section className="empty-state" role="status">

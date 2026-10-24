@@ -49,6 +49,7 @@ describe("buildThreeYearPrompt", () => {
     const income: StatementTable = {
       statement: "income",
       period: "annual",
+      source: "fmp",
       currency: "USD",
       fiscalYear: null,
       columns: [{ id: "ttm", label: "TTM", periodEnding: "2026-06-27" }, { id: "2025-09-27", label: "FY 2025", periodEnding: "2025-09-27" }],

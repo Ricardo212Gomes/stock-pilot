@@ -3,7 +3,7 @@ import { AppShell } from "../../components/app-shell";
 import { providerFailureMessage } from "@/lib/fmp-messages";
 import { loadProjectionData } from "../data";
 import { ProjectionWorkbench } from "../projection-workbench";
-import { LoadError, ToolBreadcrumb, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
+import { LoadError, SecSourceNote, ToolBreadcrumb, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
 export const metadata: Metadata = {
   title: "Intrinsic value — StockPilot",
@@ -39,6 +39,7 @@ export default async function IntrinsicValuePage({ searchParams }: { searchParam
           }
         />
       )}
+      {loaded?.ok && <SecSourceNote source={loaded.data.fundamentals.source} />}
     </AppShell>
   );
 }

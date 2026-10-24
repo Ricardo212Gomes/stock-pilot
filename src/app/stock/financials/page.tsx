@@ -182,7 +182,9 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
         ? "Valuation ratios, margins, returns and financial health."
         : `Financials in millions ${data.currency}, except per-share data.`}
       {data.fiscalYear && ` Fiscal year is ${data.fiscalYear}.`}
-      {period === "quarterly" && " The free FMP plan includes the last 5 quarters."}
+      {data.source === "sec"
+        ? " From the company's SEC filings, as FMP couldn't provide them (its free plan doesn't cover every company and has a daily limit)."
+        : period === "quarterly" && " The free FMP plan includes the last 5 quarters."}
     </p>
   );
 
@@ -289,7 +291,10 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
             {view === "balance"
               ? "Current is the latest quarterly balance sheet. "
               : "TTM (trailing twelve months) adds up the last four quarters. "}
-            Growth compares each period with the same period a year earlier. A dash means FMP has no value for that period.
+            Growth compares each period with the same period a year earlier.
+            {primary.data.source === "sec"
+              ? " Statements come from the company's SEC filings; a dash means the filings have no value for that period. Ratios need prices, so only the TTM column (from Finnhub) has valuation ratios."
+              : " A dash means FMP has no value for that period."}
           </p>
         </>
       )}

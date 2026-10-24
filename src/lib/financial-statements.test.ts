@@ -8,6 +8,7 @@ import {
   type StatementTable,
 } from "./financial-statements";
 import { getCompanyFundamentals } from "./fmp";
+import { resetSecCache } from "./sec";
 
 type Row = Record<string, unknown>;
 
@@ -218,5 +219,46 @@ describe("getStatementTable", () => {
 
     mockFmp({ "income-statement:annual": [] });
     await expect(getStatementTable("AAPL", "income", "annual")).resolves.toEqual({ ok: false, reason: "no-data" });
+  });
+
+  it("falls back to SEC filings and Finnhub ratios when FMP's plan doesn't cover the company", async () => {
+    resetSecCache();
+    vi.stubEnv("FINNHUB_API_KEY", "finnhub-key");
+    const facts = {
+      entityName: "CrowdStrike",
+      facts: { "us-gaap": {
+        NetIncomeLoss: { units: { USD: [
+          { start: "2025-02-01", end: "2026-01-31", val: -100, fy: 2026, fp: "FY", form: "10-K", filed: "2026-03-10", accn: "a" },
+          { start: "2025-02-01", end: "2025-04-30", val: -40, fy: 2026, fp: "Q1", form: "10-Q", filed: "2025-06-01", accn: "q1" },
+          { start: "2025-05-01", end: "2025-07-31", val: -30, fy: 2026, fp: "Q2", form: "10-Q", filed: "2025-09-01", accn: "q2" },
+          { start: "2025-08-01", end: "2025-10-31", val: -20, fy: 2026, fp: "Q3", form: "10-Q", filed: "2025-12-01", accn: "q3" },
+          { start: "2025-02-01", end: "2025-10-31", val: -90, fy: 2026, fp: "Q3", form: "10-Q", filed: "2025-12-01", accn: "q3" },
+        ] } },
+        Revenues: { units: { USD: [{ start: "2025-02-01", end: "2026-01-31", val: 4800, fy: 2026, fp: "FY", form: "10-K", filed: "2026-03-10", accn: "a" }] } },
+      } },
+    };
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
+      void init;
+      const url = new URL(input);
+      if (url.hostname === "financialmodelingprep.com") return json({ "Error Message": "Premium Query Parameter" }, 402);
+      if (url.hostname === "finnhub.io") return json({ metric: { peTTM: 812.5, currentDividendYieldTTM: 0 } });
+      if (url.pathname.endsWith("company_tickers.json")) return json({ 0: { cik_str: 1535527, ticker: "CRWD", title: "CrowdStrike" } });
+      return json(facts);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const income = await getStatementTable("CRWD", "income", "annual");
+    if (!income.ok) throw new Error(income.reason);
+    expect(income.data.source).toBe("sec");
+    expect(income.data.columns.map((column) => column.label)).toEqual(["TTM", "FY 2026"]);
+    expect(income.data.rows.find((row) => row.id === "netIncome")?.values).toEqual([-100, -100]);
+    expect(income.data.rows.find((row) => row.id === "revenue")?.values).toEqual([null, 4800]);
+
+    const ratios = await getStatementTable("CRWD", "ratios", "annual");
+    expect(ratios.ok && ratios.data.columns[0].label).toBe("TTM");
+    expect(ratios.ok && ratios.data.rows.find((row) => row.id === "pe")?.values[0]).toBe(812.5);
+
+    const fundamentals = await getCompanyFundamentals("CRWD");
+    expect(fundamentals.ok && fundamentals.data).toMatchObject({ source: "sec", annualFinancials: [{ revenue: 4800, netIncome: -100 }] });
   });
 });

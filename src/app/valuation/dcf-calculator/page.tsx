@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AppShell } from "../../components/app-shell";
 import { loadDcfData } from "../data";
 import { DcfCalculator } from "../dcf-calculator";
-import { LoadError, ToolBreadcrumb, ToolHeading, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
+import { LoadError, SecSourceNote, ToolBreadcrumb, ToolHeading, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
 export const metadata: Metadata = {
   title: "DCF Calculator — StockPilot",
@@ -29,7 +29,10 @@ export default async function DcfCalculatorPage({ searchParams }: { searchParams
           {!loaded.ok ? (
             <LoadError symbol={symbol} reason={loaded.reason} />
           ) : (
-            <DcfCalculator symbol={symbol} defaults={loaded.data.defaults} />
+            <>
+              <DcfCalculator symbol={symbol} defaults={loaded.data.defaults} />
+              <SecSourceNote source={loaded.data.income.source} />
+            </>
           )}
         </>
       )}

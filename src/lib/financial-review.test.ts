@@ -5,6 +5,7 @@ import type { StatementTable } from "./financial-statements";
 const table: StatementTable = {
   statement: "income",
   period: "annual",
+  source: "fmp",
   currency: "USD",
   fiscalYear: "October - September",
   columns: [

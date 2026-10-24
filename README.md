@@ -17,7 +17,7 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 
 All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 
-FMP responses are cached (24 hours for statements, 6 hours for prices) to stay within your plan's daily request limit. See [`docs/fmp-data.md`](./docs/fmp-data.md).
+FMP responses are cached (24 hours for statements, 6 hours for prices) to stay within your plan's daily request limit. See [`docs/fmp-data.md`](./docs/fmp-data.md). When FMP's plan doesn't cover a company, or its daily limit is reached, statements come from SEC filings and the quote from Finnhub instead; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
 
 ## Run locally
 
@@ -47,6 +47,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | Doc | Covers |
 | --- | --- |
 | [`docs/fmp-data.md`](./docs/fmp-data.md) | FMP endpoints, response caching, error reasons and troubleshooting |
+| [`docs/data-fallbacks.md`](./docs/data-fallbacks.md) | SEC filings and Finnhub when FMP can't provide a company: what's covered and how filings become statements |
 | [`docs/financials.md`](./docs/financials.md) | Income statement, balance sheet, cash flow and ratios: columns, TTM, growth and the chart |
 | [`docs/stock-overview.md`](./docs/stock-overview.md) | The stock overview page, company tabs, and where each statistic comes from |
 | [`docs/valuation.md`](./docs/valuation.md) | The three valuation tools: intrinsic value models, stock types, default assumptions, scenarios, AI autofill, the 3-year projection and the DCF calculator |

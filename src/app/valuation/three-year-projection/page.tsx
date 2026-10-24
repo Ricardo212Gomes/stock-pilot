@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AppShell } from "../../components/app-shell";
 import { loadThreeYearData } from "../data";
 import { ThreeYearCalculator } from "../three-year-calculator";
-import { LoadError, ToolBreadcrumb, ToolHeading, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
+import { LoadError, SecSourceNote, ToolBreadcrumb, ToolHeading, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
 export const metadata: Metadata = {
   title: "3-Year Projection — StockPilot",
@@ -30,7 +30,10 @@ export default async function ThreeYearProjectionPage({ searchParams }: { search
           {!loaded.ok ? (
             <LoadError symbol={symbol} reason={loaded.reason} />
           ) : (
-            <ThreeYearCalculator symbol={symbol} defaults={loaded.data.defaults} />
+            <>
+              <ThreeYearCalculator symbol={symbol} defaults={loaded.data.defaults} />
+              <SecSourceNote source={loaded.data.income.source} />
+            </>
           )}
         </>
       )}
