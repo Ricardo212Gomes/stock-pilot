@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-export type StockSection = "overview" | "financials" | "news";
+export type StockSection = "overview" | "financials" | "news" | "transcripts";
 
 const SECTIONS: { id: StockSection; label: string; path: string }[] = [
   { id: "overview", label: "Overview", path: "/stock" },
   { id: "financials", label: "Financials", path: "/stock/financials" },
   { id: "news", label: "News", path: "/news" },
+  { id: "transcripts", label: "Transcripts", path: "/stock/transcripts" },
 ];
 
 // The same tabs on every page about one company, like a quote site's stock header.

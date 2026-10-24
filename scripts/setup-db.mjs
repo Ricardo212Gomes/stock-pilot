@@ -11,7 +11,7 @@ if (!process.env.DATABASE_URL) {
 const sql = postgres(process.env.DATABASE_URL, { max: 1, prepare: false, onnotice: () => {} });
 try {
   await sql.unsafe(await readFile(new URL("../db/schema.sql", import.meta.url), "utf8"));
-  console.log("Database ready: favorites table created or already present.");
+  console.log("Database ready: tables created or already present.");
 } finally {
   await sql.end();
 }

@@ -4427,3 +4427,119 @@ a.earnings-round:focus-visible {
     right: 8px;
   }
 }
+
+/* Earnings call transcripts */
+
+.transcript-quarters {
+  flex-wrap: wrap;
+}
+
+.transcript-quarters .transcript-quarter-missing {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+}
+
+.transcript-participants {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.transcript-participants h2 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.transcript-participants ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.transcript-participants li {
+  display: grid;
+  align-content: start;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.transcript-participants li span {
+  color: var(--muted-foreground);
+}
+
+.transcript-jump {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.transcript {
+  max-width: 820px;
+}
+
+.transcript-turn {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.transcript-turn header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 4px;
+}
+
+.transcript-turn header strong {
+  font-size: 15px;
+}
+
+.transcript-turn header span {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.transcript-turn p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 27px;
+}
+
+.transcript-turn-operator p {
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.transcript header .transcript-sentiment {
+  padding: 0 6px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.transcript header .transcript-sentiment-positive {
+  background: color-mix(in srgb, var(--positive) 14%, transparent);
+  color: var(--positive);
+}
+
+.transcript header .transcript-sentiment-negative {
+  background: color-mix(in srgb, var(--negative) 14%, transparent);
+  color: var(--negative);
+}
+
+.transcript-divider {
+  /* Clears the sticky top bar when the "Jump to questions" link scrolls here. */
+  scroll-margin-top: 96px;
+  margin: 28px 0 4px;
+  padding-top: 12px;
+  border-top: 2px solid var(--title-rule);
+  font-size: 20px;
+}

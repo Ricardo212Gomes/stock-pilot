@@ -11,8 +11,9 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 3. Set `GEMINI_API_KEY` to your Gemini API key to enable AI analysis. `GOOGLE_GENERATIVE_AI_API_KEY` is also accepted if you already use that name. Optionally set `GEMINI_MODEL` to override the default model.
 4. Set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io) API key to enable the News page. The Finnhub secret is not needed.
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
-6. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**; see [`docs/favorites.md`](./docs/favorites.md).
-7. Restart the Next.js development server after changing the environment file.
+6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
+7. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**; see [`docs/favorites.md`](./docs/favorites.md).
+8. Restart the Next.js development server after changing the environment file.
 
 All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 
@@ -25,7 +26,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and type a company name or ticker, such as `Nvidia` or `NVDA`, in the top search; pick a suggestion or press Enter for the best match. The search runs in the browser over a bundled list of about 5,900 US stocks, so it makes no API requests; refresh the list with `npm run symbols:update` (see [`docs/stock-overview.md`](./docs/stock-overview.md#search)). Each company has three tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL` and **News**.
+Open [http://localhost:3000](http://localhost:3000) and type a company name or ticker, such as `Nvidia` or `NVDA`, in the top search; pick a suggestion or press Enter for the best match. The search runs in the browser over a bundled list of about 5,900 US stocks, so it makes no API requests; refresh the list with `npm run symbols:update` (see [`docs/stock-overview.md`](./docs/stock-overview.md#search)). Each company has four tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL`, **News** and **Transcripts** at `/stock/transcripts?symbol=AAPL` (earnings calls, speaker by speaker).
 
 FMP data access depends on the endpoints and history included in your subscription. When FMP can't return the statements, the page says why: rate limit, invalid key, plan restriction or another provider error.
 
@@ -55,6 +56,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`docs/auth.md`](./docs/auth.md) | Google sign-in: setup, session cookie and the top bar menu |
+| [`docs/transcripts.md`](./docs/transcripts.md) | Earnings call transcripts: Alpha Vantage, fiscal quarters, saving them in Postgres and the free-key limits |
 | [`docs/favorites.md`](./docs/favorites.md) | Favorites: the Postgres database, schema setup, the star button and the list |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
 | [`DESIGN.md`](./DESIGN.md) | Design tokens and component rules |

@@ -11,6 +11,7 @@
 | Overview | `/stock?symbol=AAPL` |
 | Financials | `/stock/financials?symbol=AAPL` (statements, ratios and the AI review; see [`financials.md`](./financials.md)) |
 | News | `/news?symbol=AAPL` |
+| Transcripts | `/stock/transcripts?symbol=AAPL` (earnings calls; see [`transcripts.md`](./transcripts.md)) |
 
 Search, the home page examples and breadcrumbs land on the Overview.
 

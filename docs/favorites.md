@@ -19,9 +19,9 @@ Favorites use any Postgres database through `DATABASE_URL`. [Neon](https://neon.
    npm run db:setup
    ```
 
-   It runs `db/schema.sql` and is safe to run again.
+   It runs `db/schema.sql`, which also creates the `transcripts` table (see [`transcripts.md`](./transcripts.md)), and is safe to run again.
 
-The schema is one table:
+The favorites table:
 
 | Column | Type | Meaning |
 | --- | --- | --- |
