@@ -34,7 +34,7 @@ const CACHE_ENTRIES = 30;
 const FORMS = new Set(["10-K", "10-K/A", "10-Q", "10-Q/A"]);
 
 // The SEC asks automated clients to identify themselves.
-function headers(): HeadersInit {
+export function secHeaders(): HeadersInit {
   return { "User-Agent": process.env.SEC_USER_AGENT || "StockPilot/1.0 (personal stock research app)" };
 }
 
@@ -304,9 +304,9 @@ export function statementsFromFacts(document: unknown): SecStatements | null {
   };
 }
 
-// Ticker to CIK, from the SEC's list of about 10,000 companies (~800 KB, cached for a day).
-async function lookupCik(symbol: string): Promise<string | null> {
-  const response = await fetch(TICKERS_URL, { headers: headers(), next: { revalidate: 60 * 60 * 24 } });
+// Ticker to CIK (10 digits), from the SEC's list of about 10,000 companies (~800 KB, cached for a day).
+export async function lookupCik(symbol: string): Promise<string | null> {
+  const response = await fetch(TICKERS_URL, { headers: secHeaders(), next: { revalidate: 60 * 60 * 24 } });
   if (!response.ok) throw new Error(`SEC ticker list returned ${response.status}`);
   const list = Object.values((await response.json()) as Record<string, { cik_str: number; ticker: string }>);
   const match = list.find((item) => item.ticker.toUpperCase() === symbol.toUpperCase());
@@ -324,7 +324,7 @@ export async function getSecStatements(symbol: string, now = Date.now()): Promis
   try {
     const cik = await lookupCik(symbol);
     if (!cik) return { ok: false, reason: "not-found" };
-    const response = await fetch(`${FACTS_URL}/CIK${cik}.json`, { headers: headers(), cache: "no-store", signal: AbortSignal.timeout(30_000) });
+    const response = await fetch(`${FACTS_URL}/CIK${cik}.json`, { headers: secHeaders(), cache: "no-store", signal: AbortSignal.timeout(30_000) });
     if (response.status === 404) return { ok: false, reason: "no-data" };
     if (!response.ok) return { ok: false, reason: "provider-error" };
     const data = statementsFromFacts(await response.json());

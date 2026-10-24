@@ -4543,3 +4543,70 @@ a.earnings-round:focus-visible {
   border-top: 2px solid var(--title-rule);
   font-size: 20px;
 }
+
+/* SEC filings */
+
+.filing-types {
+  flex-wrap: wrap;
+}
+
+.filings-table {
+  min-width: 640px;
+}
+
+.filings-table thead th,
+.filings-table tbody th,
+.filings-table td {
+  text-align: left;
+  vertical-align: top;
+}
+
+.filings-table tbody th {
+  white-space: nowrap;
+}
+
+.filing-form {
+  display: inline-block;
+  min-width: 52px;
+  padding: 0 6px;
+  border-radius: var(--radius);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.filing-form-earnings {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.filing-description {
+  display: block;
+}
+
+.filings-table td small {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.filing-links {
+  white-space: nowrap;
+}
+
+.filing-links a {
+  margin-right: 14px;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.filings-more {
+  margin: 14px 0 0;
+}
+
+.filings-more a {
+  color: var(--accent);
+  font-weight: 600;
+}

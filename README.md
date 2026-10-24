@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and type a company name or ticker, such as `Nvidia` or `NVDA`, in the top search; pick a suggestion or press Enter for the best match. The search runs in the browser over a bundled list of about 5,900 US stocks, so it makes no API requests; refresh the list with `npm run symbols:update` (see [`docs/stock-overview.md`](./docs/stock-overview.md#search)). Each company has four tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL`, **News** and **Transcripts** at `/stock/transcripts?symbol=AAPL` (earnings calls, speaker by speaker).
+Open [http://localhost:3000](http://localhost:3000) and type a company name or ticker, such as `Nvidia` or `NVDA`, in the top search; pick a suggestion or press Enter for the best match. The search runs in the browser over a bundled list of about 5,900 US stocks, so it makes no API requests; refresh the list with `npm run symbols:update` (see [`docs/stock-overview.md`](./docs/stock-overview.md#search)). Each company has five tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL`, **News**, **Transcripts** at `/stock/transcripts?symbol=AAPL` (earnings calls, speaker by speaker) and **Filings** at `/stock/filings?symbol=AAPL` (SEC reports, earnings releases and other filings).
 
 FMP data access depends on the endpoints and history included in your subscription. When FMP can't return the statements, the page says why: rate limit, invalid key, plan restriction or another provider error.
 
@@ -57,6 +57,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`docs/auth.md`](./docs/auth.md) | Google sign-in: setup, session cookie and the top bar menu |
+| [`docs/filings.md`](./docs/filings.md) | The Filings tab: SEC EDGAR filings, filters, 8-K descriptions and press releases |
 | [`docs/transcripts.md`](./docs/transcripts.md) | Earnings call transcripts: Alpha Vantage, fiscal quarters, saving them in Postgres and the free-key limits |
 | [`docs/favorites.md`](./docs/favorites.md) | Favorites: the Postgres database, schema setup, the star button and the list |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
