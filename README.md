@@ -29,7 +29,7 @@ FMP data access depends on the endpoints and history included in your subscripti
 
 The **Projections** page at `/projections?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models. It picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. Its **3-Year Projection** tab estimates the price and annual return in a low and a high case from revenue growth, net margin and P/E, and its **DCF Calculator** tab discounts ten years of free cash flow plus a terminal value to a value per share.
 
-The **Market maps** page at `/maps` embeds the FINVIZ S&P 500 one-day heat map.
+The **Market maps** page at `/maps` embeds the FINVIZ one-day heat maps of the S&P 500 and the Nasdaq 100.
 
 The **Earnings** page at `/earnings` shows which companies report each day of the week, with analysts' estimates and, once results are out, the actual figures and surprises.
 
