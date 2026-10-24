@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CompanyLogo } from "../components/company-logo";
 import type { EarningsDay, EarningsEvent, ReportTime } from "@/lib/earnings-calendar";
 
 // How many tiles a section shows before the "+N" tile.
@@ -38,23 +39,6 @@ function TimeIcon({ time }: { time: ReportTime }) {
   );
 }
 
-// FMP serves company logos at a public URL per ticker; unknown tickers fall back to initials.
-function Logo({ symbol }: { symbol: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return <span className="earnings-logo earnings-logo-fallback" aria-hidden="true">{symbol.slice(0, 3)}</span>;
-  return (
-    // A plain img: dozens of small third-party logos don't need the Next.js image optimizer.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      className="earnings-logo"
-      src={`https://financialmodelingprep.com/image-stock/${encodeURIComponent(symbol)}.png`}
-      alt=""
-      loading="lazy"
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
 function resultTone(event: EarningsEvent): "beat" | "miss" | null {
   if (event.epsSurprise === null) return null;
   return event.epsSurprise >= 0 ? "beat" : "miss";
@@ -79,7 +63,7 @@ function Tile({ event, onOpen }: { event: EarningsEvent; onOpen: (event: Earning
       aria-label={`${event.symbol}${event.name ? `, ${event.name}` : ""}${tone ? `, ${tone === "beat" ? "beat" : "missed"} the EPS estimate` : ""}`}
     >
       <span className="earnings-logo-box">
-        <Logo symbol={event.symbol} />
+        <CompanyLogo symbol={event.symbol} />
         {tone && <span className={`earnings-result earnings-result-${tone}`} aria-hidden="true" />}
       </span>
       <span className="earnings-tile-symbol">{event.symbol}</span>
@@ -133,7 +117,7 @@ function Details({ event, onClose }: { event: EarningsEvent | null; onClose: () 
       {event && (
         <div className="earnings-dialog-body">
           <div className="earnings-dialog-heading">
-            <span className="earnings-logo-box"><Logo symbol={event.symbol} /></span>
+            <span className="earnings-logo-box"><CompanyLogo symbol={event.symbol} /></span>
             <div>
               <h2 id="earnings-dialog-title">{event.symbol}</h2>
               {event.name && <p>{event.name}</p>}

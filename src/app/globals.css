@@ -3999,3 +3999,119 @@ a.earnings-round:focus-visible {
 .market-map-tabs {
   margin-bottom: 12px;
 }
+
+/* Dividend calendar: a Monday-to-Friday month grid */
+
+.dividend-month {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.dividend-weekdays,
+.dividend-week {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.dividend-weekdays span {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-align: center;
+}
+
+.dividend-day {
+  min-width: 0;
+  min-height: 132px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.dividend-day:first-child {
+  border-left: 0;
+}
+
+.dividend-week:last-child .dividend-day {
+  border-bottom: 0;
+}
+
+.dividend-day-outside {
+  background: var(--muted);
+}
+
+.dividend-day-outside .dividend-day-number {
+  color: var(--muted-foreground);
+}
+
+.dividend-day-number {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dividend-day-number.earnings-today-date {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.dividend-day-weekday {
+  display: none;
+}
+
+.dividend-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dividend-amount {
+  color: var(--positive);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dividend-frequency {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  /* On phones the month becomes a list of the days that have dividends. */
+  .dividend-weekdays {
+    display: none;
+  }
+
+  .dividend-week {
+    display: block;
+  }
+
+  .dividend-day {
+    min-height: 0;
+    border-left: 0;
+  }
+
+  .dividend-day-empty {
+    display: none;
+  }
+
+  .dividend-day-number {
+    width: auto;
+    height: auto;
+    display: inline-block;
+    padding: 2px 8px;
+  }
+
+  .dividend-day-weekday {
+    display: inline;
+  }
+}

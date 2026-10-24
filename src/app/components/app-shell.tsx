@@ -7,7 +7,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | "projections" | "maps" | "news" | "earnings";
+  activeSection?: "research" | "projections" | "maps" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL overview".
   headerLabel?: string;
 };
@@ -16,6 +16,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "maps") return "Market maps";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
   if (section === "earnings") return "Earnings calendar";
+  if (section === "dividends") return "Dividend calendar";
   if (section === "projections") return ticker ? `${ticker} projections` : "Stock projections";
   return ticker ? `${ticker} fundamentals` : "Company fundamentals";
 }
@@ -97,11 +98,23 @@ export function AppShell({
               </svg>
               <span>Earnings</span>
             </Link>
+            <Link
+              className={`sidebar-link${activeSection === "dividends" ? " sidebar-link-active" : ""}`}
+              href="/dividends"
+              title="Dividend calendar"
+              aria-current={activeSection === "dividends" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <circle cx="10" cy="10" r="6.5" />
+                <path d="M12 7.6c-.4-.6-1.1-.9-2-.9-1.2 0-2 .6-2 1.5 0 2 4 1.1 4 3.3 0 .9-.9 1.6-2.1 1.6-.9 0-1.7-.4-2.1-1M10 5.5v1.2M10 13.3v1.2" />
+              </svg>
+              <span>Dividends</span>
+            </Link>
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 5 TOOLS</span>
-            <p>Company research, projections, market maps, news and earnings.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 6 TOOLS</span>
+            <p>Company research, projections, market maps, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-theme">
