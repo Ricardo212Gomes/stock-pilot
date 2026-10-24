@@ -15,5 +15,7 @@ export async function FavoriteToggle({ symbol }: { symbol: string }) {
       // A database outage shouldn't break the company page; the star starts empty.
     }
   }
-  return <FavoriteButton symbol={symbol} initial={favorite} signedIn={userId !== null} />;
+  // The key gives each company (and each saved state) its own button: navigating between
+  // companies reuses this spot in the page, which would otherwise keep the last company's star.
+  return <FavoriteButton key={`${symbol}:${favorite}`} symbol={symbol} initial={favorite} signedIn={userId !== null} />;
 }
