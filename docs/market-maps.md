@@ -1,6 +1,6 @@
 # Market maps
 
-The `/maps` page embeds FINVIZ heat maps of the **S&P 500** (`/maps`, the default) and the **Nasdaq 100** (`/maps?index=ndx`), showing one-day performance by sector. Tabs switch between them. It needs no API key and makes no server requests.
+The `/maps` page embeds FINVIZ heat maps of the **S&P 500** (`/maps`, the default), the **Nasdaq 100** (`/maps?index=ndx`) and the **largest cryptocurrencies** (`/maps?index=crypto`), showing one-day performance. Tabs switch between them. It needs no API key and makes no server requests.
 
 ## Files
 
@@ -11,7 +11,7 @@ The `/maps` page embeds FINVIZ heat maps of the **S&P 500** (`/maps`, the defaul
 
 The iframe loads `https://finviz.com/widgets/map?t=<map type>&st=d1&theme=<light|dark>&wid=99lau70j`:
 
-- `t`: the map type, `sec` for the S&P 500 and `sec_ndx` for the Nasdaq 100. FINVIZ's own code also defines `sec_dji` (Dow Jones), `sec_rut` (Russell 2000), `sec_comp` (Nasdaq Composite), `sec_all` (all stocks), `geo` (world) and `etf`, so more tabs only need a new entry in `INDEXES` in `page.tsx`.
+- `t`: the map type, `sec` for the S&P 500, `sec_ndx` for the Nasdaq 100 and `crypto` for cryptocurrencies priced in US dollars (sized by market cap: price × circulating supply). FINVIZ's own code also defines `crypto_usdt`, `crypto_eur`, `crypto_btc`, `sec_dji` (Dow Jones), `sec_rut` (Russell 2000), `sec_comp` (Nasdaq Composite), `sec_all` (all stocks), `geo` (world) and `etf`, so more tabs only need a new entry in `INDEXES` in `page.tsx`.
 - `st=d1`: one-day performance.
 - `wid`: the FINVIZ widget ID for this embed.
 

@@ -8,10 +8,11 @@ export const metadata: Metadata = {
   description: "View S&P 500 and Nasdaq 100 market maps and daily stock performance.",
 };
 
-// FINVIZ map types: "sec" is the S&P 500 by sector, "sec_ndx" the Nasdaq 100.
+// FINVIZ map types: "sec" is the S&P 500 by sector, "sec_ndx" the Nasdaq 100, "crypto" coins priced in USD.
 const INDEXES = [
   { id: "sp500", label: "S&P 500", mapType: "sec", description: "Daily performance across the S&P 500." },
   { id: "ndx", label: "Nasdaq 100", mapType: "sec_ndx", description: "Daily performance across the Nasdaq 100, the largest non-financial companies listed on the Nasdaq." },
+  { id: "crypto", label: "Crypto", mapType: "crypto", description: "Daily performance of the largest cryptocurrencies in US dollars, each sized by its market cap." },
 ] as const;
 
 type MapsPageProps = {
