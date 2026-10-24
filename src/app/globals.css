@@ -3504,10 +3504,6 @@ input:focus-visible {
 
 /* 3-year projection */
 
-.projection-tabs {
-  margin-bottom: 16px;
-}
-
 .scenario-switch {
   flex-wrap: wrap;
   margin-bottom: 4px;

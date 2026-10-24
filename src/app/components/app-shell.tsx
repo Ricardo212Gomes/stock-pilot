@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { VALUATION_TOOLS, type ValuationTool } from "../valuation/tools";
 import { ThemeToggle } from "./theme-toggle";
 import { TickerSearch } from "./ticker-search";
 
@@ -7,7 +8,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | "projections" | "maps" | "news" | "earnings" | "dividends";
+  activeSection?: "research" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL overview".
   headerLabel?: string;
 };
@@ -17,9 +18,19 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
   if (section === "earnings") return "Earnings calendar";
   if (section === "dividends") return "Dividend calendar";
-  if (section === "projections") return ticker ? `${ticker} projections` : "Stock projections";
+  const tool = VALUATION_TOOLS.find(({ id }) => id === section);
+  if (tool) return ticker ? `${ticker} · ${tool.label}` : tool.label;
   return ticker ? `${ticker} fundamentals` : "Company fundamentals";
 }
+
+const VALUATION_ICONS: Record<ValuationTool, string> = {
+  // A balance scale: what a company is worth.
+  "intrinsic-value": "M10 3.5v13M6 16.5h8M4 6h12M4 6l-2 5a2 2 0 0 0 4 0L4 6M16 6l-2 5a2 2 0 0 0 4 0l-2-5",
+  // A rising line: where the price could go.
+  "three-year-projection": "M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4",
+  // A percent sign: cash flows discounted at a rate.
+  "dcf-calculator": "M5.5 14.5l9-9M7 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3ZM13 14.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z",
+};
 
 export function AppShell({
   children,
@@ -28,6 +39,7 @@ export function AppShell({
   activeSection = "research",
   headerLabel,
 }: AppShellProps) {
+  const valuationPath = VALUATION_TOOLS.find(({ id }) => id === activeSection)?.path;
   return (
     <div className="site-page">
       <div className="app-layout">
@@ -50,17 +62,25 @@ export function AppShell({
               </svg>
               <span>Company research</span>
             </Link>
-            <Link
-              className={`sidebar-link${activeSection === "projections" ? " sidebar-link-active" : ""}`}
-              href={tickerValue ? `/projections?symbol=${tickerValue}` : "/projections"}
-              title="Stock projections"
-              aria-current={activeSection === "projections" ? "page" : undefined}
-            >
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4" />
-              </svg>
-              <span>Projections</span>
-            </Link>
+          </nav>
+
+          <nav className="sidebar-nav sidebar-nav-markets" aria-label="Valuation">
+            <p className="sidebar-section-label">VALUATION</p>
+            {VALUATION_TOOLS.map((tool) => (
+              <Link
+                key={tool.id}
+                className={`sidebar-link${activeSection === tool.id ? " sidebar-link-active" : ""}`}
+                // Keep the company when switching between tools.
+                href={tickerValue ? `${tool.path}?symbol=${tickerValue}` : tool.path}
+                title={tool.label}
+                aria-current={activeSection === tool.id ? "page" : undefined}
+              >
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d={VALUATION_ICONS[tool.id]} />
+                </svg>
+                <span>{tool.label}</span>
+              </Link>
+            ))}
           </nav>
 
           <nav className="sidebar-nav sidebar-nav-markets" aria-label="Markets">
@@ -113,8 +133,8 @@ export function AppShell({
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 6 TOOLS</span>
-            <p>Company research, projections, market maps, news, earnings and dividends.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 8 TOOLS</span>
+            <p>Company research, three valuation calculators, market maps, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-theme">
@@ -131,7 +151,7 @@ export function AppShell({
               <TickerSearch
                 compact
                 value={tickerValue}
-                action={activeSection === "projections" || activeSection === "news" ? `/${activeSection}` : "/stock"}
+                action={valuationPath ?? (activeSection === "news" ? "/news" : "/stock")}
               />
               <ThemeToggle />
             </div>

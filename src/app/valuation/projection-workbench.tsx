@@ -144,7 +144,7 @@ export function ProjectionWorkbench({
     <>
       <section className="company-heading">
         <div>
-          <p className="section-label">STOCK PROJECTIONS</p>
+          <p className="section-label">INTRINSIC VALUE</p>
           <div className="company-title-row">
             <h1>{symbol}</h1>
             <span className="access-badge">{typeInfo.label.toUpperCase()}</span>

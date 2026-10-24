@@ -47,7 +47,7 @@ export function calculateDcf(inputs: DcfInputs): DcfResult {
   if (freeCashFlow === null || freeCashFlow <= 0) {
     return {
       ok: false,
-      reason: "Needs positive free cash flow. It can be negative when a business is burning cash, or, for banks and insurers, because lending and deposits run through cash flow. For those, use the residual income model on the Intrinsic value tab.",
+      reason: "Needs positive free cash flow. It can be negative when a business is burning cash, or, for banks and insurers, because lending and deposits run through cash flow. For those, use the residual income model in the Intrinsic value tool.",
     };
   }
   if (shares === null || shares <= 0) return { ok: false, reason: "Needs the number of shares outstanding." };

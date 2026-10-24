@@ -1,16 +1,28 @@
-# Stock projections
+# Valuation tools
 
-The `/projections?symbol=…` page estimates a company's intrinsic value with six valuation models. It first works out what kind of stock it is, then recommends the models that fit. It fills every assumption from the filings, and an optional AI autofill can suggest forward-looking values instead. Everything recalculates in the browser as the user edits.
+The sidebar's **Valuation** section has three separate calculators, each taking a ticker from the top search:
+
+| Tool | Route |
+| --- | --- |
+| Intrinsic value | `/valuation/intrinsic-value?symbol=AAPL` |
+| 3-Year Projection | `/valuation/three-year-projection?symbol=AAPL` |
+| DCF Calculator | `/valuation/dcf-calculator?symbol=AAPL` |
+
+The sidebar links keep the current ticker, so you can switch tools for the same company. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (breadcrumb, heading, start screen and load error); `tools.ts` lists the tools for the sidebar. The old `/projections` page redirects to these (`?view=3y` and `?view=dcf` to the matching tool).
+
+## Intrinsic value
+
+The Intrinsic value tool estimates a company's intrinsic value with six valuation models. It first works out what kind of stock it is, then recommends the models that fit. It fills every assumption from the filings, and an optional AI autofill can suggest forward-looking values instead. Everything recalculates in the browser as the user edits.
 
 ## Files
 
 | File | Role |
 | --- | --- |
-| `src/app/projections/page.tsx` | Server page: loads data, shows errors, renders the workbench |
-| `src/app/projections/data.ts` | `loadProjectionData`: fundamentals, profile and Treasury yield, then classification and defaults |
-| `src/app/projections/actions.ts` | `autofillAssumptions` server action (Gemini) |
-| `src/app/projections/projection-workbench.tsx` | Client state, layout and derived results |
-| `src/app/projections/projection-parts.tsx` | Assumption field, model card, football field, projection chart and tables |
+| `src/app/valuation/intrinsic-value/page.tsx` | Server page: loads data, shows errors, renders the workbench |
+| `src/app/valuation/data.ts` | `loadProjectionData`: fundamentals, profile and Treasury yield, then classification and defaults |
+| `src/app/valuation/actions.ts` | `autofillAssumptions` server action (Gemini) |
+| `src/app/valuation/projection-workbench.tsx` | Client state, layout and derived results |
+| `src/app/valuation/projection-parts.tsx` | Assumption field, model card, football field, projection chart and tables |
 | `src/lib/valuation/assumptions.ts` | Every assumption: label, unit, allowed range, short and long explanations |
 | `src/lib/valuation/models.ts` | The models, scenarios, reverse DCF, sensitivity grid, verdict and blended value |
 | `src/lib/valuation/classify.ts` | Stock type detection and which models suit each type |
@@ -118,9 +130,9 @@ A first visit to a ticker's page makes 6 requests: 4 statements, the profile and
 - CFA Institute, *Equity Asset Valuation*: free cash flow, dividend discount and residual income models
 - Benjamin Graham, *The Intelligent Investor* (revised 1974 formula)
 
-## 3-Year Projection tab
+## 3-Year Projection
 
-`/projections?symbol=AAPL&view=3y` follows Jeremy Lefebvre's (1000xStocks) projection template, an Excel sheet with one tab per scenario. It shows an **expected annual return**, not an intrinsic value, and doesn't discount anything. The Intrinsic value tab is unchanged and remains the default.
+`/valuation/three-year-projection?symbol=AAPL` follows Jeremy Lefebvre's (1000xStocks) projection template, an Excel sheet with one tab per scenario. It shows an **expected annual return**, not an intrinsic value, and doesn't discount anything.
 
 | Step | Formula |
 | --- | --- |
@@ -149,11 +161,11 @@ Net income needs to be positive, because a growth rate can't be applied to a los
 
 **Autofill with AI** (`autofillThreeYear`) sends Gemini the revenue, net income, growth, margin and P/E history with the data defaults and asks for all five scenarios with a reason each. The answer is parsed by `parseThreeYearResponse`, which clamps each value to its range, rescales whole-number percentages, swaps a P/E low above its P/E high, and sorts each field across the scenarios so they stay in order from ultra bearish to ultra bullish.
 
-Files: `src/lib/three-year-projection.ts` (math and defaults), `src/lib/three-year-autofill.ts` (prompt and parsing), `src/app/projections/three-year-calculator.tsx` (the calculator).
+Files: `src/lib/three-year-projection.ts` (math and defaults), `src/lib/three-year-autofill.ts` (prompt and parsing), `src/app/valuation/three-year-calculator.tsx` (the calculator).
 
-## DCF Calculator tab
+## DCF Calculator
 
-`/projections?symbol=AAPL&view=dcf` is a hands-on two-stage discounted cash flow calculator in the style used by investor YouTube channels such as Parkev Tatevosian's and by quote-site DCF tools. His exact spreadsheet is for paying channel members and isn't public, so this follows the standard structure rather than his file.
+`/valuation/dcf-calculator?symbol=AAPL` is a hands-on two-stage discounted cash flow calculator in the style used by investor YouTube channels such as Parkev Tatevosian's and by quote-site DCF tools. His exact spreadsheet is for paying channel members and isn't public, so this follows the standard structure rather than his file.
 
 | Step | Formula |
 | --- | --- |
@@ -179,10 +191,10 @@ It also shows the upside against the price, a buy-below price after the margin o
 | Terminal value | Perpetual growth at 2.5%, or a 15× free cash flow exit multiple |
 | Margin of safety | 25% |
 
-Companies with negative free cash flow, including banks and insurers whose lending runs through cash flow, get an explanation instead of a value, pointing to the residual income model on the Intrinsic value tab.
+Companies with negative free cash flow, including banks and insurers whose lending runs through cash flow, get an explanation instead of a value, pointing to the residual income model in the Intrinsic value tool.
 
 **Autofill with AI** (`autofillDcf`) suggests both growth rates, the discount rate, terminal growth and the exit multiple from revenue, margin and free cash flow history, with a reason for each. `parseDcfResponse` clamps each value; the ranges also keep terminal growth (at most 4%) below the discount rate (at least 5%).
 
 All three AI autofills only rescale a percentage written as a whole number (for example 9 for 9%) when it is above 1: an out-of-range decimal like 0.6 is capped at the field's maximum, not read as 0.6%.
 
-Files: `src/lib/simple-dcf.ts` (math and defaults), `src/lib/simple-dcf-autofill.ts` (prompt and parsing), `src/app/projections/dcf-calculator.tsx` (the calculator) and `src/app/projections/calculator-input.tsx` (the number input shared with the 3-year projection).
+Files: `src/lib/simple-dcf.ts` (math and defaults), `src/lib/simple-dcf-autofill.ts` (prompt and parsing), `src/app/valuation/dcf-calculator.tsx` (the calculator) and `src/app/valuation/calculator-input.tsx` (the number input shared with the 3-year projection).
