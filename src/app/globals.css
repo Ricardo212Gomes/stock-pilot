@@ -4610,3 +4610,93 @@ a.earnings-round:focus-visible {
   color: var(--accent);
   font-weight: 600;
 }
+
+/* Transcript AI summary */
+
+.transcript-summary-start {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--muted);
+}
+
+.transcript-summary-start p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.transcript-summary {
+  margin: 0 0 20px;
+}
+
+.transcript-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 6px 24px;
+  margin-top: 6px;
+}
+
+.transcript-summary-section h3 {
+  margin: 8px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.transcript-summary-section ul {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.transcript-summary-section li {
+  margin: 0 0 6px;
+  font-size: 15px;
+  line-height: 23px;
+}
+
+.transcript-tone {
+  margin-left: auto;
+  padding: 0 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.transcript-tone-positive {
+  background: color-mix(in srgb, var(--positive) 14%, transparent);
+  color: var(--positive);
+}
+
+.transcript-tone-neutral {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.transcript-tone-cautious {
+  background: color-mix(in srgb, var(--chart-3) 18%, transparent);
+  color: var(--foreground);
+}
+
+.transcript-tone-negative {
+  background: color-mix(in srgb, var(--negative) 14%, transparent);
+  color: var(--negative);
+}
+
+.transcript-tone-reason {
+  font-size: 14px;
+}
+
+/* On narrow screens the summary heading wraps between items, never inside them. */
+.transcript-summary .ai-review-heading {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.transcript-summary .ai-review-heading > * {
+  white-space: nowrap;
+}

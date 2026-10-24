@@ -36,9 +36,10 @@ const FOCUS: Record<ReviewStatement, string> = {
     "Mention stock-based compensation if it is large.",
   ].join(" "),
   ratios: [
-    "Focus on three groups: valuation (PE, PS, PB and P/FCF ratios and dividend yield compared with their own history),",
-    "profitability (margins, return on equity and on assets) and financial health (current ratio, debt to equity,",
-    "interest coverage). Briefly say what each ratio you mention means.",
+    "Focus on four groups: valuation (P/E, P/S, P/B, P/FCF and EV/EBITDA compared with their own history),",
+    "yields (earnings, free cash flow and dividend yield, payout ratio), returns (ROE, ROA, ROIC) and financial",
+    "health (current and quick ratio, debt to equity, net debt to EBITDA, interest coverage).",
+    "Briefly say what each ratio you mention means.",
   ].join(" "),
 };
 

@@ -33,9 +33,18 @@ By default the page opens the latest quarter. If Alpha Vantage doesn't have it, 
 - Each turn shows the speaker, their title and the text. Alpha Vantage scores each passage's sentiment from -1 to 1; scores of 0.3 or more show a "Positive tone" pill, -0.3 or less "Negative tone".
 - When FMP's plan doesn't cover the company, the header uses its name from the bundled stock list.
 
+## AI summary
+
+**Summarize with AI**, above the participants, asks Gemini to read the whole call (`summarizeTranscript` in `src/app/stock/transcripts/actions.ts`) and returns a short overview, up to five highlights, up to four outlook and guidance points, up to four themes analysts asked about with management's answers, and management's tone (positive, neutral, cautious or negative) with the reason. The answer is structured JSON (`SUMMARY_SCHEMA`), cleaned by `parseSummary`.
+
+- Only the ticker and quarter come from the browser; the transcript is the server's saved copy, so the prompt never contains text from the browser.
+- Calls over about 120,000 characters (~30,000 tokens) are cut, keeping the beginning of the Q&A.
+- Each summary is saved in the transcript's row (`summary` column, added by `npm run db:setup`), or in memory without a database. A call is summarized once; anyone opening it later sees the summary straight away.
+
 ## Files
 
 - `src/lib/transcripts.ts`: fiscal quarters, the latest reported quarter, fetching, parsing and saving transcripts.
+- `src/lib/transcript-summary.ts` and `src/app/stock/transcripts/transcript-summary.tsx`: the AI summary's prompt, parsing, saving and card.
 - `src/app/stock/transcripts/page.tsx`: the page.
 - `db/schema.sql`: the `transcripts` table.
 

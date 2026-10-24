@@ -6,6 +6,8 @@ import { StockNav } from "../../components/stock-nav";
 import stocks from "@/data/us-stocks.json";
 import { normalizeTicker } from "@/lib/fmp";
 import { getQuote } from "@/lib/stock-overview";
+import { getSavedSummary } from "@/lib/transcript-summary";
+import { TranscriptSummaryCard } from "./transcript-summary";
 import {
   OLD_EMPTY_RETRY_MS,
   getTranscript,
@@ -106,7 +108,10 @@ export default async function TranscriptsPage({ searchParams }: TranscriptsPageP
       }
     }
   }
-  const known = await savedQuarters(symbol, quarters);
+  const [known, savedSummary] = await Promise.all([
+    savedQuarters(symbol, quarters),
+    result.ok ? getSavedSummary(symbol, quarter) : Promise.resolve(null),
+  ]);
   // When FMP's plan doesn't cover the company, the bundled stock list still knows its name.
   const listedName = (stocks as [string, string, number][]).find(([listed]) => listed === symbol)?.[1];
   const companyName = quote.ok ? quote.data.name : listedName ?? symbol;
@@ -151,7 +156,17 @@ export default async function TranscriptsPage({ searchParams }: TranscriptsPageP
       </section>
 
       {result.ok ? (
-        <Transcript segments={result.segments} />
+        <>
+          <TranscriptSummaryCard
+            key={`${symbol}:${quarter}`}
+            symbol={symbol}
+            quarter={quarter}
+            quarterLabel={quarterLabel(quarter)}
+            company={companyName}
+            initial={savedSummary}
+          />
+          <Transcript segments={result.segments} />
+        </>
       ) : (
         <section className={`empty-state${result.reason === "unavailable" ? " empty-state-info" : ""}`} role="status">
           <span className="empty-state-icon" aria-hidden="true">{result.reason === "unavailable" ? "i" : "!"}</span>

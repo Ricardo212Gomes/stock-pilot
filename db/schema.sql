@@ -9,7 +9,7 @@ create table if not exists favorites (
 );
 
 -- Earnings call transcripts from Alpha Vantage, kept so each one is requested only once.
--- An empty segments array means Alpha Vantage had none yet; it's asked again after a day.
+-- An empty segments array means Alpha Vantage had none yet; it's asked again later.
 create table if not exists transcripts (
   symbol text not null,
   quarter text not null,
@@ -17,3 +17,6 @@ create table if not exists transcripts (
   fetched_at timestamptz not null default now(),
   primary key (symbol, quarter)
 );
+
+-- The AI summary of each transcript (see src/lib/transcript-summary.ts), made once on request.
+alter table transcripts add column if not exists summary jsonb;
