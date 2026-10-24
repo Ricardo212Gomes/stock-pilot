@@ -158,8 +158,46 @@ describe("buildStatementTable", () => {
       ratiosTtm: stripTtmSuffix({ priceToEarningsRatioTTM: 39.5 }),
     });
     expect(row(table, "pe").slice(0, 2)).toEqual([39.5, 31]);
-    expect(table.rows.filter((item) => item.section).map((item) => item.section)).toEqual(["Valuation", "Profitability", "Financial health"]);
+    expect(table.rows.filter((item) => item.section).map((item) => item.section)).toEqual(["Valuation", "Yields", "Returns", "Financial health", "Efficiency"]);
     expect(row(table, "roe")[1]).toBeCloseTo(112 / 74);
+    // Margins live in the income statement, not here; the chart shows valuation ratios.
+    expect(table.rows.some((item) => item.id === "grossMargin")).toBe(false);
+    expect(table.chart.title).toBe("Valuation Ratios");
+    expect(table.chart.series.map((series) => series.id)).toContain("pe");
+  });
+
+  it("prefers FMP's ratios and key metrics, and works the rest out from the statements", () => {
+    const table = build({
+      statement: "ratios",
+      ratios: [{ date: "2025-09-27", priceToEarningsRatio: 25, priceToFreeCashFlowRatio: 20, evToEBITDA: 18, returnOnEquity: 1.5, marketCap: 3.6e12 }],
+    });
+    expect(row(table, "evEbitda")[1]).toBe(18);
+    expect(row(table, "marketCap")[1]).toBe(3.6e12);
+    expect(row(table, "roe")[1]).toBe(1.5);
+    // Yields are the inverse of the multiples when FMP doesn't send them.
+    expect(row(table, "earningsYield")[1]).toBeCloseTo(0.04);
+    expect(row(table, "fcfYield")[1]).toBeCloseTo(0.05);
+  });
+
+  it("annualizes a quarter's returns so they compare with yearly figures", () => {
+    const table = buildStatementTable({
+      statement: "ratios",
+      period: "quarterly",
+      income: [{ date: "2026-06-27", period: "Q3", netIncome: 30, revenue: 100 }],
+      balance: [{ date: "2026-06-27", totalStockholdersEquity: 120, totalAssets: 400 }],
+      cash: [],
+      ratios: [],
+      quarterlyIncome: [],
+      quarterlyBalance: [],
+      quarterlyCash: [],
+      ratiosTtm: null,
+    });
+    const value = (id: string) => table.rows.find((item) => item.id === id)?.values[0];
+    expect(value("roe")).toBeCloseTo(1);
+    expect(value("roa")).toBeCloseTo(0.3);
+    expect(value("assetTurnover")).toBeCloseTo(1);
+    // One price-less column can't make a valuation chart, so returns are charted instead.
+    expect(table.chart.title).toBe("Returns");
   });
 
   it("omits the TTM column when there aren't four quarters", () => {
@@ -200,6 +238,24 @@ describe("getStatementTable", () => {
     expect(quarterly.ok && quarterly.data.period).toBe("quarterly");
     const ratioCalls = fetchMock.mock.calls.filter(([input]) => new URL(input).pathname === "/stable/ratios");
     expect(ratioCalls.map(([input]) => new URL(input).searchParams.get("period"))).toEqual(["annual"]);
+  });
+
+  it("merges each year's key metrics into its ratios, and asks for them only on the Ratios tab", async () => {
+    const fetchMock = mockFmp({
+      "income-statement:annual": annualIncome,
+      "ratios:annual": [{ date: "2025-09-27", priceToEarningsRatio: 31 }],
+      "key-metrics:annual": [{ date: "2025-09-27", enterpriseValue: 3.7e12, evToEBITDA: 26 }],
+      "key-metrics-ttm": [{ enterpriseValueTTM: 5.1e12 }],
+    });
+    const ratios = await getStatementTable("AAPL", "ratios", "annual");
+    if (!ratios.ok) throw new Error(ratios.reason);
+    const fy2025 = ratios.data.columns.findIndex((column) => column.periodEnding === "2025-09-27");
+    const value = (id: string) => ratios.data.rows.find((item) => item.id === id)?.values[fy2025];
+    expect([value("pe"), value("evEbitda"), value("enterpriseValue")]).toEqual([31, 26, 3.7e12]);
+
+    fetchMock.mockClear();
+    await getStatementTable("AAPL", "income", "annual");
+    expect(fetchMock.mock.calls.some(([input]) => new URL(input).pathname.includes("key-metrics"))).toBe(false);
   });
 
   it("shares cached requests with the fundamentals loader", async () => {

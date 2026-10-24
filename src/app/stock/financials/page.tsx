@@ -179,9 +179,10 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
   const subtitle = (data: StatementTable, ratios: boolean) => (
     <p>
       {ratios
-        ? "Valuation ratios, margins, returns and financial health."
+        ? "Valuation multiples, yields, returns, financial health and efficiency."
         : `Financials in millions ${data.currency}, except per-share data.`}
       {data.fiscalYear && ` Fiscal year is ${data.fiscalYear}.`}
+      {ratios && period === "quarterly" && " Returns and turnover in quarterly columns are annualized."}
       {data.source === "sec"
         ? " From the company's SEC filings, as FMP couldn't provide them (its free plan doesn't cover every company and has a daily limit)."
         : period === "quarterly" && " The free FMP plan includes the last 5 quarters."}
