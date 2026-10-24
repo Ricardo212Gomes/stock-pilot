@@ -10,7 +10,8 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 2. Set `FMP_API_KEY` to the key from your FMP account.
 3. Set `GEMINI_API_KEY` to your Gemini API key to enable AI analysis. `GOOGLE_GENERATIVE_AI_API_KEY` is also accepted if you already use that name. Optionally set `GEMINI_MODEL` to override the default model.
 4. Set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io) API key to enable the News page. The Finnhub secret is not needed.
-5. Restart the Next.js development server after changing the environment file.
+5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
+6. Restart the Next.js development server after changing the environment file.
 
 All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 
@@ -50,6 +51,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/dividends.md`](./docs/dividends.md) | The dividend calendar: data, free-plan limits and the two date views |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
+| [`docs/auth.md`](./docs/auth.md) | Google sign-in: setup, session cookie and the top bar menu |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
 | [`DESIGN.md`](./DESIGN.md) | Design tokens and component rules |
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { VALUATION_TOOLS, type ValuationTool } from "../valuation/tools";
 import { ThemeToggle } from "./theme-toggle";
 import { TickerSearch } from "./ticker-search";
+import { UserMenu } from "./user-menu";
 
 type AppShellProps = {
   children: ReactNode;
@@ -154,6 +155,7 @@ export function AppShell({
                 action={valuationPath ?? (activeSection === "news" ? "/news" : "/stock")}
               />
               <ThemeToggle />
+              <UserMenu />
             </div>
           </header>
 
