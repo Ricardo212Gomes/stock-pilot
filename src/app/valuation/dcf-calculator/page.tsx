@@ -1,13 +1,10 @@
-import type { Metadata } from "next";
 import { AppShell } from "../../components/app-shell";
+import { companyMetadata } from "../../components/company-metadata";
 import { loadDcfData } from "../data";
 import { DcfCalculator } from "../dcf-calculator";
 import { LoadError, SecSourceNote, ToolBreadcrumb, ToolHeading, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
-export const metadata: Metadata = {
-  title: "DCF Calculator — StockPilot",
-  description: "Discount ten years of free cash flow plus a terminal value to a value per share.",
-};
+export const generateMetadata = companyMetadata("DCF Calculator", "Discount ten years of free cash flow plus a terminal value to a value per share.");
 
 export default async function DcfCalculatorPage({ searchParams }: { searchParams: ValuationSearchParams }) {
   const symbol = await readSymbol(searchParams);

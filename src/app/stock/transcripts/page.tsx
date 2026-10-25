@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
-import { QuoteHeader } from "../../components/quote-header";
+import { CompanyHeader } from "../../components/company-header";
+import { companyMetadata } from "../../components/company-metadata";
 import { StockNav } from "../../components/stock-nav";
-import stocks from "@/data/us-stocks.json";
 import { normalizeTicker } from "@/lib/fmp";
+import { listedName } from "@/lib/listed-companies";
 import { getQuote } from "@/lib/stock-overview";
 import { getSavedSummary } from "@/lib/transcript-summary";
 import { TranscriptSummaryCard } from "./transcript-summary";
@@ -22,10 +22,7 @@ import {
   type TranscriptSegment,
 } from "@/lib/transcripts";
 
-export const metadata: Metadata = {
-  title: "Earnings call transcripts — StockPilot",
-  description: "Read a company's earnings calls, speaker by speaker.",
-};
+export const generateMetadata = companyMetadata("Transcripts", "Read a company's earnings calls, speaker by speaker, with an AI summary.");
 
 type TranscriptsPageProps = {
   searchParams: Promise<{ symbol?: string | string[]; quarter?: string | string[] }>;
@@ -112,17 +109,11 @@ export default async function TranscriptsPage({ searchParams }: TranscriptsPageP
     savedQuarters(symbol, quarters),
     result.ok ? getSavedSummary(symbol, quarter) : Promise.resolve(null),
   ]);
-  // When FMP's plan doesn't cover the company, the bundled stock list still knows its name.
-  const listedName = (stocks as [string, string, number][]).find(([listed]) => listed === symbol)?.[1];
-  const companyName = quote.ok ? quote.data.name : listedName ?? symbol;
+  const companyName = quote.ok ? quote.data.name : listedName(symbol) ?? symbol;
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} transcripts`}>
-      {quote.ok ? (
-        <QuoteHeader quote={quote.data} currency="USD" />
-      ) : (
-        <section className="quote-header"><h1>{listedName ? `${listedName} (${symbol})` : symbol}</h1></section>
-      )}
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Transcripts`} dataSource="Transcripts from Alpha Vantage">
+      <CompanyHeader symbol={symbol} quote={quote} />
       <StockNav symbol={symbol} active="transcripts" />
 
       <div className="statement-toolbar">
@@ -145,7 +136,7 @@ export default async function TranscriptsPage({ searchParams }: TranscriptsPageP
         <div>
           <p className="section-label">EARNINGS CALL</p>
           <div className="company-title-row">
-            <h1>{companyName} {quarterLabel(quarter)} earnings call</h1>
+            <h2>{companyName} {quarterLabel(quarter)} earnings call</h2>
           </div>
           <p className="company-subtitle">
             {fellBack

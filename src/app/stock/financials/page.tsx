@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
-import { QuoteHeader } from "../../components/quote-header";
+import { CompanyHeader } from "../../components/company-header";
+import { companyMetadata } from "../../components/company-metadata";
 import { StockNav } from "../../components/stock-nav";
 import { FinancialCharts } from "../financial-charts";
 import { StatementChart } from "./statement-chart";
@@ -18,12 +18,10 @@ import {
   type StatementTable,
   type ValueFormat,
 } from "@/lib/financial-statements";
+import { listedName } from "@/lib/listed-companies";
 import { getQuote } from "@/lib/stock-overview";
 
-export const metadata: Metadata = {
-  title: "Financials — StockPilot",
-  description: "Income statement, balance sheet, cash flow and ratios, annual and quarterly.",
-};
+export const generateMetadata = companyMetadata("Financials", "Income statement, balance sheet, cash flow and ratios, annual and quarterly.");
 
 type FinancialsPageProps = {
   searchParams: Promise<{ symbol?: string | string[]; statement?: string | string[]; period?: string | string[] }>;
@@ -172,7 +170,7 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
   // Every statement table shares the income statement, so its failure is the page's failure.
   const primary = tables[0];
   const currency = primary.ok ? primary.data.currency : "USD";
-  const companyName = quote.ok ? shortName(quote.data.name) : symbol;
+  const companyName = shortName(quote.ok ? quote.data.name : listedName(symbol) ?? symbol);
   const forwardPe = quote.ok && chartExtras && chartExtras.nextYearEps !== null && chartExtras.nextYearEps > 0
     ? quote.data.price / chartExtras.nextYearEps
     : null;
@@ -190,12 +188,8 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
   );
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} financials`}>
-      {quote.ok ? (
-        <QuoteHeader quote={quote.data} currency={currency} />
-      ) : (
-        <section className="quote-header"><h1>{symbol}</h1></section>
-      )}
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Financials`}>
+      <CompanyHeader symbol={symbol} quote={quote} currency={currency} />
       <StockNav symbol={symbol} active="financials" />
 
       <div className="statement-toolbar">

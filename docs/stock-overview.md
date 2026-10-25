@@ -16,6 +16,8 @@
 
 Search, the home page examples and breadcrumbs land on the Overview.
 
+Every company tab shares the same header (`CompanyHeader`: the quote, or the company name from the bundled stock list when no quote is available) and tab bar, and is titled "AAPL Overview — StockPilot", "AAPL Financials — StockPilot" and so on (`companyMetadata`). The top bar reads "AAPL · Overview", and the footer credits the tab's source.
+
 ## Search
 
 The top bar search (`src/app/components/ticker-search.tsx`) takes a company name or a ticker. Matching runs in the browser over `src/data/us-stocks.json`, a list of about 5,900 US-listed stocks, so typing makes no API requests. The list is a separate ~70 KB (compressed) chunk, loaded the first time the search box gets focus.

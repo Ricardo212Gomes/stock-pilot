@@ -11,8 +11,10 @@ type AppShellProps = {
   contentClassName: string;
   tickerValue?: string;
   activeSection?: "research" | "favorites" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
-  // Overrides the top bar label, e.g. "AAPL overview".
+  // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
+  // Overrides the footer's data credit, for pages with their own source.
+  dataSource?: string;
 };
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
@@ -23,7 +25,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "dividends") return "Dividend calendar";
   const tool = VALUATION_TOOLS.find(({ id }) => id === section);
   if (tool) return ticker ? `${ticker} · ${tool.label}` : tool.label;
-  return ticker ? `${ticker} fundamentals` : "Company fundamentals";
+  return ticker ? `${ticker} · Overview` : "Company research";
 }
 
 const VALUATION_ICONS: Record<ValuationTool, string> = {
@@ -41,6 +43,7 @@ export function AppShell({
   tickerValue = "",
   activeSection = "research",
   headerLabel,
+  dataSource,
 }: AppShellProps) {
   const valuationPath = VALUATION_TOOLS.find(({ id }) => id === activeSection)?.path;
   return (
@@ -177,11 +180,11 @@ export function AppShell({
           <footer className="app-footer">
             <span>StockPilot</span>
             <span>
-              {activeSection === "maps"
+              {dataSource ?? (activeSection === "maps"
                 ? "Market map by FINVIZ"
                 : activeSection === "news" || activeSection === "earnings"
                   ? `${activeSection === "news" ? "News" : "Earnings data"} provided by Finnhub`
-                  : "Financial data provided by Financial Modeling Prep"}
+                  : "Financial data provided by Financial Modeling Prep")}
             </span>
           </footer>
         </div>

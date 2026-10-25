@@ -146,12 +146,11 @@ export function ProjectionWorkbench({
         <div>
           <p className="section-label">INTRINSIC VALUE</p>
           <div className="company-title-row">
-            <h1>{symbol}</h1>
+            <h1>{companyName ? `${companyName} (${symbol})` : symbol}</h1>
             <span className="access-badge">{typeInfo.label.toUpperCase()}</span>
           </div>
           <p className="company-subtitle">
-            {companyName ? `${companyName}: intrinsic value` : "Intrinsic value"} estimates from{" "}
-            {MODEL_ORDER.length} valuation models, built on its annual filings.
+            Intrinsic value estimates from {MODEL_ORDER.length} valuation models, built on its annual filings.
           </p>
         </div>
       </section>

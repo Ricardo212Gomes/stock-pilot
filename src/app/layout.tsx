@@ -8,9 +8,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StockPilot — Company fundamentals",
+  title: "StockPilot — Stock research",
   description:
-    "Explore annual revenue, earnings, margins, debt and cash flow for public companies.",
+    "Research US stocks: financials, earnings call transcripts, SEC filings, valuation calculators and market calendars.",
 };
 
 // Applies a collapsed sidebar before the first paint, so the page doesn't jump when the

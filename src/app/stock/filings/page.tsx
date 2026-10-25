@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
-import { QuoteHeader } from "../../components/quote-header";
+import { CompanyHeader } from "../../components/company-header";
+import { companyMetadata } from "../../components/company-metadata";
 import { StockNav } from "../../components/stock-nav";
-import stocks from "@/data/us-stocks.json";
 import { normalizeTicker } from "@/lib/fmp";
 import {
   FILING_TYPES,
@@ -16,10 +15,7 @@ import {
 } from "@/lib/sec-filings";
 import { getQuote } from "@/lib/stock-overview";
 
-export const metadata: Metadata = {
-  title: "SEC filings — StockPilot",
-  description: "A company's annual and quarterly reports, earnings releases and other SEC filings.",
-};
+export const generateMetadata = companyMetadata("Filings", "A company's annual and quarterly reports, earnings releases and other SEC filings.");
 
 const PAGE_SIZE = 30;
 // Press-release lookups per page shown, newest first: one small request each, cached for a month.
@@ -61,7 +57,6 @@ export default async function FilingsPage({ searchParams }: FilingsPageProps) {
   const page = Math.max(1, Number.parseInt(single(params.page) ?? "1", 10) || 1);
 
   const [quote, result] = await Promise.all([getQuote(symbol), getFilings(symbol)]);
-  const listedName = (stocks as [string, string, number][]).find(([listed]) => listed === symbol)?.[1];
 
   const matching = result.ok ? result.data.filings.filter((filing) => filingMatches(filing, type)) : [];
   const shown = matching.slice(0, page * PAGE_SIZE);
@@ -71,12 +66,8 @@ export default async function FilingsPage({ searchParams }: FilingsPageProps) {
   ));
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} filings`}>
-      {quote.ok ? (
-        <QuoteHeader quote={quote.data} currency="USD" />
-      ) : (
-        <section className="quote-header"><h1>{listedName ? `${listedName} (${symbol})` : symbol}</h1></section>
-      )}
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Filings`} dataSource="Filings from SEC EDGAR">
+      <CompanyHeader symbol={symbol} quote={quote} />
       <StockNav symbol={symbol} active="filings" />
 
       <div className="statement-toolbar">

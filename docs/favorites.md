@@ -1,6 +1,6 @@
 # Favorites
 
-Signed-in users can star companies and see them on `/favorites`, with the latest price, the day's change, market cap and links to Financials, the Intrinsic value tool and News. Favorites belong to the Google account (see [`auth.md`](./auth.md)) and are stored in Postgres.
+Signed-in users can star companies and see them on `/favorites`, with the latest price, the day's change, market cap and links to Financials, the Intrinsic Value tool and News. Favorites belong to the Google account (see [`auth.md`](./auth.md)) and are stored in Postgres.
 
 ## Database
 

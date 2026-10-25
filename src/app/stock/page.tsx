@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "../components/app-shell";
+import { CompanyHeader } from "../components/company-header";
+import { companyMetadata } from "../components/company-metadata";
 import { QuoteHeader } from "../components/quote-header";
 import { StockNav } from "../components/stock-nav";
 import { PriceHistoryChart } from "./price-history-chart";
@@ -9,10 +10,7 @@ import { getStockPriceHistory, normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
 import { getStockOverview, type StockOverview } from "@/lib/stock-overview";
 
-export const metadata: Metadata = {
-  title: "Stock overview — StockPilot",
-  description: "Price, key statistics, analyst views and company profile for any stock.",
-};
+export const generateMetadata = companyMetadata("Overview", "Price, key statistics, analyst views and company profile for any stock.");
 
 const ABOUT_LENGTH = 600;
 
@@ -177,19 +175,18 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
 
   if (!overview.ok) {
     return (
-      <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} overview`}>
+      <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Overview`}>
+        <CompanyHeader symbol={symbol} quote={null} />
         <StockNav symbol={symbol} active="overview" />
         <section className="empty-state" role="status">
           <span className="empty-state-icon" aria-hidden="true">!</span>
           <div>
             <h2>We couldn&apos;t load {symbol}</h2>
             <p>
-              {overview.reason === "no-data"
-                ? `FMP has no quote for ${symbol}. Check the ticker.`
-                : overview.reason === "plan-restricted"
-                  // FMP answers 402 both for unknown tickers and for ones outside the plan.
-                  ? `FMP didn't return a quote for ${symbol}. Check the ticker: free FMP plans cover most large US-listed stocks, but not every company or exchange.`
-                  : providerFailureMessage(overview.reason, "the quote")}
+              {overview.reason === "no-data" || overview.reason === "plan-restricted" || overview.reason === "rate-limited"
+                // A plan restriction or limit only gets here when Finnhub has no quote either.
+                ? `Neither FMP nor Finnhub has a quote for ${symbol}. Check the ticker, or search by company name above.`
+                : providerFailureMessage(overview.reason, "the quote")}
             </p>
           </div>
         </section>
@@ -201,7 +198,7 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
   const [left, right] = statRows(data);
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} overview`}>
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Overview`}>
       <QuoteHeader quote={data} currency={data.currency} />
 
       <StockNav symbol={symbol} active="overview" />

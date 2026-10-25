@@ -4,7 +4,7 @@ FMP is the main data source. Its free plan doesn't cover every company (CrowdStr
 
 | What | Fallback | Where |
 | --- | --- | --- |
-| Income statement, balance sheet, cash flow (annual, quarterly, TTM) | SEC EDGAR company facts | Financials, Intrinsic value, 3-Year Projection, DCF Calculator |
+| Income statement, balance sheet, cash flow (annual, quarterly, TTM) | SEC EDGAR company facts | Financials, Intrinsic Value, 3-Year Projection, DCF Calculator |
 | Trailing valuation ratios (P/E, P/S, P/B, P/FCF, dividend yield) | Finnhub `stock/metric` | Ratios tab (TTM column only) |
 | Quote: price, change, open, day and 52-week range, market cap | Finnhub `quote`, `stock/profile2`, `stock/metric` | Every company page |
 | Revenue, net income and EPS over the trailing twelve months | SEC quarterly rows | Overview |

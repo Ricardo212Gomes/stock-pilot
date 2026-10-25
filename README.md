@@ -1,6 +1,6 @@
 # StockPilot
 
-StockPilot looks up a stock ticker and displays up to five annual periods of company fundamentals from Financial Modeling Prep (FMP): income statement metrics, balance sheet figures, cash flow and financial ratios.
+StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with three calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Alpha Vantage and FINVIZ, on their free plans.
 
 ## Configure FMP
 
@@ -26,11 +26,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and type a company name or ticker, such as `Nvidia` or `NVDA`, in the top search; pick a suggestion or press Enter for the best match. The search runs in the browser over a bundled list of about 5,900 US stocks, so it makes no API requests; refresh the list with `npm run symbols:update` (see [`docs/stock-overview.md`](./docs/stock-overview.md#search)). Each company has five tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL`, **News**, **Transcripts** at `/stock/transcripts?symbol=AAPL` (earnings calls, speaker by speaker) and **Filings** at `/stock/filings?symbol=AAPL` (SEC reports, earnings releases and other filings).
+Open [http://localhost:3000](http://localhost:3000) for the home page, which links to every tool, and type a company name or ticker, such as `Nvidia` or `NVDA`, in its search or the top bar's; pick a suggestion or press Enter for the best match. The search runs in the browser over a bundled list of about 5,900 US stocks, so it makes no API requests; refresh the list with `npm run symbols:update` (see [`docs/stock-overview.md`](./docs/stock-overview.md#search)). Each company has five tabs: **Overview** at `/stock?symbol=AAPL` (quote, key statistics, chart and profile), **Financials** at `/stock/financials?symbol=AAPL`, **News**, **Transcripts** at `/stock/transcripts?symbol=AAPL` (earnings calls, speaker by speaker) and **Filings** at `/stock/filings?symbol=AAPL` (SEC reports, earnings releases and other filings).
 
 FMP data access depends on the endpoints and history included in your subscription. When FMP can't return the statements, the page says why: rate limit, invalid key, plan restriction or another provider error.
 
-The sidebar's **Valuation** section has three calculators. **Intrinsic value** at `/valuation/intrinsic-value?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models; it picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. **3-Year Projection** at `/valuation/three-year-projection` follows Jeremy Lefebvre's projection template, estimating the price and annual return in five scenarios from revenue growth, net income growth and a P/E range. **DCF Calculator** at `/valuation/dcf-calculator` discounts ten years of free cash flow plus a terminal value to a value per share.
+The sidebar's **Valuation** section has three calculators. **Intrinsic Value** at `/valuation/intrinsic-value?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models; it picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. **3-Year Projection** at `/valuation/three-year-projection` follows Jeremy Lefebvre's projection template, estimating the price and annual return in five scenarios from revenue growth, net income growth and a P/E range. **DCF Calculator** at `/valuation/dcf-calculator` discounts ten years of free cash flow plus a terminal value to a value per share.
 
 The **Market maps** page at `/maps` embeds the FINVIZ one-day heat maps of the S&P 500, the Nasdaq 100 and the largest cryptocurrencies.
 
