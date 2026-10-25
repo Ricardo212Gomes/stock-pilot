@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "favorites" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "favorites" | "settings" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.

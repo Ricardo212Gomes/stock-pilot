@@ -18,3 +18,9 @@ export function getSql(): Sql {
   });
   return globalForDb.stockPilotSql;
 }
+
+// For command-line scripts: close the pool so the process can exit.
+export async function closeDb(): Promise<void> {
+  await globalForDb.stockPilotSql?.end();
+  globalForDb.stockPilotSql = undefined;
+}

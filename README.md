@@ -13,7 +13,8 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
 6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
 7. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**; see [`docs/favorites.md`](./docs/favorites.md).
-8. Restart the Next.js development server after changing the environment file.
+8. Optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send favorites' upcoming earnings and earnings call summaries to Telegram; see [`docs/notifications.md`](./docs/notifications.md).
+9. Restart the Next.js development server after changing the environment file.
 
 All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 
@@ -59,6 +60,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/auth.md`](./docs/auth.md) | Google sign-in: setup, session cookie and the top bar menu |
 | [`docs/filings.md`](./docs/filings.md) | The Filings tab: SEC EDGAR filings, filters, 8-K descriptions and press releases |
 | [`docs/transcripts.md`](./docs/transcripts.md) | Earnings call transcripts: Alpha Vantage, fiscal quarters, saving them in Postgres and the free-key limits |
+| [`docs/notifications.md`](./docs/notifications.md) | Telegram notifications: the bot, linking a chat, the two commands and the GitHub Actions schedule |
 | [`docs/favorites.md`](./docs/favorites.md) | Favorites: the Postgres database, schema setup, the star button and the list |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
 | [`DESIGN.md`](./DESIGN.md) | Design tokens and component rules |

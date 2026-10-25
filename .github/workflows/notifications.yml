@@ -1,0 +1,42 @@
+# Telegram notifications for users' favorites (see docs/notifications.md).
+# Scheduled workflows only run from the repository's default branch.
+name: Notifications
+
+on:
+  schedule:
+    # Mondays at 07:00 UTC: favorites reporting earnings in the next 7 days.
+    - cron: "0 7 * * 1"
+    # Every day at 13:00 UTC: summaries of favorites' new earnings calls.
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Which notification to send
+        type: choice
+        options: [earnings, transcripts]
+        default: transcripts
+
+concurrency:
+  group: notifications-${{ github.event.inputs.kind || github.event.schedule }}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Send notifications
+        run: npm run notify:${{ github.event.inputs.kind || (github.event.schedule == '0 7 * * 1' && 'earnings' || 'transcripts') }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_BOT_USERNAME: ${{ secrets.TELEGRAM_BOT_USERNAME }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          APP_URL: ${{ secrets.APP_URL }}
