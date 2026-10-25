@@ -1,14 +1,12 @@
-import type { Metadata } from "next";
 import { AppShell } from "../../components/app-shell";
+import { companyMetadata } from "../../components/company-metadata";
 import { providerFailureMessage } from "@/lib/fmp-messages";
+import { listedName } from "@/lib/listed-companies";
 import { loadProjectionData } from "../data";
 import { ProjectionWorkbench } from "../projection-workbench";
-import { LoadError, ToolBreadcrumb, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
+import { LoadError, SecSourceNote, ToolBreadcrumb, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
-export const metadata: Metadata = {
-  title: "Intrinsic value — StockPilot",
-  description: "Estimate a company's intrinsic value with DCF, dividend, earnings and residual income models.",
-};
+export const generateMetadata = companyMetadata("Intrinsic Value", "Estimate a company's intrinsic value with DCF, dividend, earnings and residual income models.");
 
 export default async function IntrinsicValuePage({ searchParams }: { searchParams: ValuationSearchParams }) {
   const symbol = await readSymbol(searchParams);
@@ -28,7 +26,7 @@ export default async function IntrinsicValuePage({ searchParams }: { searchParam
       ) : (
         <ProjectionWorkbench
           symbol={symbol}
-          companyName={loaded.data.profile?.companyName ?? null}
+          companyName={loaded.data.profile?.companyName ?? listedName(symbol)}
           currency={loaded.data.fundamentals.annualFinancials[0]?.currency ?? loaded.data.profile?.currency ?? "USD"}
           classification={loaded.data.classification}
           defaults={loaded.data.defaults}
@@ -39,6 +37,7 @@ export default async function IntrinsicValuePage({ searchParams }: { searchParam
           }
         />
       )}
+      {loaded?.ok && <SecSourceNote source={loaded.data.fundamentals.source} />}
     </AppShell>
   );
 }

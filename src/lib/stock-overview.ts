@@ -1,5 +1,6 @@
 import {
   FMP_BASE_URL,
+  canUseFallback,
   failureReason,
   fetchFmp,
   getCompanyProfile,
@@ -8,6 +9,7 @@ import {
   type FmpFailureReason,
 } from "./fmp";
 import { fetchFinnhub, finnhubSymbol } from "./finnhub";
+import { getSecStatements } from "./sec";
 
 // The quote moves all day; everything else changes at most daily.
 const QUOTE_REVALIDATE_SECONDS = 60;
@@ -18,6 +20,8 @@ const TTM_QUARTERS = 4;
 export type StockOverview = {
   symbol: string;
   name: string;
+  // "finnhub" when FMP's plan doesn't cover the company; its statistics then come from Finnhub and SEC filings.
+  quoteSource: StockQuote["source"];
   exchange: string | null;
   currency: string;
   price: number;
@@ -152,9 +156,11 @@ export type StockQuote = {
   price: number;
   change: number | null;
   changePercent: number | null;
-  // Unix seconds of the last trade FMP reports.
+  // Unix seconds of the last trade.
   quoteTime: number | null;
   marketCap: number | null;
+  // "finnhub" when FMP's plan doesn't cover the company.
+  source: "fmp" | "finnhub";
   raw: Row;
 };
 
@@ -166,10 +172,16 @@ export async function getQuote(symbol: string): Promise<StockQuoteResult> {
   if (!process.env.FMP_API_KEY) return { ok: false, reason: "not-configured" };
 
   let quote: Row | undefined;
+  let source: StockQuote["source"] = "fmp";
   try {
     quote = (await fmpRows("quote", { symbol }, QUOTE_REVALIDATE_SECONDS))[0];
   } catch (error) {
-    return { ok: false, reason: failureReason(error) };
+    const reason = failureReason(error);
+    if (!canUseFallback(reason)) return { ok: false, reason };
+    // Companies FMP's plan doesn't cover, or FMP's daily limit: Finnhub's free quote covers every US stock.
+    quote = (await finnhubQuote(symbol)) ?? undefined;
+    if (!quote) return { ok: false, reason };
+    source = "finnhub";
   }
   const price = num(quote?.price);
   if (!quote || price === null) return { ok: false, reason: "no-data" };
@@ -185,8 +197,51 @@ export async function getQuote(symbol: string): Promise<StockQuoteResult> {
       changePercent: num(quote.changePercentage) !== null ? num(quote.changePercentage)! / 100 : null,
       quoteTime: num(quote.timestamp),
       marketCap: num(quote.marketCap),
+      source,
       raw: quote,
     },
+  };
+}
+
+function shortExchange(name: string | null): string | null {
+  if (!name) return null;
+  if (/nasdaq/i.test(name)) return "NASDAQ";
+  if (/new york/i.test(name)) return "NYSE";
+  return name;
+}
+
+// A quote shaped like FMP's, from Finnhub's quote, company profile and 52-week range. Finnhub
+// reports market cap and shares in millions and has no volume.
+async function finnhubQuote(symbol: string): Promise<Row | null> {
+  const ticker = finnhubSymbol(symbol);
+  const [quote, profile, metric] = await Promise.all([
+    fetchFinnhub("quote", { symbol: ticker }, QUOTE_REVALIDATE_SECONDS),
+    fetchFinnhub("stock/profile2", { symbol: ticker }, DAILY_REVALIDATE_SECONDS),
+    fetchFinnhub("stock/metric", { symbol: ticker, metric: "all" }, DAILY_REVALIDATE_SECONDS),
+  ]);
+  const q = quote.ok ? (quote.payload as Row | null) : null;
+  const price = num(q?.c);
+  // Finnhub answers unknown symbols with a zero price.
+  if (!q || price === null || price === 0) return null;
+  const p = profile.ok ? ((profile.payload ?? {}) as Row) : {};
+  const m = metric.ok ? (((metric.payload as { metric?: Row } | null)?.metric) ?? {}) : {};
+  const marketCapMillions = num(p.marketCapitalization);
+  return {
+    symbol,
+    name: str(p.name) ?? symbol,
+    exchange: shortExchange(str(p.exchange)),
+    price,
+    change: num(q.d),
+    changePercentage: num(q.dp),
+    open: num(q.o),
+    previousClose: num(q.pc),
+    dayLow: num(q.l),
+    dayHigh: num(q.h),
+    yearLow: num(m["52WeekLow"]),
+    yearHigh: num(m["52WeekHigh"]),
+    timestamp: num(q.t),
+    marketCap: marketCapMillions !== null ? marketCapMillions * 1e6 : null,
+    volume: null,
   };
 }
 
@@ -210,7 +265,13 @@ export async function getStockOverview(symbol: string, today = new Date()): Prom
 
   const profile = profileResult.ok ? profileResult.data : null;
   const isoToday = today.toISOString().slice(0, 10);
-  const ttm = trailingTwelveMonths(quarters);
+  // Without FMP's quarters (a company its plan doesn't cover), the SEC's give the trailing year.
+  let quarterRows = quarters;
+  if (quarterRows.length === 0) {
+    const sec = await getSecStatements(symbol);
+    if (sec.ok) quarterRows = sec.data.quarterly.income;
+  }
+  const ttm = trailingTwelveMonths(quarterRows);
   const dividend = annualDividend(dividends);
   const marketCap = num(quote.marketCap);
   const sharesOutstanding = num(float[0]?.outstandingShares) ?? (marketCap !== null ? marketCap / price : null);
@@ -229,6 +290,7 @@ export async function getStockOverview(symbol: string, today = new Date()): Prom
     data: {
       symbol,
       name: str(quote.name) ?? profile?.companyName ?? symbol,
+      quoteSource: quoteResult.data.source,
       exchange: str(quote.exchange) ?? profile?.exchange ?? null,
       currency: profile?.currency ?? "USD",
       price,

@@ -1,3 +1,5 @@
+import { getSecStatements } from "./sec";
+
 export const FMP_BASE_URL = "https://financialmodelingprep.com/stable";
 const ANNUAL_PERIODS = 5;
 // Cache successful FMP responses to stay within the plan's daily request limit.
@@ -109,10 +111,19 @@ export type FinancialChartExtras = {
   nextYearDate: string | null;
 };
 
+// Where the statements came from: FMP, or SEC filings when FMP's plan doesn't cover the company.
+export type StatementSource = "fmp" | "sec";
+
 export type CompanyFundamentals = {
   symbol: string;
   annualFinancials: AnnualFinancialSummary[];
+  source: StatementSource;
 };
+
+// Failures another source can stand in for: a company the plan doesn't cover, or the daily limit.
+export function canUseFallback(reason: FmpFailureReason): boolean {
+  return reason === "plan-restricted" || reason === "rate-limited";
+}
 
 export type FmpFailureReason =
   | "not-configured"
@@ -247,83 +258,104 @@ export async function getCompanyFundamentals(symbol: string): Promise<Fundamenta
       fetchAnnualRows<CashFlowStatement>("cash-flow-statement", symbol, apiKey),
       fetchAnnualRows<FinancialRatios>("ratios", symbol, apiKey),
     ]);
-
-    const validIncomeStatements = incomeStatements.filter(
-      (row) => row.date && (numeric(row.revenue) !== null || numeric(row.netIncome) !== null),
-    );
-    if (validIncomeStatements.length === 0) return { ok: false, reason: "no-data" };
-
-    const balanceByDate = indexByDate(balanceSheets);
-    const cashFlowByDate = indexByDate(cashFlowStatements);
-    const ratiosByDate = indexByDate(ratios);
-    const sortedIncome = [...validIncomeStatements].sort((left, right) =>
-      (right.date ?? "").localeCompare(left.date ?? ""),
-    );
-
-    const annualFinancials = sortedIncome.map((income, index): AnnualFinancialSummary => {
-      const key = periodKey(income);
-      const balance = balanceByDate.get(key);
-      const cashFlow = cashFlowByDate.get(key);
-      const ratio = ratiosByDate.get(key);
-      const revenue = numeric(income.revenue);
-      const grossProfit = numeric(income.grossProfit);
-      const operatingIncome = numeric(income.operatingIncome);
-      const netIncome = numeric(income.netIncome);
-      const totalDebt = numeric(balance?.totalDebt);
-      const cash = numeric(balance?.cashAndShortTermInvestments)
-        ?? numeric(balance?.cashAndCashEquivalents);
-      const equity = numeric(balance?.totalStockholdersEquity);
-      const netDebt = numeric(balance?.netDebt)
-        ?? (totalDebt !== null && cash !== null ? totalDebt - cash : null);
-      const dividendYieldPercentage = numeric(ratio?.dividendYieldPercentage);
-      const previousRevenue = numeric(sortedIncome[index + 1]?.revenue);
-      const operatingCashFlow = numeric(cashFlow?.operatingCashFlow);
-      const capitalExpenditure = numeric(cashFlow?.capitalExpenditure);
-
-      return {
-        date: income.date ?? "",
-        fiscalYear: String(income.fiscalYear ?? income.date?.slice(0, 4) ?? "—"),
-        period: income.period ?? "FY",
-        currency: normalizeCurrency(income.reportedCurrency),
-        revenue,
-        revenueGrowth: divide(revenue !== null && previousRevenue !== null ? revenue - previousRevenue : null, previousRevenue),
-        grossProfit,
-        grossMargin: numeric(ratio?.grossProfitMargin) ?? divide(grossProfit, revenue),
-        operatingIncome,
-        operatingMargin: numeric(ratio?.operatingProfitMargin) ?? divide(operatingIncome, revenue),
-        netIncome,
-        netMargin: numeric(ratio?.netProfitMargin) ?? divide(netIncome, revenue),
-        eps: numeric(income.epsDiluted) ?? numeric(income.eps),
-        sharesDiluted: numeric(income.weightedAverageShsOutDil),
-        totalDebt,
-        cash,
-        netDebt,
-        equity,
-        debtToEquity: numeric(ratio?.debtToEquityRatio) ?? divide(totalDebt, equity),
-        currentRatio: numeric(ratio?.currentRatio)
-          ?? divide(numeric(balance?.totalCurrentAssets), numeric(balance?.totalCurrentLiabilities)),
-        interestCoverage: numeric(ratio?.interestCoverageRatio),
-        operatingCashFlow,
-        freeCashFlow: numeric(cashFlow?.freeCashFlow)
-          ?? (operatingCashFlow !== null && capitalExpenditure !== null
-            ? operatingCashFlow + capitalExpenditure
-            : null),
-        capitalExpenditure,
-        dividendPerShare: numeric(ratio?.dividendPerShare),
-        dividendYield: numeric(ratio?.dividendYield)
-          ?? (dividendYieldPercentage !== null
-            ? dividendYieldPercentage / 100
-            : null),
-        peRatio: numeric(ratio?.priceToEarningsRatio),
-        psRatio: numeric(ratio?.priceToSalesRatio),
-        pfcfRatio: numeric(ratio?.priceToFreeCashFlowRatio),
-      };
-    });
-
-    return { ok: true, data: { symbol, annualFinancials } };
+    return summarizeFundamentals(symbol, incomeStatements, balanceSheets, cashFlowStatements, ratios, "fmp");
   } catch (error) {
-    return { ok: false, reason: failureReason(error) };
+    const reason = failureReason(error);
+    // Companies FMP's plan doesn't cover, or any company once the daily limit is reached, still
+    // have SEC filings, just without the ratios.
+    if (canUseFallback(reason)) {
+      const sec = await getSecStatements(symbol);
+      if (sec.ok) {
+        const { income, balance, cash } = sec.data.annual;
+        return summarizeFundamentals(symbol, income as IncomeStatement[], balance as BalanceSheet[], cash as CashFlowStatement[], [], "sec");
+      }
+    }
+    return { ok: false, reason };
   }
+}
+
+// One summary per fiscal year, newest first, from FMP-shaped statement rows.
+function summarizeFundamentals(
+  symbol: string,
+  incomeStatements: IncomeStatement[],
+  balanceSheets: BalanceSheet[],
+  cashFlowStatements: CashFlowStatement[],
+  ratios: FinancialRatios[],
+  source: StatementSource,
+): FundamentalsResult {
+  const validIncomeStatements = incomeStatements.filter(
+    (row) => row.date && (numeric(row.revenue) !== null || numeric(row.netIncome) !== null),
+  );
+  if (validIncomeStatements.length === 0) return { ok: false, reason: "no-data" };
+
+  const balanceByDate = indexByDate(balanceSheets);
+  const cashFlowByDate = indexByDate(cashFlowStatements);
+  const ratiosByDate = indexByDate(ratios);
+  const sortedIncome = [...validIncomeStatements].sort((left, right) =>
+    (right.date ?? "").localeCompare(left.date ?? ""),
+  );
+
+  const annualFinancials = sortedIncome.map((income, index): AnnualFinancialSummary => {
+    const key = periodKey(income);
+    const balance = balanceByDate.get(key);
+    const cashFlow = cashFlowByDate.get(key);
+    const ratio = ratiosByDate.get(key);
+    const revenue = numeric(income.revenue);
+    const grossProfit = numeric(income.grossProfit);
+    const operatingIncome = numeric(income.operatingIncome);
+    const netIncome = numeric(income.netIncome);
+    const totalDebt = numeric(balance?.totalDebt);
+    const cash = numeric(balance?.cashAndShortTermInvestments)
+      ?? numeric(balance?.cashAndCashEquivalents);
+    const equity = numeric(balance?.totalStockholdersEquity);
+    const netDebt = numeric(balance?.netDebt)
+      ?? (totalDebt !== null && cash !== null ? totalDebt - cash : null);
+    const dividendYieldPercentage = numeric(ratio?.dividendYieldPercentage);
+    const previousRevenue = numeric(sortedIncome[index + 1]?.revenue);
+    const operatingCashFlow = numeric(cashFlow?.operatingCashFlow);
+    const capitalExpenditure = numeric(cashFlow?.capitalExpenditure);
+
+    return {
+      date: income.date ?? "",
+      fiscalYear: String(income.fiscalYear ?? income.date?.slice(0, 4) ?? "—"),
+      period: income.period ?? "FY",
+      currency: normalizeCurrency(income.reportedCurrency),
+      revenue,
+      revenueGrowth: divide(revenue !== null && previousRevenue !== null ? revenue - previousRevenue : null, previousRevenue),
+      grossProfit,
+      grossMargin: numeric(ratio?.grossProfitMargin) ?? divide(grossProfit, revenue),
+      operatingIncome,
+      operatingMargin: numeric(ratio?.operatingProfitMargin) ?? divide(operatingIncome, revenue),
+      netIncome,
+      netMargin: numeric(ratio?.netProfitMargin) ?? divide(netIncome, revenue),
+      eps: numeric(income.epsDiluted) ?? numeric(income.eps),
+      sharesDiluted: numeric(income.weightedAverageShsOutDil),
+      totalDebt,
+      cash,
+      netDebt,
+      equity,
+      debtToEquity: numeric(ratio?.debtToEquityRatio) ?? divide(totalDebt, equity),
+      currentRatio: numeric(ratio?.currentRatio)
+        ?? divide(numeric(balance?.totalCurrentAssets), numeric(balance?.totalCurrentLiabilities)),
+      interestCoverage: numeric(ratio?.interestCoverageRatio),
+      operatingCashFlow,
+      freeCashFlow: numeric(cashFlow?.freeCashFlow)
+        ?? (operatingCashFlow !== null && capitalExpenditure !== null
+          ? operatingCashFlow + capitalExpenditure
+          : null),
+      capitalExpenditure,
+      dividendPerShare: numeric(ratio?.dividendPerShare),
+      dividendYield: numeric(ratio?.dividendYield)
+        ?? (dividendYieldPercentage !== null
+          ? dividendYieldPercentage / 100
+          : null),
+      peRatio: numeric(ratio?.priceToEarningsRatio),
+      psRatio: numeric(ratio?.priceToSalesRatio),
+      pfcfRatio: numeric(ratio?.priceToFreeCashFlowRatio),
+    };
+  });
+
+  return { ok: true, data: { symbol, annualFinancials, source } };
 }
 
 async function fetchOptionalRows<T>(

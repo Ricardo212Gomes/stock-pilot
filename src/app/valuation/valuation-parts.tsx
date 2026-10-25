@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
+import { listedName } from "@/lib/listed-companies";
 import { valuationTool, type ValuationTool } from "./tools";
 
 export type ValuationSearchParams = Promise<{ symbol?: string | string[] }>;
@@ -25,7 +26,7 @@ export function ToolHeading({ symbol, tool, children }: { symbol: string; tool: 
       <div>
         <p className="section-label">{valuationTool(tool).label.toUpperCase()}</p>
         <div className="company-title-row">
-          <h1>{symbol}</h1>
+          <h1>{listedName(symbol) ? `${listedName(symbol)} (${symbol})` : symbol}</h1>
         </div>
         <p className="company-subtitle">{children}</p>
       </div>
@@ -41,6 +42,17 @@ export function ToolStart({ tool, title, children }: { tool: ValuationTool; titl
       <h1>{title}</h1>
       <p>{children}</p>
     </section>
+  );
+}
+
+// Shown when the statements came from SEC filings instead of FMP.
+export function SecSourceNote({ source }: { source: "fmp" | "sec" }) {
+  if (source !== "sec") return null;
+  return (
+    <p className="news-footnote">
+      FMP couldn&apos;t provide this company (its free plan doesn&apos;t cover every company and has a daily limit), so
+      the figures come from its SEC filings and the quote from Finnhub.
+    </p>
   );
 }
 

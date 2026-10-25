@@ -4,15 +4,15 @@ The sidebar's **Valuation** section has three separate calculators, each taking 
 
 | Tool | Route |
 | --- | --- |
-| Intrinsic value | `/valuation/intrinsic-value?symbol=AAPL` |
+| Intrinsic Value | `/valuation/intrinsic-value?symbol=AAPL` |
 | 3-Year Projection | `/valuation/three-year-projection?symbol=AAPL` |
 | DCF Calculator | `/valuation/dcf-calculator?symbol=AAPL` |
 
-The sidebar links keep the current ticker, so you can switch tools for the same company. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (breadcrumb, heading, start screen and load error); `tools.ts` lists the tools for the sidebar. The old `/projections` page redirects to these (`?view=3y` and `?view=dcf` to the matching tool).
+The sidebar links keep the current ticker, so you can switch tools for the same company; clicking the tool that's already open starts it over without a ticker. (The sidebar's Stocks and News always open the leaderboards and market news; a company's own pages are its tabs.) They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (breadcrumb, heading, start screen and load error); `tools.ts` lists the tools for the sidebar. The old `/projections` page redirects to these (`?view=3y` and `?view=dcf` to the matching tool).
 
-## Intrinsic value
+## Intrinsic Value
 
-The Intrinsic value tool estimates a company's intrinsic value with six valuation models. It first works out what kind of stock it is, then recommends the models that fit. It fills every assumption from the filings, and an optional AI autofill can suggest forward-looking values instead. Everything recalculates in the browser as the user edits.
+The Intrinsic Value tool estimates a company's intrinsic value with six valuation models. It first works out what kind of stock it is, then recommends the models that fit. It fills every assumption from the filings, and an optional AI autofill can suggest forward-looking values instead. Everything recalculates in the browser as the user edits.
 
 ## Files
 
@@ -191,7 +191,7 @@ It also shows the upside against the price, a buy-below price after the margin o
 | Terminal value | Perpetual growth at 2.5%, or a 15× free cash flow exit multiple |
 | Margin of safety | 25% |
 
-Companies with negative free cash flow, including banks and insurers whose lending runs through cash flow, get an explanation instead of a value, pointing to the residual income model in the Intrinsic value tool.
+Companies with negative free cash flow, including banks and insurers whose lending runs through cash flow, get an explanation instead of a value, pointing to the residual income model in the Intrinsic Value tool.
 
 **Autofill with AI** (`autofillDcf`) suggests both growth rates, the discount rate, terminal growth and the exit multiple from revenue, margin and free cash flow history, with a reason for each. `parseDcfResponse` clamps each value; the ranges also keep terminal growth (at most 4%) below the discount rate (at least 5%).
 

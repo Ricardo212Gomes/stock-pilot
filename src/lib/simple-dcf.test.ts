@@ -25,6 +25,7 @@ function table(statement: StatementTable["statement"], rows: Record<string, (num
   return {
     statement,
     period: "annual",
+    source: "fmp",
     currency: "USD",
     fiscalYear: null,
     columns: [

@@ -24,6 +24,7 @@ function table(statement: "income" | "ratios", rows: Record<string, (number | nu
   return {
     statement,
     period: "annual",
+    source: "fmp",
     currency: "USD",
     fiscalYear: null,
     columns: ttm ? [{ id: "ttm", label: "TTM", periodEnding: "2026-06-27" }, ...fiscal] : fiscal,

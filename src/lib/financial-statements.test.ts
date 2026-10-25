@@ -8,6 +8,7 @@ import {
   type StatementTable,
 } from "./financial-statements";
 import { getCompanyFundamentals } from "./fmp";
+import { resetSecCache } from "./sec";
 
 type Row = Record<string, unknown>;
 
@@ -157,8 +158,46 @@ describe("buildStatementTable", () => {
       ratiosTtm: stripTtmSuffix({ priceToEarningsRatioTTM: 39.5 }),
     });
     expect(row(table, "pe").slice(0, 2)).toEqual([39.5, 31]);
-    expect(table.rows.filter((item) => item.section).map((item) => item.section)).toEqual(["Valuation", "Profitability", "Financial health"]);
+    expect(table.rows.filter((item) => item.section).map((item) => item.section)).toEqual(["Valuation", "Yields", "Returns", "Financial health", "Efficiency"]);
     expect(row(table, "roe")[1]).toBeCloseTo(112 / 74);
+    // Margins live in the income statement, not here; the chart shows valuation ratios.
+    expect(table.rows.some((item) => item.id === "grossMargin")).toBe(false);
+    expect(table.chart.title).toBe("Valuation Ratios");
+    expect(table.chart.series.map((series) => series.id)).toContain("pe");
+  });
+
+  it("prefers FMP's ratios and key metrics, and works the rest out from the statements", () => {
+    const table = build({
+      statement: "ratios",
+      ratios: [{ date: "2025-09-27", priceToEarningsRatio: 25, priceToFreeCashFlowRatio: 20, evToEBITDA: 18, returnOnEquity: 1.5, marketCap: 3.6e12 }],
+    });
+    expect(row(table, "evEbitda")[1]).toBe(18);
+    expect(row(table, "marketCap")[1]).toBe(3.6e12);
+    expect(row(table, "roe")[1]).toBe(1.5);
+    // Yields are the inverse of the multiples when FMP doesn't send them.
+    expect(row(table, "earningsYield")[1]).toBeCloseTo(0.04);
+    expect(row(table, "fcfYield")[1]).toBeCloseTo(0.05);
+  });
+
+  it("annualizes a quarter's returns so they compare with yearly figures", () => {
+    const table = buildStatementTable({
+      statement: "ratios",
+      period: "quarterly",
+      income: [{ date: "2026-06-27", period: "Q3", netIncome: 30, revenue: 100 }],
+      balance: [{ date: "2026-06-27", totalStockholdersEquity: 120, totalAssets: 400 }],
+      cash: [],
+      ratios: [],
+      quarterlyIncome: [],
+      quarterlyBalance: [],
+      quarterlyCash: [],
+      ratiosTtm: null,
+    });
+    const value = (id: string) => table.rows.find((item) => item.id === id)?.values[0];
+    expect(value("roe")).toBeCloseTo(1);
+    expect(value("roa")).toBeCloseTo(0.3);
+    expect(value("assetTurnover")).toBeCloseTo(1);
+    // One price-less column can't make a valuation chart, so returns are charted instead.
+    expect(table.chart.title).toBe("Returns");
   });
 
   it("omits the TTM column when there aren't four quarters", () => {
@@ -201,6 +240,24 @@ describe("getStatementTable", () => {
     expect(ratioCalls.map(([input]) => new URL(input).searchParams.get("period"))).toEqual(["annual"]);
   });
 
+  it("merges each year's key metrics into its ratios, and asks for them only on the Ratios tab", async () => {
+    const fetchMock = mockFmp({
+      "income-statement:annual": annualIncome,
+      "ratios:annual": [{ date: "2025-09-27", priceToEarningsRatio: 31 }],
+      "key-metrics:annual": [{ date: "2025-09-27", enterpriseValue: 3.7e12, evToEBITDA: 26 }],
+      "key-metrics-ttm": [{ enterpriseValueTTM: 5.1e12 }],
+    });
+    const ratios = await getStatementTable("AAPL", "ratios", "annual");
+    if (!ratios.ok) throw new Error(ratios.reason);
+    const fy2025 = ratios.data.columns.findIndex((column) => column.periodEnding === "2025-09-27");
+    const value = (id: string) => ratios.data.rows.find((item) => item.id === id)?.values[fy2025];
+    expect([value("pe"), value("evEbitda"), value("enterpriseValue")]).toEqual([31, 26, 3.7e12]);
+
+    fetchMock.mockClear();
+    await getStatementTable("AAPL", "income", "annual");
+    expect(fetchMock.mock.calls.some(([input]) => new URL(input).pathname.includes("key-metrics"))).toBe(false);
+  });
+
   it("shares cached requests with the fundamentals loader", async () => {
     const fetchMock = mockFmp({ "income-statement:annual": annualIncome });
     await getStatementTable("AAPL", "income", "annual");
@@ -218,5 +275,46 @@ describe("getStatementTable", () => {
 
     mockFmp({ "income-statement:annual": [] });
     await expect(getStatementTable("AAPL", "income", "annual")).resolves.toEqual({ ok: false, reason: "no-data" });
+  });
+
+  it("falls back to SEC filings and Finnhub ratios when FMP's plan doesn't cover the company", async () => {
+    resetSecCache();
+    vi.stubEnv("FINNHUB_API_KEY", "finnhub-key");
+    const facts = {
+      entityName: "CrowdStrike",
+      facts: { "us-gaap": {
+        NetIncomeLoss: { units: { USD: [
+          { start: "2025-02-01", end: "2026-01-31", val: -100, fy: 2026, fp: "FY", form: "10-K", filed: "2026-03-10", accn: "a" },
+          { start: "2025-02-01", end: "2025-04-30", val: -40, fy: 2026, fp: "Q1", form: "10-Q", filed: "2025-06-01", accn: "q1" },
+          { start: "2025-05-01", end: "2025-07-31", val: -30, fy: 2026, fp: "Q2", form: "10-Q", filed: "2025-09-01", accn: "q2" },
+          { start: "2025-08-01", end: "2025-10-31", val: -20, fy: 2026, fp: "Q3", form: "10-Q", filed: "2025-12-01", accn: "q3" },
+          { start: "2025-02-01", end: "2025-10-31", val: -90, fy: 2026, fp: "Q3", form: "10-Q", filed: "2025-12-01", accn: "q3" },
+        ] } },
+        Revenues: { units: { USD: [{ start: "2025-02-01", end: "2026-01-31", val: 4800, fy: 2026, fp: "FY", form: "10-K", filed: "2026-03-10", accn: "a" }] } },
+      } },
+    };
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
+      void init;
+      const url = new URL(input);
+      if (url.hostname === "financialmodelingprep.com") return json({ "Error Message": "Premium Query Parameter" }, 402);
+      if (url.hostname === "finnhub.io") return json({ metric: { peTTM: 812.5, currentDividendYieldTTM: 0 } });
+      if (url.pathname.endsWith("company_tickers.json")) return json({ 0: { cik_str: 1535527, ticker: "CRWD", title: "CrowdStrike" } });
+      return json(facts);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const income = await getStatementTable("CRWD", "income", "annual");
+    if (!income.ok) throw new Error(income.reason);
+    expect(income.data.source).toBe("sec");
+    expect(income.data.columns.map((column) => column.label)).toEqual(["TTM", "FY 2026"]);
+    expect(income.data.rows.find((row) => row.id === "netIncome")?.values).toEqual([-100, -100]);
+    expect(income.data.rows.find((row) => row.id === "revenue")?.values).toEqual([null, 4800]);
+
+    const ratios = await getStatementTable("CRWD", "ratios", "annual");
+    expect(ratios.ok && ratios.data.columns[0].label).toBe("TTM");
+    expect(ratios.ok && ratios.data.rows.find((row) => row.id === "pe")?.values[0]).toBe(812.5);
+
+    const fundamentals = await getCompanyFundamentals("CRWD");
+    expect(fundamentals.ok && fundamentals.data).toMatchObject({ source: "sec", annualFinancials: [{ revenue: 4800, netIncome: -100 }] });
   });
 });

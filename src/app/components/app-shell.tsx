@@ -1,26 +1,32 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { VALUATION_TOOLS, type ValuationTool } from "../valuation/tools";
+import { SidebarToggle } from "./sidebar-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { TickerSearch } from "./ticker-search";
+import { UserMenu } from "./user-menu";
 
 type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
-  // Overrides the top bar label, e.g. "AAPL overview".
+  activeSection?: "home" | "research" | "favorites" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
+  // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
+  // Overrides the footer's data credit, for pages with their own source.
+  dataSource?: string;
 };
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
+  if (section === "home") return "Home";
+  if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
   if (section === "earnings") return "Earnings calendar";
   if (section === "dividends") return "Dividend calendar";
   const tool = VALUATION_TOOLS.find(({ id }) => id === section);
   if (tool) return ticker ? `${ticker} · ${tool.label}` : tool.label;
-  return ticker ? `${ticker} fundamentals` : "Company fundamentals";
+  return ticker ? `${ticker} · Overview` : "Stocks";
 }
 
 const VALUATION_ICONS: Record<ValuationTool, string> = {
@@ -38,6 +44,7 @@ export function AppShell({
   tickerValue = "",
   activeSection = "research",
   headerLabel,
+  dataSource,
 }: AppShellProps) {
   const valuationPath = VALUATION_TOOLS.find(({ id }) => id === activeSection)?.path;
   return (
@@ -52,15 +59,38 @@ export function AppShell({
           <nav className="sidebar-nav" aria-label="Workspace">
             <p className="sidebar-section-label">WORKSPACE</p>
             <Link
-              className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
+              className={`sidebar-link${activeSection === "home" ? " sidebar-link-active" : ""}`}
               href="/"
-              title="Company research"
+              title="Home"
+              aria-current={activeSection === "home" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 9 10 3.5 16.5 9M5 8v8.5h3.5V12h3v4.5H15V8" />
+              </svg>
+              <span>Home</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
+              // Always the leaderboards: a company's own pages are its tabs.
+              href="/stock"
+              title="Stocks"
               aria-current={activeSection === "research" ? "page" : undefined}
             >
               <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M3 16.5h14M4.5 14V9.5M8.2 14V5.5M11.8 14v-3M15.5 14V7" />
               </svg>
-              <span>Company research</span>
+              <span>Stocks</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "favorites" ? " sidebar-link-active" : ""}`}
+              href="/favorites"
+              title="Favorites"
+              aria-current={activeSection === "favorites" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m10 2.8 2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7L10 2.8Z" />
+              </svg>
+              <span>Favorites</span>
             </Link>
           </nav>
 
@@ -70,8 +100,8 @@ export function AppShell({
               <Link
                 key={tool.id}
                 className={`sidebar-link${activeSection === tool.id ? " sidebar-link-active" : ""}`}
-                // Keep the company when switching between tools.
-                href={tickerValue ? `${tool.path}?symbol=${tickerValue}` : tool.path}
+                // Coming from another page keeps the company; clicking the open tool starts it over.
+                href={tickerValue && activeSection !== tool.id ? `${tool.path}?symbol=${tickerValue}` : tool.path}
                 title={tool.label}
                 aria-current={activeSection === tool.id ? "page" : undefined}
               >
@@ -98,7 +128,8 @@ export function AppShell({
             </Link>
             <Link
               className={`sidebar-link${activeSection === "news" ? " sidebar-link-active" : ""}`}
-              href={tickerValue ? `/news?symbol=${tickerValue}` : "/news"}
+              // Market news; a company's news is its News tab.
+              href="/news"
               title="News"
               aria-current={activeSection === "news" ? "page" : undefined}
             >
@@ -133,12 +164,12 @@ export function AppShell({
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 8 TOOLS</span>
-            <p>Company research, three valuation calculators, market maps, news, earnings and dividends.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 9 TOOLS</span>
+            <p>Stocks, favorites, three valuation calculators, market maps, news, earnings and dividends.</p>
           </div>
 
-          <div className="sidebar-theme">
-            <ThemeToggle />
+          <div className="sidebar-collapse">
+            <SidebarToggle />
           </div>
         </aside>
 
@@ -154,6 +185,7 @@ export function AppShell({
                 action={valuationPath ?? (activeSection === "news" ? "/news" : "/stock")}
               />
               <ThemeToggle />
+              <UserMenu />
             </div>
           </header>
 
@@ -162,11 +194,11 @@ export function AppShell({
           <footer className="app-footer">
             <span>StockPilot</span>
             <span>
-              {activeSection === "maps"
+              {dataSource ?? (activeSection === "maps"
                 ? "Market map by FINVIZ"
                 : activeSection === "news" || activeSection === "earnings"
                   ? `${activeSection === "news" ? "News" : "Earnings data"} provided by Finnhub`
-                  : "Financial data provided by Financial Modeling Prep"}
+                  : "Financial data provided by Financial Modeling Prep")}
             </span>
           </footer>
         </div>

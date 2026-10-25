@@ -1,23 +1,23 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "../components/app-shell";
+import { CompanyHeader } from "../components/company-header";
+import { companyMetadata } from "../components/company-metadata";
 import { QuoteHeader } from "../components/quote-header";
 import { StockNav } from "../components/stock-nav";
+import { Leaderboard } from "./leaderboard";
 import { PriceHistoryChart } from "./price-history-chart";
 import { getStockPriceHistory, normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
+import { isLeaderboardId } from "@/lib/leaderboard";
 import { getStockOverview, type StockOverview } from "@/lib/stock-overview";
 
-export const metadata: Metadata = {
-  title: "Stock overview — StockPilot",
-  description: "Price, key statistics, analyst views and company profile for any stock.",
-};
+export const generateMetadata = companyMetadata("Overview", "Price, key statistics, analyst views and company profile for any stock.", "Stocks");
 
 const ABOUT_LENGTH = 600;
 
 type StockPageProps = {
-  searchParams: Promise<{ symbol?: string | string[] }>;
+  searchParams: Promise<{ symbol?: string | string[]; list?: string | string[] }>;
 };
 
 function compactNumber(value: number | null): string {
@@ -161,35 +161,40 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
     : [null, null];
 
   if (!symbol || !overview) {
+    const rawList = Array.isArray(params.list) ? params.list[0] : params.list;
     return (
       <AppShell contentClassName="dashboard-content">
-        <section className="projection-start">
-          <p className="section-label">STOCK OVERVIEW</p>
-          <h1>Look up a stock</h1>
-          <p>
-            {rawSymbol ? "That isn't a valid ticker. " : ""}
-            Search for a ticker above to see its price, key statistics, analyst views and company profile.
-          </p>
+        <section className="company-heading">
+          <div>
+            <p className="section-label">LEADERBOARDS</p>
+            <div className="company-title-row">
+              <h1>Stocks</h1>
+            </div>
+            <p className="company-subtitle">
+              {rawSymbol ? "That isn't a valid ticker. " : ""}
+              Start from the largest companies or today&apos;s biggest moves, or search for any company above.
+            </p>
+          </div>
         </section>
+        <Leaderboard list={isLeaderboardId(rawList) ? rawList : "largest"} />
       </AppShell>
     );
   }
 
   if (!overview.ok) {
     return (
-      <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} overview`}>
+      <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Overview`}>
+        <CompanyHeader symbol={symbol} quote={null} />
         <StockNav symbol={symbol} active="overview" />
         <section className="empty-state" role="status">
           <span className="empty-state-icon" aria-hidden="true">!</span>
           <div>
             <h2>We couldn&apos;t load {symbol}</h2>
             <p>
-              {overview.reason === "no-data"
-                ? `FMP has no quote for ${symbol}. Check the ticker.`
-                : overview.reason === "plan-restricted"
-                  // FMP answers 402 both for unknown tickers and for ones outside the plan.
-                  ? `FMP didn't return a quote for ${symbol}. Check the ticker: free FMP plans cover most large US-listed stocks, but not every company or exchange.`
-                  : providerFailureMessage(overview.reason, "the quote")}
+              {overview.reason === "no-data" || overview.reason === "plan-restricted" || overview.reason === "rate-limited"
+                // A plan restriction or limit only gets here when Finnhub has no quote either.
+                ? `Neither FMP nor Finnhub has a quote for ${symbol}. Check the ticker, or search by company name above.`
+                : providerFailureMessage(overview.reason, "the quote")}
             </p>
           </div>
         </section>
@@ -201,7 +206,7 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
   const [left, right] = statRows(data);
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} overview`}>
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Overview`}>
       <QuoteHeader quote={data} currency={data.currency} />
 
       <StockNav symbol={symbol} active="overview" />
@@ -225,7 +230,10 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
       <About data={data} />
 
       <p className="news-footnote">
-        Quote and statistics from Financial Modeling Prep; growth rates from Finnhub. TTM means trailing twelve months.
+        {data.quoteSource === "finnhub"
+          ? `FMP couldn't provide ${symbol} (its free plan doesn't cover every company and has a daily limit), so the quote comes from Finnhub and the trailing figures from SEC filings; analyst data and the price chart aren't available.`
+          : "Quote and statistics from Financial Modeling Prep; growth rates from Finnhub."}{" "}
+        TTM means trailing twelve months.
         Prices may be delayed. <Link href={`/stock/financials?symbol=${symbol}`}>See the full financials</Link>.
       </p>
     </AppShell>

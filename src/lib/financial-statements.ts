@@ -1,4 +1,6 @@
-import { FMP_BASE_URL, failureReason, fetchFmp, numeric, type FmpFailureReason } from "./fmp";
+import { fetchFinnhub, finnhubSymbol } from "./finnhub";
+import { FMP_BASE_URL, canUseFallback, failureReason, fetchFmp, numeric, type FmpFailureReason, type StatementSource } from "./fmp";
+import { getSecStatements } from "./sec";
 
 const STATEMENT_REVALIDATE_SECONDS = 60 * 60 * 24;
 // The free FMP plan returns at most 5 rows per request.
@@ -27,6 +29,8 @@ export type StatementColumn = {
   label: string;
   periodEnding: string | null;
   isTtm: boolean;
+  // 4 for a single quarter, so ratios of a flow to a balance (ROE, turnover) read as yearly rates.
+  annualize: number;
   income: Row | null;
   balance: Row | null;
   cash: Row | null;
@@ -58,6 +62,7 @@ export type ChartSeries = { id: string; label: string; format: ValueFormat; valu
 export type StatementTable = {
   statement: StatementId;
   period: StatementPeriod;
+  source: StatementSource;
   currency: string;
   fiscalYear: string | null;
   columns: { id: string; label: string; periodEnding: string | null }[];
@@ -84,6 +89,21 @@ function field(row: Row | null, ...keys: string[]): number | null {
 
 function divide(numerator: number | null, denominator: number | null): number | null {
   return numerator === null || denominator === null || denominator === 0 ? null : numerator / denominator;
+}
+
+// A quarter's flow at a yearly rate, for comparing it with a balance-sheet level.
+function yearly(value: number | null, column: StatementColumn): number | null {
+  return value === null ? null : value * column.annualize;
+}
+
+// 1 / x for a positive ratio, such as earnings yield from P/E.
+function inverse(value: number | null): number | null {
+  return value === null || value <= 0 ? null : 1 / value;
+}
+
+function addUp(...values: (number | null)[]): number | null {
+  const present = values.filter((value): value is number => value !== null);
+  return present.length ? present.reduce((total, value) => total + value, 0) : null;
 }
 
 // Growth is only meaningful from a positive base.
@@ -179,36 +199,106 @@ const LINE_ITEMS: Record<StatementId, LineItem[]> = {
     { id: "freeCashFlowMargin", label: "Free Cash Flow Margin", format: "percent", value: (c) => divide(freeCashFlow(c), revenue(c)) },
     { id: "freeCashFlowPerShare", label: "Free Cash Flow Per Share", format: "perShare", value: (c) => divide(freeCashFlow(c), shares(c)) },
   ],
+  // FMP's ratios and key metrics when it has them; otherwise worked out from the statements, so
+  // quarterly views and companies whose statements come from the SEC still get most rows.
   ratios: [
-    { id: "pe", label: "PE Ratio", format: "ratio", value: ratio("priceToEarningsRatio"), section: "Valuation", help: "Price divided by earnings per share." },
+    { id: "marketCap", label: "Market Capitalization", format: "money", value: ratio("marketCap"), section: "Valuation", help: "Share price times shares outstanding, at the end of the period." },
+    { id: "enterpriseValue", label: "Enterprise Value", format: "money", value: ratio("enterpriseValue"), help: "Market cap plus debt minus cash: what buying the whole business would cost." },
+    { id: "pe", label: "PE Ratio", format: "ratio", value: ratio("priceToEarningsRatio"), help: "Price divided by earnings per share." },
+    { id: "peg", label: "PEG Ratio", format: "ratio", value: ratio("priceToEarningsGrowthRatio"), help: "P/E divided by earnings growth. Around 1 or below can mean the growth is fairly priced." },
     { id: "ps", label: "PS Ratio", format: "ratio", value: ratio("priceToSalesRatio"), help: "Price divided by revenue per share." },
     { id: "pb", label: "PB Ratio", format: "ratio", value: ratio("priceToBookRatio"), help: "Price divided by book value per share." },
     { id: "pfcf", label: "P/FCF Ratio", format: "ratio", value: ratio("priceToFreeCashFlowRatio"), help: "Price divided by free cash flow per share." },
+    { id: "pocf", label: "P/OCF Ratio", format: "ratio", value: ratio("priceToOperatingCashFlowRatio"), help: "Price divided by operating cash flow per share." },
+    { id: "evSales", label: "EV / Sales", format: "ratio", value: ratio("evToSales"), help: "Enterprise value divided by revenue." },
+    { id: "evEbitda", label: "EV / EBITDA", format: "ratio", value: (c) => field(c.ratios, "evToEBITDA", "enterpriseValueMultiple"), help: "Enterprise value divided by EBITDA. Unlike P/E, it isn't affected by how the company is financed." },
+    { id: "evFcf", label: "EV / FCF", format: "ratio", value: ratio("evToFreeCashFlow"), help: "Enterprise value divided by free cash flow." },
+    {
+      id: "earningsYield", label: "Earnings Yield", format: "percent", section: "Yields",
+      value: (c) => field(c.ratios, "earningsYield") ?? inverse(ratio("priceToEarningsRatio")(c)),
+      help: "Earnings per share divided by price: the inverse of P/E.",
+    },
+    {
+      id: "fcfYield", label: "FCF Yield", format: "percent",
+      value: (c) => field(c.ratios, "freeCashFlowYield") ?? inverse(ratio("priceToFreeCashFlowRatio")(c)),
+      help: "Free cash flow per share divided by price.",
+    },
     { id: "dividendYield", label: "Dividend Yield", format: "percent", value: ratio("dividendYield") },
     { id: "payoutRatio", label: "Payout Ratio", format: "percent", value: (c) => {
+      const reported = field(c.ratios, "dividendPayoutRatio");
+      if (reported !== null) return reported;
       const paid = cf("commonDividendsPaid", "netDividendsPaid")(c);
       return paid === null ? null : divide(Math.abs(paid), netIncome(c));
     }, help: "Dividends paid as a share of net income." },
-    { id: "grossMargin", label: "Gross Margin", format: "percent", value: (c) => divide(inc("grossProfit")(c), revenue(c)), section: "Profitability" },
-    { id: "operatingMargin", label: "Operating Margin", format: "percent", value: (c) => divide(inc("operatingIncome")(c), revenue(c)) },
-    { id: "profitMargin", label: "Profit Margin", format: "percent", value: (c) => divide(netIncome(c), revenue(c)) },
-    { id: "freeCashFlowMargin", label: "Free Cash Flow Margin", format: "percent", value: (c) => divide(freeCashFlow(c), revenue(c)) },
-    { id: "roe", label: "Return on Equity (ROE)", format: "percent", value: (c) => divide(netIncome(c), equity(c)), help: "Net income divided by shareholders' equity." },
-    { id: "roa", label: "Return on Assets (ROA)", format: "percent", value: (c) => divide(netIncome(c), bal("totalAssets")(c)), help: "Net income divided by total assets." },
-    { id: "currentRatio", label: "Current Ratio", format: "ratio", value: (c) => divide(bal("totalCurrentAssets")(c), bal("totalCurrentLiabilities")(c)), section: "Financial health", help: "Current assets divided by current liabilities. Above 1 means short-term bills are covered." },
-    { id: "debtToEquity", label: "Debt / Equity", format: "ratio", value: (c) => divide(totalDebt(c), equity(c)) },
+    {
+      id: "roe", label: "Return on Equity (ROE)", format: "percent", section: "Returns",
+      value: (c) => field(c.ratios, "returnOnEquity") ?? divide(yearly(netIncome(c), c), equity(c)),
+      help: "Net income divided by shareholders' equity.",
+    },
+    {
+      id: "roa", label: "Return on Assets (ROA)", format: "percent",
+      value: (c) => field(c.ratios, "returnOnAssets") ?? divide(yearly(netIncome(c), c), bal("totalAssets")(c)),
+      help: "Net income divided by total assets.",
+    },
+    {
+      id: "roic", label: "Return on Invested Capital (ROIC)", format: "percent", value: ratio("returnOnInvestedCapital"),
+      help: "After-tax operating profit divided by the debt and equity invested in the business.",
+    },
+    {
+      id: "currentRatio", label: "Current Ratio", format: "ratio", section: "Financial health",
+      value: (c) => field(c.ratios, "currentRatio") ?? divide(bal("totalCurrentAssets")(c), bal("totalCurrentLiabilities")(c)),
+      help: "Current assets divided by current liabilities. Above 1 means short-term bills are covered.",
+    },
+    {
+      id: "quickRatio", label: "Quick Ratio", format: "ratio",
+      value: (c) => field(c.ratios, "quickRatio") ?? divide(addUp(cashAndShortTerm(c), bal("netReceivables")(c)), bal("totalCurrentLiabilities")(c)),
+      help: "Cash, short-term investments and receivables divided by current liabilities: the current ratio without inventory.",
+    },
+    {
+      id: "debtToEquity", label: "Debt / Equity", format: "ratio",
+      value: (c) => field(c.ratios, "debtToEquityRatio") ?? divide(totalDebt(c), equity(c)),
+    },
+    {
+      id: "netDebtEbitda", label: "Net Debt / EBITDA", format: "ratio",
+      value: (c) => field(c.ratios, "netDebtToEBITDA") ?? divide(
+        totalDebt(c) !== null && cashAndShortTerm(c) !== null ? totalDebt(c)! - cashAndShortTerm(c)! : null,
+        (() => {
+          const ebitda = yearly(inc("ebitda")(c), c);
+          return ebitda !== null && ebitda > 0 ? ebitda : null;
+        })(),
+      ),
+      help: "Years of EBITDA it would take to pay off debt net of cash. Negative means more cash than debt.",
+    },
     { id: "interestCoverage", label: "Interest Coverage", format: "ratio", value: (c) => {
+      const reported = field(c.ratios, "interestCoverageRatio");
+      if (reported !== null) return reported;
       const interest = inc("interestExpense")(c);
       return interest !== null && interest > 0 ? divide(inc("operatingIncome")(c), interest) : null;
     }, help: "Operating income divided by interest expense." },
+    {
+      id: "assetTurnover", label: "Asset Turnover", format: "ratio", section: "Efficiency",
+      value: (c) => field(c.ratios, "assetTurnover") ?? divide(yearly(revenue(c), c), bal("totalAssets")(c)),
+      help: "Revenue divided by total assets: how much the business sells for each dollar it owns.",
+    },
+    {
+      id: "inventoryTurnover", label: "Inventory Turnover", format: "ratio",
+      value: (c) => field(c.ratios, "inventoryTurnover") ?? divide(yearly(inc("costOfRevenue")(c), c), bal("inventory")(c)),
+      help: "Cost of revenue divided by inventory: how many times a year inventory is sold through.",
+    },
   ],
 };
 
-const CHARTS: Record<StatementId, { title: string; series: string[]; defaults: string[] }> = {
+type ChartConfig = { title: string; series: string[]; defaults: string[] };
+
+// Without yearly prices (quarterly views, or statements from SEC filings) the valuation chart would
+// have a single TTM point, so the Ratios tab charts returns instead.
+const RATIOS_FALLBACK_CHART: ChartConfig = { title: "Returns", series: ["roe", "roa", "roic"], defaults: ["roe", "roa", "roic"] };
+
+const CHARTS: Record<StatementId, ChartConfig> = {
   income: { title: "Revenue & Profits", series: ["revenue", "grossProfit", "operatingIncome", "netIncome", "eps"], defaults: ["revenue", "netIncome"] },
   balance: { title: "Cash & Debt", series: ["cashAndShortTerm", "totalDebt", "equity", "totalAssets"], defaults: ["cashAndShortTerm", "totalDebt"] },
   "cash-flow": { title: "Cash Flow", series: ["operatingCashFlow", "capex", "freeCashFlow", "dividends", "buybacks"], defaults: ["operatingCashFlow", "freeCashFlow"] },
-  ratios: { title: "Margins & Returns", series: ["grossMargin", "operatingMargin", "profitMargin", "freeCashFlowMargin", "roe"], defaults: ["grossMargin", "operatingMargin", "profitMargin"] },
+  ratios: { title: "Valuation Ratios", series: ["pe", "ps", "pb", "pfcf", "evEbitda"], defaults: ["pe", "ps", "pfcf"] },
 };
 
 // Share counts are a level, not a flow, so a trailing-twelve-month figure uses the latest quarter.
@@ -269,9 +359,11 @@ export function buildStatementTable({
   quarterlyBalance,
   quarterlyCash,
   ratiosTtm,
+  source = "fmp",
 }: {
   statement: StatementId;
   period: StatementPeriod;
+  source?: StatementSource;
   income: Row[];
   balance: Row[];
   cash: Row[];
@@ -294,6 +386,7 @@ export function buildStatementTable({
       label: columnLabel(row, period),
       periodEnding: date,
       isTtm: false,
+      annualize: period === "quarterly" ? 4 : 1,
       income: incomeByDate.get(date) ?? null,
       balance: balanceByDate.get(date) ?? null,
       cash: cashByDate.get(date) ?? null,
@@ -312,6 +405,7 @@ export function buildStatementTable({
       ? latestQuarterBalance.date
       : typeof ttmIncome?.date === "string" ? ttmIncome.date : null,
     isTtm: true,
+    annualize: 1,
     income: ttmIncome,
     balance: latestQuarterBalance,
     cash: ttmCash,
@@ -352,7 +446,10 @@ export function buildStatementTable({
     pendingSection = null;
   }
 
-  const chartConfig = CHARTS[statement];
+  const pointsIn = (id: string) => rows.find((row) => row.id === id)?.values.filter((value) => value !== null).length ?? 0;
+  const chartConfig = statement === "ratios" && !CHARTS.ratios.series.some((id) => pointsIn(id) >= 2)
+    ? RATIOS_FALLBACK_CHART
+    : CHARTS[statement];
   // Charts read oldest to newest, with TTM last. A quarterly chart leaves TTM out: a year's total
   // next to single quarters would dwarf them.
   const order = columns.map((_, index) => index).reverse();
@@ -367,6 +464,7 @@ export function buildStatementTable({
   return {
     statement,
     period,
+    source,
     currency: typeof currencySource?.reportedCurrency === "string" ? currencySource.reportedCurrency : "USD",
     fiscalYear: fiscalYearLabel(period === "annual" ? income : quarterlyIncome),
     columns: columns.map(({ id, label, periodEnding }) => ({ id, label, periodEnding })),
@@ -416,12 +514,17 @@ export async function getStatementTable(
   try {
     income = await rows("income-statement", params);
   } catch (error) {
-    return { ok: false, reason: failureReason(error) };
+    const reason = failureReason(error);
+    // Companies FMP's plan doesn't cover, or any company once its daily limit is reached, still
+    // have SEC filings.
+    return canUseFallback(reason) ? (await secStatementTable(symbol, statement, period)) ?? { ok: false, reason } : { ok: false, reason };
   }
   if (income.length === 0) return { ok: false, reason: "no-data" };
 
   const quarterly = quarterParams(symbol);
-  const [balance, cash, ratios, quarterlyIncome, quarterlyBalance, quarterlyCash, ratiosTtm] = await Promise.all([
+  // Key metrics (market cap, enterprise value, EV multiples, yields, ROIC) only feed the Ratios tab.
+  const wantsMetrics = statement === "ratios";
+  const [balance, cash, ratios, quarterlyIncome, quarterlyBalance, quarterlyCash, ratiosTtm, metrics, metricsTtm] = await Promise.all([
     optional(rows("balance-sheet-statement", params)),
     optional(rows("cash-flow-statement", params)),
     // Quarterly ratios need a paid plan; quarterly views compute what they can from the statements.
@@ -430,7 +533,16 @@ export async function getStatementTable(
     optional(rows("balance-sheet-statement", quarterly)),
     optional(rows("cash-flow-statement", quarterly)),
     optional(rows("ratios-ttm", [["symbol", symbol]])),
+    wantsMetrics && period === "annual" ? optional(rows("key-metrics", params)) : Promise.resolve([]),
+    wantsMetrics ? optional(rows("key-metrics-ttm", [["symbol", symbol]])) : Promise.resolve([]),
   ]);
+  const metricsByDate = byDate(metrics);
+  // Each year's ratios and key metrics share a date, so they merge into one row.
+  const mergedRatios = ratios.length
+    ? ratios.map((row) => ({ ...metricsByDate.get(String(row.date)), ...row }))
+    : metrics;
+  const ttmRatios = stripTtmSuffix(ratiosTtm[0]);
+  const ttmMetrics = stripTtmSuffix(metricsTtm[0]);
 
   return {
     ok: true,
@@ -440,11 +552,49 @@ export async function getStatementTable(
       income,
       balance,
       cash,
-      ratios,
+      ratios: mergedRatios,
       quarterlyIncome,
       quarterlyBalance,
       quarterlyCash,
-      ratiosTtm: stripTtmSuffix(ratiosTtm[0]),
+      ratiosTtm: ttmRatios || ttmMetrics ? { ...ttmMetrics, ...ttmRatios } : null,
+    }),
+  };
+}
+
+// Trailing ratios from Finnhub's free metrics, for companies whose statements come from the SEC
+// (which has no prices). Named like FMP's ratios so the same line items read them.
+async function finnhubRatiosTtm(symbol: string): Promise<Row | null> {
+  const result = await fetchFinnhub("stock/metric", { symbol: finnhubSymbol(symbol), metric: "all" }, STATEMENT_REVALIDATE_SECONDS);
+  const metric = result.ok ? (result.payload as { metric?: Row } | null)?.metric : null;
+  if (!metric) return null;
+  const yieldPercent = num(metric.currentDividendYieldTTM);
+  return {
+    priceToEarningsRatio: num(metric.peTTM),
+    priceToSalesRatio: num(metric.psTTM),
+    priceToBookRatio: num(metric.pbQuarterly) ?? num(metric.pbAnnual),
+    priceToFreeCashFlowRatio: num(metric.pfcfShareTTM),
+    dividendYield: yieldPercent !== null ? yieldPercent / 100 : null,
+  };
+}
+
+async function secStatementTable(symbol: string, statement: StatementId, period: StatementPeriod): Promise<StatementResult | null> {
+  const [sec, ratiosTtm] = await Promise.all([getSecStatements(symbol), finnhubRatiosTtm(symbol)]);
+  if (!sec.ok) return null;
+  const rowsFor = period === "annual" ? sec.data.annual : sec.data.quarterly;
+  return {
+    ok: true,
+    data: buildStatementTable({
+      statement,
+      period,
+      income: rowsFor.income,
+      balance: rowsFor.balance,
+      cash: rowsFor.cash,
+      ratios: [],
+      quarterlyIncome: sec.data.quarterly.income,
+      quarterlyBalance: sec.data.quarterly.balance,
+      quarterlyCash: sec.data.quarterly.cash,
+      ratiosTtm,
+      source: "sec",
     }),
   };
 }

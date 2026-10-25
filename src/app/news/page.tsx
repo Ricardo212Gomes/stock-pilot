@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "../components/app-shell";
+import { CompanyHeader } from "../components/company-header";
+import { companyMetadata } from "../components/company-metadata";
 import { StockNav } from "../components/stock-nav";
 import { normalizeTicker } from "@/lib/fmp";
 import {
@@ -15,11 +16,9 @@ import {
   type NewsCategory,
   type NewsItem,
 } from "@/lib/finnhub-news";
+import { getQuote } from "@/lib/stock-overview";
 
-export const metadata: Metadata = {
-  title: "News — StockPilot",
-  description: "Global market news and company headlines.",
-};
+export const generateMetadata = companyMetadata("News", "Global market news and company headlines.", "Market news");
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -201,18 +200,21 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   const page = Number.isInteger(rawPage) && rawPage > 1 ? rawPage - 1 : 0;
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""} activeSection="news">
-      {symbol && (
-        <div className="breadcrumb">
-          <Link href={`/stock?symbol=${symbol}`}>{symbol}</Link><span>/</span><span>News</span>
-        </div>
-      )}
+    // Company news is one of the company's tabs, so it looks like the others; market news is a Markets page.
+    <AppShell
+      contentClassName="dashboard-content"
+      tickerValue={symbol ?? ""}
+      activeSection={symbol ? "research" : "news"}
+      headerLabel={symbol ? `${symbol} · News` : undefined}
+      dataSource="News provided by Finnhub"
+    >
+      {symbol && <CompanyHeader symbol={symbol} quote={await getQuote(symbol)} />}
       {symbol && <StockNav symbol={symbol} active="news" />}
       <section className="company-heading">
         <div>
           <p className="section-label">{symbol ? "COMPANY NEWS" : "GLOBAL NEWS"}</p>
           <div className="company-title-row">
-            <h1>{symbol ? `${symbol} news` : "Market news"}</h1>
+            {symbol ? <h2>Latest news</h2> : <h1>Market news</h1>}
           </div>
           <p className="company-subtitle">
             {symbol

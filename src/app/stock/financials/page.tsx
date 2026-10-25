@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
-import { QuoteHeader } from "../../components/quote-header";
+import { CompanyHeader } from "../../components/company-header";
+import { companyMetadata } from "../../components/company-metadata";
 import { StockNav } from "../../components/stock-nav";
 import { FinancialCharts } from "../financial-charts";
 import { StatementChart } from "./statement-chart";
@@ -18,12 +18,10 @@ import {
   type StatementTable,
   type ValueFormat,
 } from "@/lib/financial-statements";
+import { listedName } from "@/lib/listed-companies";
 import { getQuote } from "@/lib/stock-overview";
 
-export const metadata: Metadata = {
-  title: "Financials — StockPilot",
-  description: "Income statement, balance sheet, cash flow and ratios, annual and quarterly.",
-};
+export const generateMetadata = companyMetadata("Financials", "Income statement, balance sheet, cash flow and ratios, annual and quarterly.");
 
 type FinancialsPageProps = {
   searchParams: Promise<{ symbol?: string | string[]; statement?: string | string[]; period?: string | string[] }>;
@@ -172,27 +170,26 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
   // Every statement table shares the income statement, so its failure is the page's failure.
   const primary = tables[0];
   const currency = primary.ok ? primary.data.currency : "USD";
-  const companyName = quote.ok ? shortName(quote.data.name) : symbol;
+  const companyName = shortName(quote.ok ? quote.data.name : listedName(symbol) ?? symbol);
   const forwardPe = quote.ok && chartExtras && chartExtras.nextYearEps !== null && chartExtras.nextYearEps > 0
     ? quote.data.price / chartExtras.nextYearEps
     : null;
   const subtitle = (data: StatementTable, ratios: boolean) => (
     <p>
       {ratios
-        ? "Valuation ratios, margins, returns and financial health."
+        ? "Valuation multiples, yields, returns, financial health and efficiency."
         : `Financials in millions ${data.currency}, except per-share data.`}
       {data.fiscalYear && ` Fiscal year is ${data.fiscalYear}.`}
-      {period === "quarterly" && " The free FMP plan includes the last 5 quarters."}
+      {ratios && period === "quarterly" && " Returns and turnover in quarterly columns are annualized."}
+      {data.source === "sec"
+        ? " From the company's SEC filings, as FMP couldn't provide them (its free plan doesn't cover every company and has a daily limit)."
+        : period === "quarterly" && " The free FMP plan includes the last 5 quarters."}
     </p>
   );
 
   return (
-    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} financials`}>
-      {quote.ok ? (
-        <QuoteHeader quote={quote.data} currency={currency} />
-      ) : (
-        <section className="quote-header"><h1>{symbol}</h1></section>
-      )}
+    <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Financials`}>
+      <CompanyHeader symbol={symbol} quote={quote} currency={currency} />
       <StockNav symbol={symbol} active="financials" />
 
       <div className="statement-toolbar">
@@ -289,7 +286,10 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
             {view === "balance"
               ? "Current is the latest quarterly balance sheet. "
               : "TTM (trailing twelve months) adds up the last four quarters. "}
-            Growth compares each period with the same period a year earlier. A dash means FMP has no value for that period.
+            Growth compares each period with the same period a year earlier.
+            {primary.data.source === "sec"
+              ? " Statements come from the company's SEC filings; a dash means the filings have no value for that period. Ratios need prices, so only the TTM column (from Finnhub) has valuation ratios."
+              : " A dash means FMP has no value for that period."}
           </p>
         </>
       )}
