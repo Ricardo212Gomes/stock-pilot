@@ -8,7 +8,7 @@ The sidebar's **Valuation** section has three separate calculators, each taking 
 | 3-Year Projection | `/valuation/three-year-projection?symbol=AAPL` |
 | DCF Calculator | `/valuation/dcf-calculator?symbol=AAPL` |
 
-The sidebar links keep the current ticker, so you can switch tools for the same company. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (breadcrumb, heading, start screen and load error); `tools.ts` lists the tools for the sidebar. The old `/projections` page redirects to these (`?view=3y` and `?view=dcf` to the matching tool).
+The sidebar links keep the current ticker, so you can switch tools for the same company; clicking the tool that's already open starts it over without a ticker. (The sidebar's Stocks and News always open the leaderboards and market news; a company's own pages are its tabs.) They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (breadcrumb, heading, start screen and load error); `tools.ts` lists the tools for the sidebar. The old `/projections` page redirects to these (`?view=3y` and `?view=dcf` to the matching tool).
 
 ## Intrinsic Value
 

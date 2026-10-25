@@ -71,8 +71,8 @@ export function AppShell({
             </Link>
             <Link
               className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
-              // Back to the company being viewed, or the stock lookup when there's none.
-              href={tickerValue ? `/stock?symbol=${tickerValue}` : "/stock"}
+              // Always the leaderboards: a company's own pages are its tabs.
+              href="/stock"
               title="Stocks"
               aria-current={activeSection === "research" ? "page" : undefined}
             >
@@ -100,8 +100,8 @@ export function AppShell({
               <Link
                 key={tool.id}
                 className={`sidebar-link${activeSection === tool.id ? " sidebar-link-active" : ""}`}
-                // Keep the company when switching between tools.
-                href={tickerValue ? `${tool.path}?symbol=${tickerValue}` : tool.path}
+                // Coming from another page keeps the company; clicking the open tool starts it over.
+                href={tickerValue && activeSection !== tool.id ? `${tool.path}?symbol=${tickerValue}` : tool.path}
                 title={tool.label}
                 aria-current={activeSection === tool.id ? "page" : undefined}
               >
@@ -128,7 +128,8 @@ export function AppShell({
             </Link>
             <Link
               className={`sidebar-link${activeSection === "news" ? " sidebar-link-active" : ""}`}
-              href={tickerValue ? `/news?symbol=${tickerValue}` : "/news"}
+              // Market news; a company's news is its News tab.
+              href="/news"
               title="News"
               aria-current={activeSection === "news" ? "page" : undefined}
             >
