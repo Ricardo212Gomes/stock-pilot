@@ -1,5 +1,6 @@
 import { getSql, isDatabaseConfigured } from "./db";
-import type { FiscalQuarter, TranscriptSegment } from "./transcripts";
+import { generateGeminiText } from "./gemini";
+import { getTranscript, quarterLabel, transcriptFailureMessage, type FiscalQuarter, type TranscriptSegment } from "./transcripts";
 
 // An AI summary of an earnings call transcript. Summaries are saved next to the transcript, so
 // each call is summarized once.
@@ -120,4 +121,34 @@ export async function saveSummary(symbol: string, quarter: FiscalQuarter, summar
   } catch {
     // The memory copy still saves a second Gemini request until the server restarts.
   }
+}
+
+export type TranscriptSummaryResult = { ok: true; summary: TranscriptSummary } | { ok: false; error: string };
+
+// The saved summary, or a new one from Gemini (saved for next time). Used by the Transcripts page
+// and the Telegram notifications.
+export async function ensureTranscriptSummary(symbol: string, quarter: FiscalQuarter, company: string): Promise<TranscriptSummaryResult> {
+  const saved = await getSavedSummary(symbol, quarter);
+  if (saved) return { ok: true, summary: saved };
+
+  const transcript = await getTranscript(symbol, quarter);
+  if (!transcript.ok) return { ok: false, error: transcriptFailureMessage(transcript.reason, quarter) };
+
+  const result = await generateGeminiText({
+    instructions: SUMMARY_INSTRUCTIONS,
+    prompt: buildSummaryPrompt({ company, quarterLabel: quarterLabel(quarter), segments: transcript.segments }),
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 1500,
+      responseMimeType: "application/json",
+      responseSchema: SUMMARY_SCHEMA,
+    },
+    subject: "summary",
+  });
+  if (!result.ok) return result;
+
+  const summary = parseSummary(result.text);
+  if (!summary) return { ok: false, error: "Gemini's summary could not be read. Please try again." };
+  await saveSummary(symbol, quarter, summary);
+  return { ok: true, summary };
 }

@@ -10,7 +10,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:setup": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/setup-db.mjs",
-    "symbols:update": "node scripts/update-symbols.mjs"
+    "symbols:update": "node scripts/update-symbols.mjs",
+    "notify:earnings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts earnings",
+    "notify:transcripts": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts transcripts"
   },
   "dependencies": {
     "lightweight-charts": "^5.2.1",
@@ -29,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^3.2.7"

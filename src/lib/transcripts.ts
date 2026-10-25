@@ -55,6 +55,11 @@ export function recentQuarters(latest: FiscalQuarter, count = 8): FiscalQuarter[
 // company's next report and its fiscal quarter; the one before it is the latest reported. Without
 // it, the calendar quarter before today's is a fair guess.
 export async function latestReportedQuarter(symbol: string, today = new Date().toISOString().slice(0, 10)): Promise<FiscalQuarter> {
+  return (await latestReport(symbol, today)).quarter;
+}
+
+// The latest reported quarter and, when Finnhub's calendar still lists it, the report date.
+export async function latestReport(symbol: string, today = new Date().toISOString().slice(0, 10)): Promise<{ quarter: FiscalQuarter; date: string | null }> {
   const result = await fetchFinnhub("calendar/earnings", { symbol, from: addDays(today, -100), to: addDays(today, 120) }, 60 * 60 * 6);
   const rows = result.ok ? (result.payload as { earningsCalendar?: unknown })?.earningsCalendar : null;
   if (Array.isArray(rows)) {
@@ -65,12 +70,12 @@ export async function latestReportedQuarter(symbol: string, today = new Date().t
       .filter((row): row is { date: string; quarter: FiscalQuarter } => isFiscalQuarter(row.quarter))
       .sort((left, right) => left.date.localeCompare(right.date));
     const past = reports.filter((row) => row.date <= today);
-    if (past.length) return past[past.length - 1].quarter;
-    if (reports.length) return previousQuarter(reports[0].quarter);
+    if (past.length) return past[past.length - 1];
+    if (reports.length) return { quarter: previousQuarter(reports[0].quarter), date: null };
   }
   const month = Number(today.slice(5, 7));
   const current = `${today.slice(0, 4)}Q${Math.ceil(month / 3)}` as FiscalQuarter;
-  return previousQuarter(current);
+  return { quarter: previousQuarter(current), date: null };
 }
 
 function text(value: unknown): string | null {

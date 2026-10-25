@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth, isAuthConfigured, signIn, signOut } from "@/auth";
 
 function initials(name: string | null | undefined, email: string | null | undefined): string {
@@ -44,6 +45,7 @@ export async function UserMenu() {
       <div className="user-menu-panel">
         {user.name && <strong>{user.name}</strong>}
         {user.email && <span>{user.email}</span>}
+        <Link className="user-menu-link" href="/settings">Notification settings</Link>
         <form
           action={async () => {
             "use server";
