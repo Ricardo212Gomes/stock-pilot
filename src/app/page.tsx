@@ -85,7 +85,7 @@ export default async function Home() {
   const favorites = await favoriteSymbols();
 
   return (
-    <AppShell contentClassName="dashboard-content home" dataSource="Data from FMP, SEC EDGAR, Finnhub, Alpha Vantage and FINVIZ">
+    <AppShell contentClassName="dashboard-content home" activeSection="home" dataSource="Data from FMP, SEC EDGAR, Finnhub, Alpha Vantage and FINVIZ">
       <section className="home-hero">
         <p className="section-label">STOCK RESEARCH</p>
         <h1>Research any US stock, from its filings to its fair value.</h1>

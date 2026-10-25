@@ -76,6 +76,6 @@ Tests live next to the code as `*.test.ts` and mock `fetch`, so they never call 
 
 ## Design system
 
-See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar currently contains the Company research tool and a light/dark theme switch; the top bar keeps a synchronized copy. The theme selector follows the system preference until a choice is saved.
+See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Company research, Favorites), Valuation and Markets, and can collapse to an icon rail. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
 
 On the Financials page, the spark button beside each section title asks Gemini to explain that section's figures in plain language. Intraday prices and a dedicated dividend history are not included yet.

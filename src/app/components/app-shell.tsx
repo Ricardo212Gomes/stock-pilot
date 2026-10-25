@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "research" | "favorites" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "favorites" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -18,6 +18,7 @@ type AppShellProps = {
 };
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
+  if (section === "home") return "Home";
   if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
@@ -58,8 +59,20 @@ export function AppShell({
           <nav className="sidebar-nav" aria-label="Workspace">
             <p className="sidebar-section-label">WORKSPACE</p>
             <Link
-              className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
+              className={`sidebar-link${activeSection === "home" ? " sidebar-link-active" : ""}`}
               href="/"
+              title="Home"
+              aria-current={activeSection === "home" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 9 10 3.5 16.5 9M5 8v8.5h3.5V12h3v4.5H15V8" />
+              </svg>
+              <span>Home</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
+              // Back to the company being viewed, or the stock lookup when there's none.
+              href={tickerValue ? `/stock?symbol=${tickerValue}` : "/stock"}
               title="Company research"
               aria-current={activeSection === "research" ? "page" : undefined}
             >

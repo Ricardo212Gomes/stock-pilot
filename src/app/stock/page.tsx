@@ -10,7 +10,7 @@ import { getStockPriceHistory, normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
 import { getStockOverview, type StockOverview } from "@/lib/stock-overview";
 
-export const generateMetadata = companyMetadata("Overview", "Price, key statistics, analyst views and company profile for any stock.");
+export const generateMetadata = companyMetadata("Overview", "Price, key statistics, analyst views and company profile for any stock.", "Company research");
 
 const ABOUT_LENGTH = 600;
 
