@@ -18,6 +18,19 @@ Search, the home page examples and breadcrumbs land on the Overview.
 
 Every company tab shares the same header (`CompanyHeader`: the quote, or the company name from the bundled stock list when no quote is available) and tab bar, and is titled "AAPL Overview — StockPilot", "AAPL Financials — StockPilot" and so on (`companyMetadata`). The top bar reads "AAPL · Overview", and the footer credits the tab's source.
 
+## Stocks: leaderboards without a ticker
+
+`/stock` with no ticker (the sidebar's **Stocks** when no company is open; it stays highlighted on every company tab) shows leaderboards instead of an empty page, one FMP request each (`src/lib/leaderboard.ts`):
+
+| List (`list`) | FMP endpoint | Cached |
+| --- | --- | --- |
+| Largest companies (default) | `company-screener` (US, not ETFs or funds, market cap over $10B), sorted by market cap | 6 hours |
+| Top gainers (`gainers`) | `biggest-gainers` | 15 minutes |
+| Top losers (`losers`) | `biggest-losers` | 15 minutes |
+| Most active (`active`) | `most-actives` | 15 minutes |
+
+Each shows the top 50 with rank, ticker and name (linking to the company), price, and market cap, daily change or volume; the largest list adds the sector. Field names that differ between FMP's endpoints (`changesPercentage`, `changePercentage`, `companyName`, `name`) are all read. If a request fails, the page explains why and the search still works.
+
 ## Search
 
 The top bar search (`src/app/components/ticker-search.tsx`) takes a company name or a ticker. Matching runs in the browser over `src/data/us-stocks.json`, a list of about 5,900 US-listed stocks, so typing makes no API requests. The list is a separate ~70 KB (compressed) chunk, loaded the first time the search box gets focus.

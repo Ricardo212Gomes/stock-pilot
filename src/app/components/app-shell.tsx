@@ -26,7 +26,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "dividends") return "Dividend calendar";
   const tool = VALUATION_TOOLS.find(({ id }) => id === section);
   if (tool) return ticker ? `${ticker} · ${tool.label}` : tool.label;
-  return ticker ? `${ticker} · Overview` : "Company research";
+  return ticker ? `${ticker} · Overview` : "Stocks";
 }
 
 const VALUATION_ICONS: Record<ValuationTool, string> = {
@@ -73,13 +73,13 @@ export function AppShell({
               className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
               // Back to the company being viewed, or the stock lookup when there's none.
               href={tickerValue ? `/stock?symbol=${tickerValue}` : "/stock"}
-              title="Company research"
+              title="Stocks"
               aria-current={activeSection === "research" ? "page" : undefined}
             >
               <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M3 16.5h14M4.5 14V9.5M8.2 14V5.5M11.8 14v-3M15.5 14V7" />
               </svg>
-              <span>Company research</span>
+              <span>Stocks</span>
             </Link>
             <Link
               className={`sidebar-link${activeSection === "favorites" ? " sidebar-link-active" : ""}`}
@@ -164,7 +164,7 @@ export function AppShell({
 
           <div className="sidebar-note">
             <span className="sidebar-tool-count"><span aria-hidden="true" /> 9 TOOLS</span>
-            <p>Company research, favorites, three valuation calculators, market maps, news, earnings and dividends.</p>
+            <p>Stocks, favorites, three valuation calculators, market maps, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-collapse">

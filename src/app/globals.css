@@ -4638,3 +4638,59 @@ a.earnings-round:focus-visible {
   color: var(--accent);
   font-weight: 600;
 }
+
+/* Stocks leaderboards */
+
+.leaderboard-tabs {
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.leaderboard-table {
+  min-width: 0;
+}
+
+.leaderboard-table thead th:nth-child(-n + 2),
+.leaderboard-table tbody th,
+.leaderboard-rank,
+.leaderboard-sector {
+  text-align: left;
+}
+
+.leaderboard-rank {
+  width: 40px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-company {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  color: inherit;
+}
+
+.leaderboard-company strong {
+  min-width: 56px;
+  color: var(--accent);
+}
+
+.leaderboard-company span {
+  overflow: hidden;
+  color: var(--foreground);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-sector {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 640px) {
+  .leaderboard-optional,
+  .leaderboard-company span {
+    display: none;
+  }
+}

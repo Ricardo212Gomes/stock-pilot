@@ -5,17 +5,19 @@ import { CompanyHeader } from "../components/company-header";
 import { companyMetadata } from "../components/company-metadata";
 import { QuoteHeader } from "../components/quote-header";
 import { StockNav } from "../components/stock-nav";
+import { Leaderboard } from "./leaderboard";
 import { PriceHistoryChart } from "./price-history-chart";
 import { getStockPriceHistory, normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
+import { isLeaderboardId } from "@/lib/leaderboard";
 import { getStockOverview, type StockOverview } from "@/lib/stock-overview";
 
-export const generateMetadata = companyMetadata("Overview", "Price, key statistics, analyst views and company profile for any stock.", "Company research");
+export const generateMetadata = companyMetadata("Overview", "Price, key statistics, analyst views and company profile for any stock.", "Stocks");
 
 const ABOUT_LENGTH = 600;
 
 type StockPageProps = {
-  searchParams: Promise<{ symbol?: string | string[] }>;
+  searchParams: Promise<{ symbol?: string | string[]; list?: string | string[] }>;
 };
 
 function compactNumber(value: number | null): string {
@@ -159,16 +161,22 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
     : [null, null];
 
   if (!symbol || !overview) {
+    const rawList = Array.isArray(params.list) ? params.list[0] : params.list;
     return (
       <AppShell contentClassName="dashboard-content">
-        <section className="projection-start">
-          <p className="section-label">STOCK OVERVIEW</p>
-          <h1>Look up a stock</h1>
-          <p>
-            {rawSymbol ? "That isn't a valid ticker. " : ""}
-            Search for a ticker above to see its price, key statistics, analyst views and company profile.
-          </p>
+        <section className="company-heading">
+          <div>
+            <p className="section-label">LEADERBOARDS</p>
+            <div className="company-title-row">
+              <h1>Stocks</h1>
+            </div>
+            <p className="company-subtitle">
+              {rawSymbol ? "That isn't a valid ticker. " : ""}
+              Start from the largest companies or today&apos;s biggest moves, or search for any company above.
+            </p>
+          </div>
         </section>
+        <Leaderboard list={isLeaderboardId(rawList) ? rawList : "largest"} />
       </AppShell>
     );
   }
