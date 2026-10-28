@@ -1,19 +1,46 @@
 import { addDays, getEarningsWeek, weekStart, type EarningsEvent, type ReportTime } from "./earnings-calendar";
 import { listFavorites } from "./favorites";
+import { ensureFilingAnalysis, isAlertFiling, type FilingAnalysis } from "./filing-analysis";
+import { getCompanyNews } from "./finnhub-news";
 import { listedName } from "./listed-companies";
+import { CANDIDATES_PER_SYMBOL, selectNews, type NewsCandidate, type NewsPick } from "./news-digest";
+import { getFilings, isEarningsRelease, pressReleaseUrl, type Filing } from "./sec-filings";
 import { markSent, notificationRecipients, wasSent, type Recipient } from "./notification-settings";
 import { escapeHtml, sendTelegramMessage } from "./telegram";
 import { ensureTranscriptSummary, type TranscriptSummary } from "./transcript-summary";
 import { latestReport, quarterLabel, type FiscalQuarter } from "./transcripts";
 
-// Telegram notifications for each user's favorites: upcoming earnings, and summaries of new
-// earnings calls. Run by `npm run notify:earnings` and `npm run notify:transcripts`.
+// Telegram notifications for each user's favorites: upcoming earnings, summaries of new earnings
+// calls, a digest of the news that matters, and analyses of new SEC filings. Run by
+// `npm run notify:earnings`, `notify:transcripts`, `notify:news` and `notify:filings`.
 
 export const EARNINGS_DAYS = 7;
 // Only calls this recent count as new; older ones were missed, not news.
 export const RECENT_CALL_DAYS = 21;
 
 export type RunReport = { sent: number; lines: string[] };
+
+// With NOTIFY_DRY_RUN=1 (npm run notify:… -- --dry-run), messages are printed instead of sent
+// and nothing is marked as sent, so a later real run still delivers them.
+function isDryRun(): boolean {
+  return process.env.NOTIFY_DRY_RUN === "1";
+}
+
+async function deliver(chatId: string, message: string): ReturnType<typeof sendTelegramMessage> {
+  if (!isDryRun()) return sendTelegramMessage(chatId, message);
+  console.log(`\n--- to chat ${chatId.slice(0, 3)}… ---\n${message}\n`);
+  return { ok: true, result: null };
+}
+
+async function record(userId: string, kind: string, item: string): Promise<void> {
+  if (!isDryRun()) await markSent(userId, kind, item);
+}
+// News from the last day; runs are daily, so a little overlap catches late articles.
+export const NEWS_HOURS = 26;
+// Filings from the last few days count as new; older ones were missed, not news.
+export const FILING_DAYS = 3;
+// New filings analyzed per company per run, newest first, to bound the AI requests.
+const FILINGS_PER_SYMBOL = 3;
 
 const TIME_LABEL: Record<ReportTime, string> = {
   bmo: "before the open",
@@ -109,7 +136,7 @@ export async function runEarningsAlerts(today = new Date().toISOString().slice(0
       report.lines.push(`${recipient.userId}: no favorites report by ${to}.`);
       continue;
     }
-    const sent = await sendTelegramMessage(recipient.chatId, message);
+    const sent = await deliver(recipient.chatId, message);
     report.lines.push(`${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
     if (sent.ok) report.sent += 1;
   }
@@ -150,12 +177,151 @@ export async function runTranscriptSummaries(today = new Date().toISOString().sl
     }
     const message = transcriptMessage(symbol, quarter, summary.summary);
     for (const recipient of waiting) {
-      const sent = await sendTelegramMessage(recipient.chatId, message);
+      const sent = await deliver(recipient.chatId, message);
       if (sent.ok) {
-        await markSent(recipient.userId, "transcript", item);
+        await record(recipient.userId, "transcript", item);
         report.sent += 1;
       }
       report.lines.push(`${symbol} ${quarter} → ${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
+    }
+  }
+  return report;
+}
+
+function groupBySymbol<T extends { symbol: string }>(items: T[]): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const item of items) groups.set(item.symbol, [...(groups.get(item.symbol) ?? []), item]);
+  return groups;
+}
+
+export function newsMessage(picks: NewsPick[], aiSelected: boolean): string | null {
+  if (picks.length === 0) return null;
+  const sections = [...groupBySymbol(picks)].map(([symbol, items]) => {
+    const name = listedName(symbol);
+    return [
+      `${tickerLink(symbol, "/news")}${name ? ` ${escapeHtml(name)}` : ""}`,
+      ...items.map((item) => {
+        const title = escapeHtml(item.title);
+        const headline = item.url ? `<a href="${escapeHtml(item.url)}">${title}</a>` : title;
+        return `• ${headline}${item.source ? ` · ${escapeHtml(item.source)}` : ""}${item.why ? `\n   ${escapeHtml(item.why)}` : ""}`;
+      }),
+    ].join("\n");
+  });
+  return [
+    `📰 <b>News on your favorites</b>\n${aiSelected ? "Picked by AI from the last day's headlines" : "The latest headlines"}`,
+    ...sections,
+  ].join("\n\n");
+}
+
+const SENTIMENT: Record<FilingAnalysis["sentiment"], string> = {
+  positive: "🟢 Positive for shareholders",
+  neutral: "⚪ Neutral for shareholders",
+  negative: "🔴 Negative for shareholders",
+};
+
+// documentUrl: the press release for an earnings 8-K, since that's what was analyzed.
+export function filingMessage(symbol: string, filing: Filing, analysis: FilingAnalysis, documentUrl = filing.documentUrl): string {
+  const list = (title: string, items: string[]) => (items.length ? `<b>${title}</b>\n${items.map((item) => `• ${escapeHtml(item)}`).join("\n")}` : null);
+  const name = listedName(symbol);
+  return [
+    `🗂 ${tickerLink(symbol, "/stock/filings")} <b>filed ${/^8/.test(filing.form) ? "an" : "a"} ${escapeHtml(filing.form)}</b> · ${escapeHtml(filing.description)}\n${name ? `${escapeHtml(name)} · ` : ""}${SENTIMENT[analysis.sentiment]}`,
+    `<b>${escapeHtml(analysis.headline)}</b>\n${escapeHtml(analysis.summary)}`,
+    list("Key points", analysis.keyPoints),
+    list("What to watch", analysis.watch),
+    `<a href="${escapeHtml(documentUrl)}">${documentUrl === filing.documentUrl ? "Read the filing" : "Read the press release"} on sec.gov</a>`,
+    "<i>AI analysis of the filing. Not investment advice.</i>",
+  ].filter(Boolean).join("\n\n");
+}
+
+// One digest per user: Gemini picks the headlines about their favorites that matter, each sent once.
+export async function runNewsDigest(now = new Date()): Promise<RunReport> {
+  const report: RunReport = { sent: 0, lines: [] };
+  const recipients = await notificationRecipients("news");
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has news alerts on with Telegram connected."] };
+
+  const since = new Date(now.getTime() - NEWS_HOURS * 3_600_000).toISOString();
+  const favorites = await favoritesOf(recipients);
+  const newsBySymbol = new Map<string, NewsCandidate[]>();
+  for (const symbol of new Set([...favorites.values()].flat())) {
+    const news = await getCompanyNews(symbol, now);
+    if (!news.ok) {
+      report.lines.push(`${symbol}: news failed (${news.reason}).`);
+      continue;
+    }
+    newsBySymbol.set(symbol, news.items
+      .filter((item) => item.publishedAt >= since)
+      .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt))
+      .slice(0, CANDIDATES_PER_SYMBOL)
+      .map((item) => ({ id: item.id, symbol, title: item.title, summary: item.summary, source: item.source, url: item.url, publishedAt: item.publishedAt })));
+  }
+
+  for (const recipient of recipients) {
+    const candidates: NewsCandidate[] = [];
+    const seen = new Set<string>();
+    for (const symbol of favorites.get(recipient.userId) ?? []) {
+      for (const item of newsBySymbol.get(symbol) ?? []) {
+        if (seen.has(item.id) || (await wasSent(recipient.userId, "news", item.id))) continue;
+        seen.add(item.id);
+        candidates.push(item);
+      }
+    }
+    const { picks, aiSelected } = await selectNews(candidates);
+    const message = newsMessage(picks, aiSelected);
+    if (!message) {
+      report.lines.push(`${recipient.userId}: nothing relevant among ${candidates.length} new headlines.`);
+      continue;
+    }
+    const sent = await deliver(recipient.chatId, message);
+    if (sent.ok) {
+      for (const pick of picks) await record(recipient.userId, "news", pick.id);
+      report.sent += 1;
+    }
+    report.lines.push(`${recipient.userId}: ${sent.ok ? `sent ${picks.length} of ${candidates.length} headlines` : `failed (${sent.error})`}.`);
+  }
+  return report;
+}
+
+// An AI analysis of each favorite's new 10-K, 10-Q or significant 8-K, sent once per user.
+export async function runFilingAlerts(today = new Date().toISOString().slice(0, 10)): Promise<RunReport> {
+  const report: RunReport = { sent: 0, lines: [] };
+  const recipients = await notificationRecipients("filings");
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has filing alerts on with Telegram connected."] };
+
+  const favorites = await favoritesOf(recipients);
+  const oldest = addDays(today, -FILING_DAYS);
+  for (const symbol of [...new Set([...favorites.values()].flat())].sort()) {
+    const result = await getFilings(symbol);
+    if (!result.ok) {
+      report.lines.push(`${symbol}: filings failed (${result.reason}).`);
+      continue;
+    }
+    const recent = result.data.filings.filter((filing) => isAlertFiling(filing) && filing.filed >= oldest).slice(0, FILINGS_PER_SYMBOL);
+    if (recent.length === 0) {
+      report.lines.push(`${symbol}: no new filings to analyze.`);
+      continue;
+    }
+    for (const filing of recent) {
+      const waiting: Recipient[] = [];
+      for (const recipient of recipients) {
+        if (favorites.get(recipient.userId)?.includes(symbol) && !(await wasSent(recipient.userId, "filing", filing.accession))) waiting.push(recipient);
+      }
+      if (waiting.length === 0) continue;
+
+      const analysis = await ensureFilingAnalysis(symbol, listedName(symbol) ?? result.data.name ?? symbol, filing);
+      if (!analysis.ok) {
+        report.lines.push(`${symbol} ${filing.form} ${filing.filed}: not analyzed (${analysis.error})`);
+        continue;
+      }
+      const release = isEarningsRelease(filing) ? await pressReleaseUrl(filing) : null;
+      const message = filingMessage(symbol, filing, analysis.analysis, release ?? filing.documentUrl);
+      for (const recipient of waiting) {
+        const sent = await deliver(recipient.chatId, message);
+        if (sent.ok) {
+          await record(recipient.userId, "filing", filing.accession);
+          report.sent += 1;
+        }
+        report.lines.push(`${symbol} ${filing.form} ${filing.filed} → ${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
+      }
     }
   }
   return report;

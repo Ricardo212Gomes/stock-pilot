@@ -20,13 +20,13 @@ Thirty filings show at a time, with **Show more filings** below (`page`). The li
 - **Filed** date and the **form**, highlighted for earnings releases.
 - A plain description: the form's purpose ("Quarterly report", "Insider trade"), or for an 8-K its items ("Executive or director change · Regulation FD disclosure"). Item 9.01, which only lists exhibits, is left out.
 - The period: "Quarter ended …" for a 10-Q, "Year ended …" for a 10-K, or the event date when it differs from the filing date.
-- Links: **Document** (the main document), **All files** (the filing index) and, for earnings releases, **Press release**: exhibit 99.1, found in the filing's file list (`index.json`). Up to eight press releases are looked up per page shown.
+- Links: **Document** (the main document), **All files** (the filing index) and, for earnings releases, **Press release**: the document typed EX-99.1 (or EX-99) on the filing's index page. Companies name the file freely (`ex991.htm`, `gevpressrelease3q26.htm`, `a2026q3earningsrelease.htm`), so the type column decides, with release-like names as a fallback. Up to eight press releases are looked up per page shown.
 
 ## Requests and caching
 
 - `https://www.sec.gov/files/company_tickers.json` for the ticker's CIK (cached for a day, shared with the statements fallback in [`data-fallbacks.md`](./data-fallbacks.md)).
 - `https://data.sec.gov/submissions/CIK##########.json` for the filings (~150 KB, cached for 6 hours).
-- A filing's `index.json` per press release (cached for 30 days; filings don't change).
+- A filing's index page per press release (cached for 30 days; filings don't change).
 
 The SEC limits automated clients to 10 requests a second and asks them to identify themselves in the User-Agent. Requests use `SEC_USER_AGENT` when set; the SEC recommends including a contact email, for example `StockPilot you@example.com`. Browsers opening the document links are unaffected, but the SEC can briefly block a network it sees sending heavy automated traffic.
 

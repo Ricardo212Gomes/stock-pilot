@@ -12,7 +12,9 @@
     "db:setup": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/setup-db.mjs",
     "symbols:update": "node scripts/update-symbols.mjs",
     "notify:earnings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts earnings",
-    "notify:transcripts": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts transcripts"
+    "notify:transcripts": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts transcripts",
+    "notify:news": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts news",
+    "notify:filings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts filings"
   },
   "dependencies": {
     "lightweight-charts": "^5.2.1",

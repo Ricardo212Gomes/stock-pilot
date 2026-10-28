@@ -180,23 +180,32 @@ export async function getFilings(symbol: string): Promise<FilingsResult> {
   }
 }
 
-// The press release attached to an earnings 8-K: exhibit 99.1, named like "…ex991.htm" or
-// "…ex-99_1.htm". Found from the filing's file list; null if there's no such exhibit.
+// The press release attached to an earnings 8-K: the exhibit typed EX-99.1 (or EX-99) on the
+// filing's index page. Companies name the file freely ("ex991.htm", "gevpressrelease3q26.htm",
+// "a2026q3earningsrelease.htm"), so the type column decides; names are only a fallback.
+export function pressReleaseFromIndex(html: string, folder: string): string | null {
+  const documents = [...html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].flatMap((row) => {
+    const cells = [...row[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((cell) => cell[1].replace(/<[^>]+>|&nbsp;/g, " ").trim());
+    const href = row[1].match(/href="([^"]+)"/)?.[1];
+    const name = href?.split("/").pop() ?? "";
+    return href && /\.html?$/i.test(name) && cells.length >= 4 ? [{ type: cells[3].toUpperCase(), name }] : [];
+  });
+  const rank = (type: string) => (type === "EX-99.1" ? 0 : type === "EX-99" ? 1 : /^EX-99\./.test(type) ? 2 : 3);
+  const exhibit = documents.filter((doc) => rank(doc.type) < 3).sort((left, right) => rank(left.type) - rank(right.type))[0]
+    ?? documents.find((doc) => doc.type !== "8-K" && /ex(?:hibit)?[-_]?99|press|release/i.test(doc.name));
+  return exhibit ? `${folder}/${exhibit.name}` : null;
+}
+
 export async function pressReleaseUrl(filing: Filing): Promise<string | null> {
   const folder = filing.indexUrl.slice(0, filing.indexUrl.lastIndexOf("/"));
   try {
-    const response = await fetch(`${folder}/index.json`, {
+    const response = await fetch(filing.indexUrl, {
       headers: secHeaders(),
       next: { revalidate: INDEX_REVALIDATE_SECONDS },
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) return null;
-    const body = (await response.json()) as { directory?: { item?: { name?: unknown }[] } };
-    const names = (body.directory?.item ?? []).map((item) => (typeof item.name === "string" ? item.name : ""));
-    // Exhibit 99 documents; 99.1 (the press release) first when there are several.
-    const exhibits = names.filter((name) => /ex(?:hibit)?[-_]?99/i.test(name) && /\.html?$/i.test(name));
-    const exhibit = exhibits.find((name) => /ex(?:hibit)?[-_]?99[-_.]?0?1(?!\d)/i.test(name)) ?? exhibits[0];
-    return exhibit ? `${folder}/${exhibit}` : null;
+    return pressReleaseFromIndex(await response.text(), folder);
   } catch {
     return null;
   }
