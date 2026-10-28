@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { describeFiling, filingMatches, parseSubmissions, pressReleaseUrl, type Filing } from "./sec-filings";
+import { describeFiling, filingMatches, parseSubmissions, pressReleaseFromIndex, pressReleaseUrl, type Filing } from "./sec-filings";
 
 const submissions = {
   name: "CrowdStrike Holdings, Inc.",
@@ -65,17 +65,28 @@ describe("pressReleaseUrl", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   const filing = parseSubmissions(submissions, "0001535527")!.filings[0] as Filing;
+  const folder = "https://www.sec.gov/Archives/edgar/data/1535527/000153552726000029";
+  // Rows as on EDGAR's filing index page: Seq | Description | Document | Type | Size.
+  const row = (doc: string, type: string) =>
+    `<tr><td>1</td><td></td><td><a href="/Archives/edgar/data/1535527/000153552726000029/${doc}">${doc}</a></td><td>${type}</td><td>100</td></tr>`;
+  const indexPage = (...rows: string[]) => `<table><tr><th>Seq</th></tr>${rows.join("")}</table>`;
 
-  it("finds exhibit 99.1 in the filing's files", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ directory: { item: [
-      { name: "crwd-20260826.htm" }, { name: "crwd-20260826xex992.htm" }, { name: "crwd-20260826xex991.htm" }, { name: "R1.htm" },
-    ] } })));
-    await expect(pressReleaseUrl(filing)).resolves.toBe("https://www.sec.gov/Archives/edgar/data/1535527/000153552726000029/crwd-20260826xex991.htm");
+  it("picks the document typed EX-99.1, then EX-99, whatever the file is called", () => {
+    expect(pressReleaseFromIndex(indexPage(row("crwd-20260826.htm", "8-K"), row("ex992.htm", "EX-99.2"), row("anything.htm", "EX-99.1")), folder)).toBe(`${folder}/anything.htm`);
+    expect(pressReleaseFromIndex(indexPage(row("gev-20261028.htm", "8-K"), row("gevpressrelease3q26.htm", "EX-99"), row("logo.jpg", "GRAPHIC")), folder)).toBe(`${folder}/gevpressrelease3q26.htm`);
+    // Without a type, a release-like name still works; the 8-K itself never counts.
+    expect(pressReleaseFromIndex(indexPage(row("crwd-20260826.htm", "8-K"), row("a2026q3earningsrelease.htm", "")), folder)).toBe(`${folder}/a2026q3earningsrelease.htm`);
+    expect(pressReleaseFromIndex(indexPage(row("crwd-20260826.htm", "8-K")), folder)).toBeNull();
   });
 
-  it("returns null without an exhibit 99 or when the SEC fails", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ directory: { item: [{ name: "crwd-20260826.htm" }] } })));
-    await expect(pressReleaseUrl(filing)).resolves.toBeNull();
+  it("reads the filing's index page, and returns null when the SEC fails", async () => {
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
+      void init;
+      return new Response(indexPage(row("crwd-20260826xex991.htm", "EX-99.1")));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(pressReleaseUrl(filing)).resolves.toBe(`${folder}/crwd-20260826xex991.htm`);
+    expect(String(fetchMock.mock.calls[0][0])).toBe(filing.indexUrl);
     vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 503 })));
     await expect(pressReleaseUrl(filing)).resolves.toBeNull();
   });

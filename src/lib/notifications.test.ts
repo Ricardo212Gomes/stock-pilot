@@ -9,6 +9,9 @@ const state = {
   events: [] as EarningsEvent[],
   report: { quarter: "2026Q4", date: "2026-10-20" as string | null },
   summary: { ok: true, summary: { overview: "Strong <quarter>.", highlights: ["ARR up 22%."], outlook: [], analystQuestions: [], tone: "positive", toneReason: "Raised guidance." } } as unknown,
+  news: [] as { id: string; title: string; summary: string; source: string; url: string; publishedAt: string; tickers: string[]; category: null }[],
+  filings: [] as { accession: string; form: string; filed: string; period: string | null; items: string[]; description: string; documentUrl: string; indexUrl: string }[],
+  analyzed: 0,
 };
 
 vi.mock("./notification-settings", () => ({
@@ -30,8 +33,25 @@ vi.mock("./earnings-calendar", async (original) => ({
 }));
 vi.mock("./transcripts", async (original) => ({ ...(await original<typeof import("./transcripts")>()), latestReport: async () => state.report }));
 vi.mock("./transcript-summary", () => ({ ensureTranscriptSummary: async () => state.summary }));
+vi.mock("./finnhub-news", () => ({ getCompanyNews: async () => ({ ok: true, items: state.news }) }));
+vi.mock("./news-digest", () => ({
+  CANDIDATES_PER_SYMBOL: 6,
+  selectNews: async (candidates: { id: string }[]) => ({ aiSelected: true, picks: candidates.slice(0, 1).map((item) => ({ ...item, why: "It matters." })) }),
+}));
+vi.mock("./sec-filings", () => ({
+  getFilings: async () => ({ ok: true, data: { name: "CrowdStrike", cik: "1", filings: state.filings } }),
+  isEarningsRelease: (filing: { form: string; items: string[] }) => filing.form === "8-K" && filing.items.includes("2.02"),
+  pressReleaseUrl: async () => "https://www.sec.gov/a1-ex991.htm",
+}));
+vi.mock("./filing-analysis", async (original) => ({
+  ...(await original<typeof import("./filing-analysis")>()),
+  ensureFilingAnalysis: async () => {
+    state.analyzed += 1;
+    return { ok: true, analysis: { headline: "Q2 beat", summary: "Revenue rose 22%.", keyPoints: ["ARR $5.3B"], watch: [], sentiment: "positive" } };
+  },
+}));
 
-const { earningsMessage, runEarningsAlerts, runTranscriptSummaries } = await import("./notifications");
+const { earningsMessage, runEarningsAlerts, runFilingAlerts, runNewsDigest, runTranscriptSummaries } = await import("./notifications");
 
 function event(symbol: string, date: string): EarningsEvent {
   return { symbol, name: null, date, time: "amc", quarter: 3, year: 2027, epsEstimate: 0.95, epsActual: null, epsSurprise: null, revenueEstimate: 1.55e9, revenueActual: null, revenueSurprise: null };
@@ -92,5 +112,42 @@ describe("runTranscriptSummaries", () => {
     const report = await runTranscriptSummaries("2026-10-26");
     expect(report.sent).toBe(0);
     expect(report.lines.some((line) => line.includes("not ready"))).toBe(true);
+  });
+});
+
+describe("runNewsDigest", () => {
+  it("sends each user the picked headlines from the last day, once", async () => {
+    state.favorites = { u1: ["CRWD"], u2: [] };
+    const article = (id: string, publishedAt: string) => ({ id, title: `CrowdStrike <${id}>`, summary: "", source: "Reuters", url: `https://example.com/${id}`, publishedAt, tickers: ["CRWD"], category: null });
+    state.news = [article("old", "2026-10-26T09:00:00.000Z"), article("new", "2026-10-28T09:00:00.000Z")];
+
+    const first = await runNewsDigest(new Date("2026-10-28T21:30:00Z"));
+    expect(first.sent).toBe(1);
+    expect(state.messages[0].text).toContain("📰 <b>News on your favorites</b>");
+    expect(state.messages[0].text).toContain('<a href="https://example.com/new">CrowdStrike &lt;new&gt;</a> · Reuters');
+    expect(state.messages[0].text).toContain("It matters.");
+    expect(state.messages[0].text).not.toContain("example.com/old");
+
+    const second = await runNewsDigest(new Date("2026-10-28T22:00:00Z"));
+    expect(second.sent).toBe(0);
+  });
+});
+
+describe("runFilingAlerts", () => {
+  it("analyzes each recent significant filing once and sends it to its followers", async () => {
+    state.favorites = { u1: ["CRWD"], u2: ["CRWD"] };
+    state.analyzed = 0;
+    const filing = (accession: string, form: string, filed: string, items: string[] = []) => ({ accession, form, filed, period: null, items, description: "Earnings results", documentUrl: `https://www.sec.gov/${accession}.htm`, indexUrl: "" });
+    state.filings = [filing("a1", "8-K", "2026-10-27", ["2.02"]), filing("a2", "4", "2026-10-27"), filing("a3", "10-Q", "2026-09-01")];
+
+    const report = await runFilingAlerts("2026-10-28");
+    expect(state.analyzed).toBe(1);
+    expect(report.sent).toBe(2);
+    expect(state.messages[0].text).toContain("<b>filed an 8-K</b> · Earnings results");
+    expect(state.messages[0].text).toContain("🟢 Positive for shareholders");
+    expect(state.messages[0].text).toContain('<a href="https://www.sec.gov/a1-ex991.htm">Read the press release on sec.gov</a>');
+
+    await runFilingAlerts("2026-10-28");
+    expect(state.analyzed).toBe(1);
   });
 });

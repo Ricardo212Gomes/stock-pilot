@@ -8,6 +8,7 @@ import {
   disconnectTelegram,
   getNotificationSettings,
   setNotificationPreferences,
+  type NotificationPreferences,
   startTelegramLink,
   telegramStartLink,
 } from "@/lib/notification-settings";
@@ -56,10 +57,18 @@ export async function disconnectTelegramAction(): Promise<SettingsActionResult> 
   return { ok: true, message: "Telegram disconnected." };
 }
 
-export async function savePreferencesAction(earningsAlerts: boolean, transcriptSummaries: boolean): Promise<SettingsActionResult> {
+export async function savePreferencesAction(raw: unknown): Promise<SettingsActionResult> {
   const userId = await signedIn();
   if (typeof userId !== "string") return userId;
-  await setNotificationPreferences(userId, { earningsAlerts: earningsAlerts === true, transcriptSummaries: transcriptSummaries === true });
+  // Only true counts as on; anything else from the browser is off.
+  const value = (raw ?? {}) as Record<string, unknown>;
+  const preferences: NotificationPreferences = {
+    earningsAlerts: value.earningsAlerts === true,
+    transcriptSummaries: value.transcriptSummaries === true,
+    newsAlerts: value.newsAlerts === true,
+    filingAlerts: value.filingAlerts === true,
+  };
+  await setNotificationPreferences(userId, preferences);
   refresh();
   return { ok: true, message: "Saved." };
 }

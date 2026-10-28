@@ -16,12 +16,15 @@ export async function generateGeminiText({
   prompt,
   generationConfig,
   subject,
+  timeoutMs = 45_000,
 }: {
   instructions: string;
   prompt: string;
   generationConfig: Record<string, unknown>;
   // Names the task in error messages, e.g. "analysis" → "could not complete the analysis".
   subject: string;
+  // Pages keep the default; background jobs with long prompts (news, filings) can wait longer.
+  timeoutMs?: number;
 }): Promise<GeminiResult> {
   // Blank values count as unset, so an empty line in .env falls back cleanly.
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -47,7 +50,7 @@ export async function generateGeminiText({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig,
       }),
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (!response.ok) {

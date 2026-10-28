@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CompanyLogo } from "../components/company-logo";
+import { useModalDialog } from "../components/use-modal-dialog";
 import type { DividendDay, DividendEvent } from "@/lib/dividend-calendar";
 
 function money(value: number | null): string {
@@ -15,12 +16,8 @@ function longDate(iso: string | null): string {
     .format(new Date(`${iso}T12:00:00Z`));
 }
 
-function Details({ event, onClose }: { event: DividendEvent | null; onClose: () => void }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (event && !dialog.current?.open) dialog.current?.showModal();
-    if (!event && dialog.current?.open) dialog.current.close();
-  }, [event]);
+function Details({ event: selected, onClose }: { event: DividendEvent | null; onClose: () => void }) {
+  const { dialog, shown: event } = useModalDialog(selected);
 
   return (
     <dialog

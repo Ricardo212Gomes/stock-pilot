@@ -57,8 +57,12 @@ async function SettingsBody() {
       botUsername={botUsername()}
       telegramName={settings.telegramName}
       pendingLink={settings.linkCode ? telegramStartLink(settings.linkCode) : null}
-      earningsAlerts={settings.earningsAlerts}
-      transcriptSummaries={settings.transcriptSummaries}
+      initialPreferences={{
+        earningsAlerts: settings.earningsAlerts,
+        transcriptSummaries: settings.transcriptSummaries,
+        newsAlerts: settings.newsAlerts,
+        filingAlerts: settings.filingAlerts,
+      }}
     />
   );
 }

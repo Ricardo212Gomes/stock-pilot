@@ -42,3 +42,17 @@ create table if not exists notification_log (
   sent_at timestamptz not null default now(),
   primary key (user_id, kind, item)
 );
+
+-- News and filing alerts, added after the first two kinds.
+alter table notification_settings add column if not exists news_alerts boolean not null default true;
+alter table notification_settings add column if not exists filing_alerts boolean not null default true;
+
+-- AI analyses of SEC filings, made once per filing and shared by everyone who follows the company.
+create table if not exists filing_analyses (
+  accession text primary key,
+  symbol text not null,
+  form text not null,
+  filed date not null,
+  analysis jsonb not null,
+  created_at timestamptz not null default now()
+);

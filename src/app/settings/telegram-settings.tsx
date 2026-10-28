@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { NotificationPreferences } from "@/lib/notification-settings";
 import {
   confirmTelegramLinkAction,
   disconnectTelegramAction,
@@ -14,16 +15,22 @@ type Props = {
   botUsername: string;
   telegramName: string | null;
   pendingLink: string | null;
-  earningsAlerts: boolean;
-  transcriptSummaries: boolean;
+  initialPreferences: NotificationPreferences;
 };
 
-export function TelegramSettings({ botUsername, telegramName, pendingLink, earningsAlerts, transcriptSummaries }: Props) {
+const ALERTS: { key: keyof NotificationPreferences; title: string; detail: string }[] = [
+  { key: "earningsAlerts", title: "Upcoming earnings", detail: "Every Monday: which favorites report in the next 7 days, with the time and estimates." },
+  { key: "transcriptSummaries", title: "Earnings call summaries", detail: "An AI summary of each favorite's new earnings call, once its transcript is out." },
+  { key: "newsAlerts", title: "Relevant news", detail: "Each weekday evening: the headlines about your favorites that matter, picked by AI with a line on why." },
+  { key: "filingAlerts", title: "SEC filing analysis", detail: "When a favorite files a 10-K, 10-Q or significant 8-K: an AI analysis of what it says and what to watch." },
+];
+
+export function TelegramSettings({ botUsername, telegramName, pendingLink, initialPreferences }: Props) {
   const [link, setLink] = useState(pendingLink);
   // Each card shows its own result.
   const [status, setStatus] = useState<{ card: "telegram" | "alerts"; ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
-  const [preferences, setPreferences] = useState({ earningsAlerts, transcriptSummaries });
+  const [preferences, setPreferences] = useState(initialPreferences);
 
   function run(
     card: "telegram" | "alerts",
@@ -54,7 +61,7 @@ export function TelegramSettings({ botUsername, telegramName, pendingLink, earni
   function togglePreference(key: keyof typeof preferences) {
     const next = { ...preferences, [key]: !preferences[key] };
     setPreferences(next);
-    run("alerts", () => savePreferencesAction(next.earningsAlerts, next.transcriptSummaries));
+    run("alerts", () => savePreferencesAction(next));
   }
 
   return (
@@ -83,7 +90,7 @@ export function TelegramSettings({ botUsername, telegramName, pendingLink, earni
           </ol>
         ) : (
           <>
-            <p>Get your favorites&apos; upcoming earnings and summaries of their earnings calls in Telegram.</p>
+            <p>Get your favorites&apos; upcoming earnings, earnings call summaries, relevant news and SEC filing analyses in Telegram.</p>
             <button type="button" className="settings-button" disabled={pending} onClick={() => run("telegram", startTelegramLinkAction, (result) => setLink(result.link ?? null))}>
               Connect Telegram
             </button>
@@ -94,20 +101,15 @@ export function TelegramSettings({ botUsername, telegramName, pendingLink, earni
 
       <section className="settings-card" aria-labelledby="alerts-heading">
         <h2 id="alerts-heading">What to send</h2>
-        <label className="settings-toggle">
-          <input type="checkbox" checked={preferences.earningsAlerts} disabled={pending} onChange={() => togglePreference("earningsAlerts")} />
-          <span>
-            <strong>Upcoming earnings</strong>
-            <small>Every Monday: which favorites report in the next 7 days, with the time and estimates.</small>
-          </span>
-        </label>
-        <label className="settings-toggle">
-          <input type="checkbox" checked={preferences.transcriptSummaries} disabled={pending} onChange={() => togglePreference("transcriptSummaries")} />
-          <span>
-            <strong>Earnings call summaries</strong>
-            <small>An AI summary of each favorite&apos;s new earnings call, once its transcript is out.</small>
-          </span>
-        </label>
+        {ALERTS.map((alert) => (
+          <label className="settings-toggle" key={alert.key}>
+            <input type="checkbox" checked={preferences[alert.key]} disabled={pending} onChange={() => togglePreference(alert.key)} />
+            <span>
+              <strong>{alert.title}</strong>
+              <small>{alert.detail}</small>
+            </span>
+          </label>
+        ))}
         {statusFor("alerts")}
       </section>
     </>

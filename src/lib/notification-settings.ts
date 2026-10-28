@@ -12,8 +12,13 @@ export type NotificationSettings = {
   telegramName: string | null;
   earningsAlerts: boolean;
   transcriptSummaries: boolean;
+  newsAlerts: boolean;
+  filingAlerts: boolean;
   linkCode: string | null;
 };
+
+export type NotificationKind = "earnings" | "transcripts" | "news" | "filings";
+export type NotificationPreferences = Pick<NotificationSettings, "earningsAlerts" | "transcriptSummaries" | "newsAlerts" | "filingAlerts">;
 
 type SettingsRow = {
   user_id: string;
@@ -21,11 +26,21 @@ type SettingsRow = {
   telegram_name: string | null;
   earnings_alerts: boolean;
   transcript_summaries: boolean;
+  news_alerts: boolean;
+  filing_alerts: boolean;
   link_code: string | null;
   link_code_expires_at: Date | null;
 };
 
-const DEFAULTS: NotificationSettings = { telegramChatId: null, telegramName: null, earningsAlerts: true, transcriptSummaries: true, linkCode: null };
+const DEFAULTS: NotificationSettings = {
+  telegramChatId: null,
+  telegramName: null,
+  earningsAlerts: true,
+  transcriptSummaries: true,
+  newsAlerts: true,
+  filingAlerts: true,
+  linkCode: null,
+};
 
 function toSettings(row: SettingsRow | undefined, now = Date.now()): NotificationSettings {
   if (!row) return DEFAULTS;
@@ -35,6 +50,8 @@ function toSettings(row: SettingsRow | undefined, now = Date.now()): Notificatio
     telegramName: row.telegram_name,
     earningsAlerts: row.earnings_alerts,
     transcriptSummaries: row.transcript_summaries,
+    newsAlerts: row.news_alerts,
+    filingAlerts: row.filing_alerts,
     linkCode: codeValid ? row.link_code : null,
   };
 }
@@ -89,23 +106,35 @@ export async function disconnectTelegram(userId: string): Promise<void> {
   `;
 }
 
-export async function setNotificationPreferences(userId: string, preferences: { earningsAlerts: boolean; transcriptSummaries: boolean }): Promise<void> {
+export async function setNotificationPreferences(userId: string, preferences: NotificationPreferences): Promise<void> {
   await getSql()`
-    insert into notification_settings (user_id, earnings_alerts, transcript_summaries)
-    values (${userId}, ${preferences.earningsAlerts}, ${preferences.transcriptSummaries})
+    insert into notification_settings (user_id, earnings_alerts, transcript_summaries, news_alerts, filing_alerts)
+    values (${userId}, ${preferences.earningsAlerts}, ${preferences.transcriptSummaries}, ${preferences.newsAlerts}, ${preferences.filingAlerts})
     on conflict (user_id) do update
-      set earnings_alerts = excluded.earnings_alerts, transcript_summaries = excluded.transcript_summaries, updated_at = now()
+      set earnings_alerts = excluded.earnings_alerts,
+          transcript_summaries = excluded.transcript_summaries,
+          news_alerts = excluded.news_alerts,
+          filing_alerts = excluded.filing_alerts,
+          updated_at = now()
   `;
 }
 
 export type Recipient = { userId: string; chatId: string };
 
+const PREFERENCE_COLUMN: Record<NotificationKind, string> = {
+  earnings: "earnings_alerts",
+  transcripts: "transcript_summaries",
+  news: "news_alerts",
+  filings: "filing_alerts",
+};
+
 // Users with a linked chat who want this kind of notification.
-export async function notificationRecipients(kind: "earnings" | "transcripts"): Promise<Recipient[]> {
+export async function notificationRecipients(kind: NotificationKind): Promise<Recipient[]> {
   const sql = getSql();
-  const rows = kind === "earnings"
-    ? await sql<{ user_id: string; telegram_chat_id: string }[]>`select user_id, telegram_chat_id from notification_settings where telegram_chat_id is not null and earnings_alerts`
-    : await sql<{ user_id: string; telegram_chat_id: string }[]>`select user_id, telegram_chat_id from notification_settings where telegram_chat_id is not null and transcript_summaries`;
+  const rows = await sql<{ user_id: string; telegram_chat_id: string }[]>`
+    select user_id, telegram_chat_id from notification_settings
+    where telegram_chat_id is not null and ${sql(PREFERENCE_COLUMN[kind])} = true
+  `;
   return rows.map((row) => ({ userId: row.user_id, chatId: row.telegram_chat_id }));
 }
 
