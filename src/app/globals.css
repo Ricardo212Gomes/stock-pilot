@@ -4850,7 +4850,20 @@ a.earnings-round:focus-visible {
 
 /* Feedback lands on pointer-down, and the release eases back. */
 :where(button, summary, .settings-button):not(:disabled) {
-  transition: scale 180ms var(--ease-out);
+  transition:
+    scale 180ms var(--ease-out),
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+/* Hover colour changes fade instead of snapping. Zero specificity, so a component's own
+   transition still wins. */
+:where(a) {
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
 }
 
 :where(button, summary, .settings-button):not(:disabled):active {
@@ -4924,5 +4937,73 @@ a.earnings-round:focus-visible {
     background: var(--background);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+  }
+}
+
+/* Hover feedback for controls that had none. Colour and underline only: these are used tens of
+   times a day, so nothing moves. Gated so a tap on a touch screen doesn't leave them stuck. */
+@media (hover: hover) and (pointer: fine) {
+  .sidebar-link:not(.sidebar-link-active):hover {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+
+  .earnings-bar-tools .chart-view-switch a:not(.chart-view-active):hover {
+    background: var(--selected);
+    color: var(--selected-foreground);
+  }
+
+  .settings-button:not(.settings-button-quiet):not(:disabled):hover,
+  .favorites-sign-in:hover {
+    background: color-mix(in srgb, var(--primary) 86%, #000000);
+  }
+
+  .settings-button-quiet:not(:disabled):hover,
+  .assumptions-reset:hover,
+  .earnings-more:hover {
+    border-color: var(--ring);
+    color: var(--foreground);
+  }
+
+  .earnings-dialog-link:hover,
+  .user-menu-panel .user-menu-link:hover,
+  .transcript-jump:hover,
+  .filings-more a:hover,
+  .filing-links a:hover,
+  .favorites-links a:hover,
+  .projection-start a:hover,
+  .scenario-row-button:hover,
+  .leaderboard-company:hover strong,
+  .favorites-company:hover strong,
+  .assumption-help summary:hover,
+  .model-explainer summary:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* AI answers arrive a moment after the click; they settle in rather than pop. */
+.ai-review-panel,
+.transcript-summary {
+  transition:
+    opacity 200ms var(--ease-out),
+    translate 200ms var(--ease-out);
+}
+
+@starting-style {
+  .ai-review-panel,
+  .transcript-summary {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the fade, drop the movement. */
+  @starting-style {
+    .ai-review-panel,
+    .transcript-summary {
+      translate: none;
+    }
   }
 }
