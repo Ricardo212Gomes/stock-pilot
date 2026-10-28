@@ -84,6 +84,18 @@ Known contrast exceptions, kept from the source: in dark mode, the search placeh
 - Do not fabricate company logos or details from a ticker; link only to sections backed by fetched data.
 - Ship both themes. The top bar toggle stores the choice and adds or removes `.dark` on `<html>`.
 
+## Motion and feel
+
+Interaction follows Apple's fluid interface guidelines; the look above doesn't change.
+
+- One curve, `--ease-out` (`cubic-bezier(0.32, 0.72, 0, 1)`), close to a critically damped spring: fast start, no overshoot. No bounce anywhere, since nothing in the app is flicked or thrown.
+- Buttons and `summary` toggles scale to 0.97 on pointer-down (60ms) and ease back over 180ms on release. Full-width rows, such as the scenario table buttons, skip it.
+- The top bar is translucent (`background` at 78% with a 20px blur), so content scrolls underneath it. It goes solid under `prefers-reduced-transparency` or `prefers-contrast: more`.
+- Search suggestions and the user menu fade and scale in from 0.96 over 180ms, from their top edge (the menu from its top right).
+- Calendar dialogs grow out of the tile that opened them and shrink back into it when they close (`useModalDialog` sets the origin). The backdrop fades in with them.
+- Large type is tracked in: -0.02em at 36px, -0.01em at 26px. Body text keeps the default.
+- Under `prefers-reduced-motion`, press scaling, popover motion and dialog scaling switch off, and dialogs only fade.
+
 ## Theme tokens
 
 The canonical values live in `src/app/globals.css` (`:root` and `.dark`), and are mapped to Tailwind colours in its `@theme inline` block (`bg-primary`, `text-positive`, `border-border-strong`, and so on).

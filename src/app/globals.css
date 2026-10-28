@@ -3816,10 +3816,45 @@ a.earnings-round:focus-visible {
   border-radius: var(--radius);
   background: var(--card);
   color: var(--card-foreground);
+  /* Grows out of the tile that opened it and shrinks back into it (origin set by useModalDialog). */
+  opacity: 0;
+  scale: 0.94;
+  transform-origin: var(--dialog-origin, 50% 50%);
+  transition:
+    opacity 180ms var(--ease-out),
+    scale 280ms var(--ease-out),
+    overlay 280ms allow-discrete,
+    display 280ms allow-discrete;
+}
+
+.earnings-dialog[open] {
+  opacity: 1;
+  scale: 1;
+}
+
+@starting-style {
+  .earnings-dialog[open] {
+    opacity: 0;
+    scale: 0.94;
+  }
 }
 
 .earnings-dialog::backdrop {
+  background: rgba(0, 0, 0, 0);
+  transition:
+    background-color 220ms var(--ease-out),
+    overlay 280ms allow-discrete,
+    display 280ms allow-discrete;
+}
+
+.earnings-dialog[open]::backdrop {
   background: rgba(0, 0, 0, 0.45);
+}
+
+@starting-style {
+  .earnings-dialog[open]::backdrop {
+    background: rgba(0, 0, 0, 0);
+  }
 }
 
 .earnings-dialog-body {
@@ -4803,4 +4838,91 @@ a.earnings-round:focus-visible {
 .settings-toggle small {
   color: var(--muted-foreground);
   font-size: 14px;
+}
+
+/* Interaction feel, after Apple's fluid interface guidelines: feedback on press, translucent
+   chrome, popovers that grow from their trigger, and tighter tracking on large type. */
+
+:root {
+  /* Close to a critically damped spring: fast start, no overshoot. */
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Feedback lands on pointer-down, and the release eases back. */
+:where(button, summary, .settings-button):not(:disabled) {
+  transition: scale 180ms var(--ease-out);
+}
+
+:where(button, summary, .settings-button):not(:disabled):active {
+  scale: 0.97;
+  transition-duration: 60ms;
+}
+
+/* Full-width rows would read as a jump, so they only take the colour change. */
+.scenario-row-button:active {
+  scale: none;
+}
+
+.topbar {
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+.search-suggestions {
+  transform-origin: top center;
+  animation: popover-in 180ms var(--ease-out);
+}
+
+.user-menu[open] .user-menu-panel {
+  transform-origin: top right;
+  animation: popover-in 180ms var(--ease-out);
+}
+
+/* Large type reads loose as it grows, so it's tracked in. */
+.home-hero h1,
+.stock-price-summary strong,
+.projection-summary-main strong,
+.quote-price strong {
+  letter-spacing: -0.02em;
+}
+
+.market-map-heading h1,
+.company-title-row h2,
+.projection-start h1,
+.quote-header h1,
+.statement-heading h2 {
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(button, summary, .settings-button):not(:disabled):active {
+    scale: none;
+  }
+
+  .search-suggestions,
+  .user-menu[open] .user-menu-panel {
+    animation: none;
+  }
+
+  /* Keep the fade, drop the movement. */
+  .earnings-dialog,
+  .earnings-dialog[open] {
+    scale: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .topbar {
+    background: var(--background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
