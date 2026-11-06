@@ -3,6 +3,8 @@ import Link from "next/link";
 import { normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
 import { listedName } from "@/lib/listed-companies";
+import { PROJECTION_GUIDE, type ProjectionFit } from "@/lib/projection-fit";
+import { STOCK_TYPES, type Classification } from "@/lib/valuation/classify";
 import { valuationTool, type ValuationTool } from "./tools";
 
 export type ValuationSearchParams = Promise<{ symbol?: string | string[] }>;
@@ -68,6 +70,48 @@ export function LoadError({ symbol, reason }: { symbol: string; reason: Paramete
             : providerFailureMessage(reason, "the financial statements")}
         </p>
       </div>
+    </section>
+  );
+}
+
+// Which of the two projections suits the company, and what each is best for.
+export function ProjectionFitCard({
+  symbol,
+  current,
+  fit,
+  classification,
+}: {
+  symbol: string;
+  current: ValuationTool;
+  fit: ProjectionFit;
+  classification: Classification;
+}) {
+  const best = valuationTool(fit.tool);
+  return (
+    <section className="projection-fit" aria-labelledby="projection-fit-heading">
+      <div className="projection-fit-verdict">
+        <p className="section-label" id="projection-fit-heading">WHICH PROJECTION FITS {symbol}?</p>
+        <p className="projection-fit-answer">
+          <span className="model-role model-role-primary">Best fit</span>
+          <strong>{best.label}</strong>
+          {fit.tool === current
+            ? <span className="projection-fit-here">This page</span>
+            : <Link href={`${best.path}?symbol=${encodeURIComponent(symbol)}`}>Open {best.label} →</Link>}
+        </p>
+        <p className="projection-fit-reason">
+          <strong>{STOCK_TYPES[classification.type].label}.</strong> {classification.reasons[0]} {fit.reason}
+        </p>
+      </div>
+      <dl className="projection-fit-guide">
+        {(Object.keys(PROJECTION_GUIDE) as (keyof typeof PROJECTION_GUIDE)[]).map((tool) => (
+          <div key={tool} className={tool === fit.tool ? "projection-fit-match" : undefined}>
+            <dt>
+              {tool === current ? valuationTool(tool).label : <Link href={`${valuationTool(tool).path}?symbol=${encodeURIComponent(symbol)}`}>{valuationTool(tool).label}</Link>}
+            </dt>
+            <dd><strong>Best for {PROJECTION_GUIDE[tool].bestFor.toLowerCase()}.</strong> {PROJECTION_GUIDE[tool].how}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }

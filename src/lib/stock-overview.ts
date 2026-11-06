@@ -245,21 +245,60 @@ async function finnhubQuote(symbol: string): Promise<Row | null> {
   };
 }
 
+// Shares outstanding today, from FMP's float data; null when FMP can't provide them.
+export async function getOutstandingShares(symbol: string): Promise<number | null> {
+  const float = await optionalRows("shares-float", { symbol });
+  return num(float[0]?.outstandingShares);
+}
+
+export type EstimateRange = { low: number | null; avg: number | null; high: number | null };
+
+// Analysts' consensus for one fiscal year: the average of their estimates and the lowest and highest.
+export type AnalystEstimate = {
+  // The fiscal year's end, e.g. "2026-12-31".
+  date: string;
+  revenue: EstimateRange;
+  netIncome: EstimateRange;
+  eps: EstimateRange;
+  analysts: number | null;
+};
+
+// Every fiscal year FMP has estimates for, past and future, oldest first; empty when its plan doesn't
+// cover them.
+export async function getAnalystEstimates(symbol: string): Promise<AnalystEstimate[]> {
+  // Same parameters as the financials page, so both share one cached response.
+  const rows = await optionalRows("analyst-estimates", { symbol, period: "annual", page: "0", limit: "10" });
+  const range = (row: Row, field: string): EstimateRange => ({
+    low: num(row[`${field}Low`]),
+    avg: num(row[`${field}Avg`]),
+    high: num(row[`${field}High`]),
+  });
+  return rows
+    .filter((row) => str(row.date))
+    .map((row) => ({
+      date: String(row.date),
+      revenue: range(row, "revenue"),
+      netIncome: range(row, "netIncome"),
+      eps: range(row, "eps"),
+      analysts: num(row.numAnalystsEps) ?? num(row.numAnalystsRevenue),
+    }))
+    .sort((left, right) => left.date.localeCompare(right.date));
+}
+
 export async function getStockOverview(symbol: string, today = new Date()): Promise<StockOverviewResult> {
   const quoteResult = await getQuote(symbol);
   if (!quoteResult.ok) return quoteResult;
   const { raw: quote, price } = quoteResult.data;
 
-  const [profileResult, quarters, float, target, grades, dividends, earnings, estimates, growth] = await Promise.all([
+  const [profileResult, quarters, floatShares, target, grades, dividends, earnings, estimates, growth] = await Promise.all([
     getCompanyProfile(symbol),
     optionalRows("income-statement", { symbol, period: "quarter", limit: "5" }),
-    optionalRows("shares-float", { symbol }),
+    getOutstandingShares(symbol),
     optionalRows("price-target-consensus", { symbol }),
     optionalRows("grades-consensus", { symbol }),
     optionalRows("dividends", { symbol, limit: "5" }),
     optionalRows("earnings", { symbol, limit: "5" }),
-    // Same parameters as the financials page, so both share one cached response.
-    optionalRows("analyst-estimates", { symbol, period: "annual", page: "0", limit: "10" }),
+    getAnalystEstimates(symbol),
     finnhubGrowth(symbol),
   ]);
 
@@ -274,12 +313,9 @@ export async function getStockOverview(symbol: string, today = new Date()): Prom
   const ttm = trailingTwelveMonths(quarterRows);
   const dividend = annualDividend(dividends);
   const marketCap = num(quote.marketCap);
-  const sharesOutstanding = num(float[0]?.outstandingShares) ?? (marketCap !== null ? marketCap / price : null);
+  const sharesOutstanding = floatShares ?? (marketCap !== null ? marketCap / price : null);
 
-  const nextEstimate = estimates
-    .filter((row) => str(row.date) && String(row.date) >= isoToday && (num(row.epsAvg) ?? 0) > 0)
-    .sort((left, right) => String(left.date).localeCompare(String(right.date)))[0];
-  const forwardEps = num(nextEstimate?.epsAvg);
+  const forwardEps = estimates.find((estimate) => estimate.date >= isoToday && (estimate.eps.avg ?? 0) > 0)?.eps.avg ?? null;
 
   const gradeCounts = ["strongBuy", "buy", "hold", "sell", "strongSell"].map((key) => num(grades[0]?.[key]) ?? 0);
   const analystCount = gradeCounts.reduce((total, count) => total + count, 0);

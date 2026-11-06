@@ -1,6 +1,6 @@
 # StockPilot
 
-StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with three calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Alpha Vantage and FINVIZ, on their free plans.
+StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with four calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Alpha Vantage and FINVIZ, on their free plans.
 
 ## Configure FMP
 
@@ -31,7 +31,7 @@ Open [http://localhost:3000](http://localhost:3000) for the home page, which lin
 
 FMP data access depends on the endpoints and history included in your subscription. When FMP can't return the statements, the page says why: rate limit, invalid key, plan restriction or another provider error.
 
-The sidebar's **Valuation** section has three calculators. **Intrinsic Value** at `/valuation/intrinsic-value?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models; it picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. **3-Year Projection** at `/valuation/three-year-projection` follows Jeremy Lefebvre's projection template, estimating the price and annual return in five scenarios from revenue growth, net income growth and a P/E range. **DCF Calculator** at `/valuation/dcf-calculator` discounts ten years of free cash flow plus a terminal value to a value per share.
+The sidebar's **Valuation** section has four calculators. **Intrinsic Value** at `/valuation/intrinsic-value?symbol=AAPL` estimates intrinsic value with DCF, dividend, earnings, revenue, residual income and Graham models; it picks the models that suit the type of company, fills assumptions from the filings (or with AI), and explains each input and result. **Jeremy's Projection** at `/valuation/jeremy-projection` follows Jeremy Lefebvre's (1000xStocks) sheet: bull, base and bear cases from this year's analyst consensus, with revenue and net income growth and a P/E range, best for growth stocks. **Plumas Projection** at `/valuation/plumas-projection` projects revenue, margins, EPS, the share price and the yearly return five years past the last report, in three or five scenarios, with a Simple mode and an Advanced one (costs, interest, buybacks and a low, mid and high P/E), next to analysts' estimates, best for mature, dividend, cyclical and loss-making companies. Both pages say which of the two suits the company. **DCF Calculator** at `/valuation/dcf-calculator` discounts ten years of free cash flow plus a terminal value to a value per share, optionally from a year 1 forecast, and runs it backwards: the reverse DCF shows the growth today's price implies, next to the free cash flow history.
 
 The **Market maps** page at `/maps` embeds the FINVIZ one-day heat maps of the S&P 500, the Nasdaq 100 and the largest cryptocurrencies.
 
@@ -51,7 +51,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/data-fallbacks.md`](./docs/data-fallbacks.md) | SEC filings and Finnhub when FMP can't provide a company: what's covered and how filings become statements |
 | [`docs/financials.md`](./docs/financials.md) | Income statement, balance sheet, cash flow and ratios: columns, TTM, growth and the chart |
 | [`docs/stock-overview.md`](./docs/stock-overview.md) | The stock overview page, company tabs, and where each statistic comes from |
-| [`docs/valuation.md`](./docs/valuation.md) | The three valuation tools: intrinsic value models, stock types, default assumptions, scenarios, AI autofill, the 3-year projection and the DCF calculator |
+| [`docs/valuation.md`](./docs/valuation.md) | The four valuation tools: intrinsic value models, stock types, default assumptions, scenarios, AI autofill, Jeremy's and the Plumas projections (their differences and which stocks each suits) and the DCF calculator |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The AI review buttons on financial sections: configuration, what's sent, prompt rules and errors |
 | [`docs/earnings.md`](./docs/earnings.md) | The earnings calendar: data, company names, filters and surprises |
 | [`docs/dividends.md`](./docs/dividends.md) | The dividend calendar: data, free-plan limits and the two date views |

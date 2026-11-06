@@ -33,7 +33,9 @@ const VALUATION_ICONS: Record<ValuationTool, string> = {
   // A balance scale: what a company is worth.
   "intrinsic-value": "M10 3.5v13M6 16.5h8M4 6h12M4 6l-2 5a2 2 0 0 0 4 0L4 6M16 6l-2 5a2 2 0 0 0 4 0l-2-5",
   // A rising line: where the price could go.
-  "three-year-projection": "M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4",
+  "jeremy-projection": "M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4",
+  // A feather ("pluma"), for the Plumas projection.
+  "plumas-projection": "M4 16 15.5 4.5M15.5 4.5c0 5.5-3.5 9.5-9 9.5M15.5 4.5c-5.5 0-9.5 3.5-9.5 9M9 11h3.5M7.5 12.5h2",
   // A percent sign: cash flows discounted at a rate.
   "dcf-calculator": "M5.5 14.5l9-9M7 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3ZM13 14.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z",
 };
@@ -164,8 +166,8 @@ export function AppShell({
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 9 TOOLS</span>
-            <p>Stocks, favorites, three valuation calculators, market maps, news, earnings and dividends.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 10 TOOLS</span>
+            <p>Stocks, favorites, four valuation calculators, market maps, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-collapse">

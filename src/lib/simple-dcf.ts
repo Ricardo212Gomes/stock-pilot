@@ -1,8 +1,9 @@
 import type { StatementTable } from "./financial-statements";
 
 // A hands-on two-stage DCF in the style of investor YouTube and quote-site calculators:
-// ten years of free cash flow (years 1–5 and 6–10 grow at their own rates), a terminal value,
-// then cash added and debt subtracted before dividing by the share count.
+// ten years of free cash flow (years 1–5 and 6–10 grow at their own rates, or year 1 can be a
+// forecast that years 2–10 grow from), a terminal value, then cash added and debt subtracted before
+// dividing by the share count. A reverse DCF finds the growth today's price implies.
 
 export type TerminalMethod = "growth" | "multiple";
 
@@ -12,6 +13,8 @@ export const PROJECTION_YEARS = STAGE_YEARS * 2;
 export type DcfInputs = {
   price: number | null;
   freeCashFlow: number | null;
+  // An optional forecast for year 1, such as guidance or an analyst estimate; null grows today's.
+  firstYearCashFlow: number | null;
   shares: number | null;
   cash: number;
   debt: number;
@@ -43,8 +46,11 @@ export type DcfResult =
   | { ok: false; reason: string };
 
 export function calculateDcf(inputs: DcfInputs): DcfResult {
-  const { freeCashFlow, shares, discountRate } = inputs;
-  if (freeCashFlow === null || freeCashFlow <= 0) {
+  const { freeCashFlow, firstYearCashFlow, shares, discountRate } = inputs;
+  if (firstYearCashFlow !== null && firstYearCashFlow <= 0) {
+    return { ok: false, reason: "Year 1 free cash flow must be above zero, or left blank to grow today's." };
+  }
+  if (firstYearCashFlow === null && (freeCashFlow === null || freeCashFlow <= 0)) {
     return {
       ok: false,
       reason: "Needs positive free cash flow. It can be negative when a business is burning cash, or, for banks and insurers, because lending and deposits run through cash flow. For those, use the residual income model in the Intrinsic Value tool.",
@@ -56,10 +62,12 @@ export function calculateDcf(inputs: DcfInputs): DcfResult {
     return { ok: false, reason: "The discount rate must be higher than terminal growth, or the value would be infinite." };
   }
 
-  let cashFlow = freeCashFlow;
+  let cashFlow = freeCashFlow ?? 0;
   const years: DcfYear[] = [];
   for (let year = 1; year <= PROJECTION_YEARS; year++) {
-    cashFlow *= 1 + (year <= STAGE_YEARS ? inputs.growthEarly : inputs.growthLate);
+    cashFlow = year === 1 && firstYearCashFlow !== null
+      ? firstYearCashFlow
+      : cashFlow * (1 + (year <= STAGE_YEARS ? inputs.growthEarly : inputs.growthLate));
     const discountFactor = 1 / (1 + discountRate) ** year;
     years.push({ year, freeCashFlow: cashFlow, discountFactor, presentValue: cashFlow * discountFactor });
   }
@@ -105,8 +113,44 @@ export function dcfSensitivityGrid(inputs: DcfInputs): DcfSensitivity {
   };
 }
 
+// Reverse DCF: the one growth rate, in every projected year (after year 1 when it's a forecast), that
+// makes the value per share equal today's price, with the discount rate and terminal value unchanged.
+// Outside −50% to +100% a year, it says which side the answer is on.
+export type ImpliedGrowth = { rate: number; beyond: "below" | "above" | null };
+
+export function impliedDcfGrowth(inputs: DcfInputs): ImpliedGrowth | null {
+  const { price } = inputs;
+  if (price === null || price <= 0) return null;
+  const valueAt = (growth: number) => {
+    const result = calculateDcf({ ...inputs, growthEarly: growth, growthLate: growth });
+    return result.ok ? result.valuePerShare : null;
+  };
+
+  let low = -0.5;
+  let high = 1;
+  const lowValue = valueAt(low);
+  const highValue = valueAt(high);
+  if (lowValue === null || highValue === null) return null;
+  if (price <= lowValue) return { rate: low, beyond: "below" };
+  if (price >= highValue) return { rate: high, beyond: "above" };
+  // The value rises with growth, so halving the interval converges on the price.
+  for (let iteration = 0; iteration < 80; iteration++) {
+    const middle = (low + high) / 2;
+    if (valueAt(middle)! < price) low = middle;
+    else high = middle;
+  }
+  return { rate: (low + high) / 2, beyond: null };
+}
+
+export type DcfHistory = {
+  // Fiscal years oldest first, then the trailing twelve months when there are quarterly figures.
+  years: { label: string; freeCashFlow: number | null; growth: number | null }[];
+  // Compound growth between the oldest and the latest fiscal year with positive free cash flow.
+  cagr: { rate: number; from: number; to: number } | null;
+};
+
 export type DcfNoteKey = keyof Omit<DcfInputs, "terminalMethod">;
-export type DcfDefaults = { inputs: DcfInputs; notes: Partial<Record<DcfNoteKey, string>>; currency: string };
+export type DcfDefaults = { inputs: DcfInputs; notes: Partial<Record<DcfNoteKey, string>>; currency: string; history: DcfHistory };
 
 function pct(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
@@ -118,6 +162,31 @@ function clamp(value: number, min: number, max: number): number {
 
 function firstValue(table: StatementTable | null, id: string): number | null {
   return table?.rows.find((row) => row.id === id)?.values[0] ?? null;
+}
+
+function cashFlowHistory(cashFlow: StatementTable | null): DcfHistory {
+  if (!cashFlow) return { years: [], cagr: null };
+  const row = (id: string) => cashFlow.rows.find((candidate) => candidate.id === id)?.values ?? [];
+  const flows = row("freeCashFlow");
+  const growth = row("freeCashFlowGrowth");
+  const columns = cashFlow.columns.map((column, index) => ({
+    label: column.id === "ttm" ? "TTM" : column.label.replace(/^FY\s*/, ""),
+    year: Number(column.label.match(/\d{4}/)?.[0]),
+    isTtm: column.id === "ttm",
+    freeCashFlow: flows[index] ?? null,
+    growth: growth[index] ?? null,
+  }));
+  const fiscal = columns.filter((column) => !column.isTtm && Number.isFinite(column.year));
+  const latest = fiscal[0];
+  const oldest = [...fiscal].reverse().find((column) => (column.freeCashFlow ?? 0) > 0);
+  const span = latest && oldest ? latest.year - oldest.year : 0;
+  return {
+    years: [...fiscal].reverse().concat(columns.filter((column) => column.isTtm))
+      .map(({ label, freeCashFlow, growth: rate }) => ({ label, freeCashFlow, growth: rate })),
+    cagr: latest && oldest && span > 0 && (latest.freeCashFlow ?? 0) > 0
+      ? { rate: (latest.freeCashFlow! / oldest.freeCashFlow!) ** (1 / span) - 1, from: oldest.year, to: latest.year }
+      : null,
+  };
 }
 
 function fiscalCagr(table: StatementTable, id: string): number | null {
@@ -154,6 +223,7 @@ export function buildDcfDefaults({
   notes.cash = `Cash and short-term investments in ${balanceLabel}.`;
   notes.debt = `Total debt in ${balanceLabel}.`;
   notes.price = price !== null ? "Latest quote." : "No quote available. Type the current price.";
+  notes.firstYearCashFlow = "Blank: year 1 grows today's free cash flow like the years after it.";
 
   // Revenue growth is steadier than free cash flow, which swings with investment cycles.
   const revenueGrowth = fiscalCagr(income, "revenue");
@@ -172,9 +242,11 @@ export function buildDcfDefaults({
   return {
     currency: income.currency,
     notes,
+    history: cashFlowHistory(cashFlow),
     inputs: {
       price,
       freeCashFlow,
+      firstYearCashFlow: null,
       shares,
       cash,
       debt,

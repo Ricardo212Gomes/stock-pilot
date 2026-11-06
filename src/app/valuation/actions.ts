@@ -11,12 +11,12 @@ import {
   type AutofillSuggestions,
 } from "@/lib/valuation/autofill";
 import {
-  THREE_YEAR_INSTRUCTIONS,
-  THREE_YEAR_SCHEMA,
-  buildThreeYearPrompt,
-  parseThreeYearResponse,
-  type ThreeYearSuggestions,
-} from "@/lib/three-year-autofill";
+  PROJECTION_AI_INSTRUCTIONS,
+  PROJECTION_AI_SCHEMA,
+  buildProjectionPrompt,
+  parseProjectionResponse,
+  type ProjectionSuggestions,
+} from "@/lib/plumas-projection-autofill";
 import {
   DCF_AI_INSTRUCTIONS,
   DCF_AI_SCHEMA,
@@ -24,7 +24,7 @@ import {
   parseDcfResponse,
   type DcfSuggestions,
 } from "@/lib/simple-dcf-autofill";
-import { loadDcfData, loadProjectionData, loadThreeYearData } from "./data";
+import { loadDcfData, loadPriceProjectionData, loadProjectionData } from "./data";
 
 export type AutofillResult =
   | ({ ok: true } & AutofillSuggestions)
@@ -68,39 +68,35 @@ export async function autofillAssumptions(rawSymbol: unknown): Promise<AutofillR
   return { ok: true, ...parsed };
 }
 
-export type ThreeYearAutofillResult =
-  | ({ ok: true } & ThreeYearSuggestions)
+export type ProjectionAutofillResult =
+  | ({ ok: true } & ProjectionSuggestions)
   | { ok: false; error: string };
 
 // Same safeguard as above: only the ticker comes from the browser.
-export async function autofillThreeYear(rawSymbol: unknown): Promise<ThreeYearAutofillResult> {
+export async function autofillPlumasProjection(rawSymbol: unknown): Promise<ProjectionAutofillResult> {
   const symbol = normalizeTicker(rawSymbol);
   if (!symbol) return { ok: false, error: "Enter a valid ticker symbol first." };
 
-  const loaded = await loadThreeYearData(symbol);
+  const loaded = await loadPriceProjectionData(symbol);
   if (!loaded.ok) {
     return { ok: false, error: providerFailureMessage(loaded.reason, "the financial statements") };
   }
 
   const result = await generateGeminiText({
-    instructions: THREE_YEAR_INSTRUCTIONS,
-    prompt: buildThreeYearPrompt({
-      symbol,
-      income: loaded.data.income,
-      ratios: loaded.data.ratios,
-      defaults: loaded.data.defaults,
-    }),
+    instructions: PROJECTION_AI_INSTRUCTIONS,
+    prompt: buildProjectionPrompt({ symbol, defaults: loaded.data.plumas }),
     generationConfig: {
       temperature: 0.2,
-      maxOutputTokens: 3000,
+      // Five scenarios × nine fields × five years, plus a reason for each scenario.
+      maxOutputTokens: 6000,
       responseMimeType: "application/json",
-      responseSchema: THREE_YEAR_SCHEMA,
+      responseSchema: PROJECTION_AI_SCHEMA,
     },
     subject: "autofill",
   });
   if (!result.ok) return result;
 
-  const parsed = parseThreeYearResponse(result.text);
+  const parsed = parseProjectionResponse(result.text);
   if (!parsed) return { ok: false, error: "Gemini's suggestions could not be read. Please try again." };
   return { ok: true, ...parsed };
 }

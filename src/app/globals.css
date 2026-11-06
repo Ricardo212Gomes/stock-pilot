@@ -3423,21 +3423,12 @@ input:focus-visible {
   }
 }
 
-/* 3-year projection */
+/* Financial projections */
 
-.scenario-switch {
-  flex-wrap: wrap;
-  margin-bottom: 4px;
-}
-
-.scenario-switch button {
-  font-size: 14px;
-}
-
-/* A handful of columns fit the results column; no need for the statement tables' 960px minimum. */
+/* Shared with the DCF calculator: a handful of columns fit, so no statement-table minimum width. */
 .three-year-table,
-.scenario-table,
-.history-table {
+.scenario-comparison,
+.projection-sheet {
   min-width: 0;
 }
 
@@ -3446,6 +3437,15 @@ input:focus-visible {
   padding-right: 8px;
   padding-left: 8px;
   white-space: nowrap;
+}
+
+.three-year-steps {
+  margin: 10px 0 0;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 26px;
+  /* Tailwind's reset removes list markers; the steps read in order. */
+  list-style: decimal;
 }
 
 .projection-range {
@@ -3468,36 +3468,661 @@ input:focus-visible {
   text-align: left;
 }
 
-.scenario-row-selected th,
-.scenario-row-selected td {
-  background: var(--highlight);
+/* Each scenario's colour, from the worst case to the best: its dot, card rule and chart line. */
+.scenario-tone-negative {
+  --scenario: var(--negative);
 }
 
-.scenario-row-selected .scenario-row-button {
+.scenario-tone-chart-3 {
+  --scenario: var(--chart-3);
+}
+
+.scenario-tone-chart-1 {
+  --scenario: var(--chart-1);
+}
+
+.scenario-tone-chart-6 {
+  --scenario: var(--chart-6);
+}
+
+.scenario-tone-positive {
+  --scenario: var(--positive);
+}
+
+.scenario-dot {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 9999px;
+  background: var(--scenario, var(--muted-foreground));
+}
+
+.projection-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--title-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.projection-toolbar > p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.projection-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+}
+
+.projection-stats dt {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.projection-stats dd {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.projection-stats .assumption-input-wrap {
+  width: 150px;
+  margin-top: 0;
+}
+
+.projection-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.projection-controls .ai-analysis-button {
+  font-size: 15px;
+}
+
+.projection-status {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.projection-ai-note {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--muted);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.scenario-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.scenario-card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.scenario-card[aria-pressed="true"] {
+  border-color: var(--scenario);
+  box-shadow: inset 0 0 0 1px var(--scenario);
+}
+
+.scenario-card-name {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 21px;
+}
+
+.scenario-card-label {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.scenario-card-price {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 28px;
+}
+
+.scenario-card-cagr {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
+}
+
+.projection-sheet-card {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--scenario);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.projection-sheet-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.projection-sheet-heading h2 {
+  display: flex;
+  align-items: center;
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.projection-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.projection-sheet-card .projection-ai-note {
+  margin-bottom: 12px;
+}
+
+.projection-sheet-card .projection-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.projection-notice p {
+  margin: 0;
+}
+
+.projection-sheet th,
+.projection-sheet td {
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* The label column stays in view while the years scroll sideways on narrow screens. */
+.projection-sheet thead th:first-child,
+.projection-sheet thead td:first-child,
+.projection-sheet tbody th {
+  position: sticky;
+  left: 0;
+  text-align: left;
+}
+
+.projection-sheet tbody th {
+  min-width: 200px;
+  font-weight: 500;
+}
+
+.projection-sheet .sheet-groups th,
+.projection-sheet .sheet-groups td {
+  padding-top: 6px;
+  padding-bottom: 0;
+  border-bottom: 0;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 16px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.projection-sheet thead th.sheet-reported {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.projection-sheet thead tr:last-child th:not(.sheet-reported):not(:first-child) {
+  font-weight: 700;
+}
+
+.projection-sheet .sheet-first-projected {
+  border-left: 1px solid var(--border-strong);
+}
+
+.projection-sheet td.sheet-reported {
+  color: var(--muted-foreground);
+}
+
+/* Margins and the reported P/E: smaller and indented, like the statements' growth rows. */
+.projection-sheet .sheet-row-sub th,
+.projection-sheet .sheet-row-sub td {
+  font-size: 14px;
+}
+
+.projection-sheet .sheet-row-sub th {
+  padding-left: 22px;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.projection-sheet .sheet-row-strong th,
+.projection-sheet .sheet-row-strong td {
+  font-weight: 700;
+}
+
+.projection-sheet .sheet-row-result td {
+  font-weight: 600;
+}
+
+.sheet-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sheet-label small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.sheet-fill {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.sheet-fill svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sheet-input {
+  width: 84px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--input-background);
+  vertical-align: middle;
+}
+
+.sheet-input:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.sheet-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 2px 0 2px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  line-height: 22px;
+  text-align: right;
+  outline: none;
+}
+
+.sheet-input span {
+  padding: 0 8px 0 3px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.scenario-chart {
+  height: 300px;
+}
+
+.scenario-comparison th,
+.scenario-comparison td {
+  white-space: nowrap;
+}
+
+.scenario-comparison thead th:first-child,
+.scenario-comparison tbody th {
+  text-align: left;
+}
+
+.scenario-comparison thead .scenario-row-button {
+  display: inline-flex;
+  align-items: center;
+}
+
+.scenario-comparison thead .scenario-row-button[aria-pressed="true"] {
   color: var(--foreground);
   font-weight: 700;
 }
 
-.three-year-growth th,
-.three-year-growth td {
+.scenario-comparison .scenario-column-selected {
+  background: var(--highlight);
+}
+
+.projection-subheading {
+  margin: 20px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.projection-notes {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 15px;
+  line-height: 22px;
+  list-style: disc;
+}
+
+/* Which projection fits: the verdict on the left, what each projection is best for on the right. */
+.projection-fit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 12px 24px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.projection-fit-answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 6px 0 0;
+  font-size: 17px;
+  line-height: 24px;
+}
+
+.projection-fit-answer .model-role {
+  margin-right: 0;
+}
+
+.projection-fit-answer a,
+.projection-fit-guide dt a {
+  color: var(--accent);
+}
+
+.projection-fit-answer a {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.projection-fit-here {
   color: var(--muted-foreground);
   font-size: 14px;
 }
 
-.three-year-growth th {
-  padding-left: 22px;
-}
-
-.three-year-total th,
-.three-year-total td {
-  font-weight: 700;
-}
-
-.three-year-steps {
-  margin: 10px 0 0;
-  padding-left: 22px;
+.projection-fit-reason {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
   font-size: 15px;
-  line-height: 26px;
+  line-height: 22px;
+}
+
+.projection-fit-reason strong {
+  color: var(--foreground);
+}
+
+.projection-fit-guide {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  margin: 0;
+}
+
+.projection-fit-guide div {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.projection-fit-guide .projection-fit-match {
+  border-color: var(--accent);
+  background: var(--highlight);
+}
+
+.projection-fit-guide dt {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 21px;
+}
+
+.projection-fit-guide dd {
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.projection-fit-guide dd strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+/* Jeremy's projection: three case tables, then the price chart with its entry price. */
+/* Room for a starting revenue in millions, such as 51744.69. */
+.jeremy-projection .projection-stats .assumption-input-wrap {
+  width: 170px;
+}
+
+.jeremy-case-target {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  line-height: 22px;
+}
+
+.jeremy-case-target strong {
+  color: var(--foreground);
+}
+
+.jeremy-chart-heading {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.jeremy-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+}
+
+.jeremy-entry > div {
+  display: grid;
+  gap: 4px;
+}
+
+.jeremy-entry-label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.jeremy-entry strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  line-height: 38px;
+}
+
+.jeremy-entry .assumption-input-wrap {
+  width: 140px;
+  margin-top: 0;
+}
+
+.jeremy-chart {
+  height: 340px;
+}
+
+.jeremy-tooltip {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.jeremy-tooltip > span {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .projection-fit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .scenario-card:not([aria-pressed="true"]):hover {
+    border-color: var(--border-strong);
+    background: var(--highlight);
+  }
+
+  .sheet-fill:hover {
+    background: var(--selected);
+    color: var(--selected-foreground);
+  }
+}
+
+@media (max-width: 640px) {
+  .projection-toolbar {
+    padding: 12px;
+  }
+
+  .projection-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    width: 100%;
+  }
+
+  .projection-stats .assumption-input-wrap,
+  .jeremy-projection .projection-stats .assumption-input-wrap {
+    width: 100%;
+  }
+
+  /* Amounts in millions need the full width next to their "M USD". */
+  .jeremy-stat-wide {
+    grid-column: 1 / -1;
+  }
+
+  /* Two cards to a row, so the scenarios don't push the table a screen down. */
+  .scenario-cards {
+    grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  }
+
+  .scenario-card {
+    padding: 10px;
+  }
+
+  .scenario-card-price {
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  .scenario-card-cagr {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .projection-sheet-card {
+    padding: 12px;
+  }
+
+  .projection-sheet-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .projection-sheet tbody th {
+    min-width: 150px;
+    max-width: 170px;
+    white-space: normal;
+  }
+
+  /* 16px keeps phones from zooming into a box when it's tapped. */
+  .sheet-input input {
+    font-size: 16px;
+  }
+
+  .scenario-chart,
+  .jeremy-chart {
+    height: 260px;
+  }
 }
 
 /* DCF calculator */
@@ -3516,6 +4141,22 @@ input:focus-visible {
 
 .dcf-breakdown th {
   font-size: 15px;
+}
+
+/* Free cash flow history: fiscal years across, with growth beneath in the statements' style. */
+.dcf-history-table thead th:first-child,
+.dcf-history-table tbody th {
+  text-align: left;
+}
+
+.dcf-history-growth th,
+.dcf-history-growth td {
+  font-size: 14px;
+}
+
+.dcf-history-growth th {
+  padding-left: 22px !important;
+  color: var(--muted-foreground);
 }
 
 .dcf-breakdown td {

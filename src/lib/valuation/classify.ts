@@ -75,6 +75,9 @@ export type Classification = {
   reasons: string[];
 };
 
+// The yearly figures the classifier reads, newest first.
+export type ClassifierYear = Pick<AnnualFinancialSummary, "fiscalYear" | "revenue" | "netIncome" | "eps" | "dividendYield">;
+
 const FINANCIAL_INDUSTRY = /bank|insurance|credit|capital markets|asset management|mortgage|financial/i;
 const REIT_INDUSTRY = /reit|real estate/i;
 const CYCLICAL_SECTORS = new Set(["Energy", "Basic Materials"]);
@@ -109,8 +112,8 @@ function variation(values: (number | null)[]): number | null {
 }
 
 export function classifyStock(
-  financials: AnnualFinancialSummary[],
-  profile: CompanyProfile | null,
+  financials: ClassifierYear[],
+  profile: Pick<CompanyProfile, "sector" | "industry"> | null,
 ): Classification {
   const latest = financials[0];
   const sector = profile?.sector ?? "";
