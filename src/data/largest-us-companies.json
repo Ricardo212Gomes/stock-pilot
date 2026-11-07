@@ -1,0 +1,605 @@
+{
+  "asOf": "2026-11-07",
+  "companies": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "sector": "Technology",
+      "marketCap": 4975383167318
+    },
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA Corporation",
+      "sector": "Semiconductors",
+      "marketCap": 4498024109744
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft Corporation",
+      "sector": "Technology",
+      "marketCap": 3940412890048
+    },
+    {
+      "symbol": "GOOGL",
+      "name": "Alphabet Inc.",
+      "sector": "Media",
+      "marketCap": 3501085320000
+    },
+    {
+      "symbol": "GOOG",
+      "name": "Alphabet Inc.",
+      "sector": "Media",
+      "marketCap": 3501085320000
+    },
+    {
+      "symbol": "AMZN",
+      "name": "Amazon.com Inc",
+      "sector": "Retail",
+      "marketCap": 2803846591528
+    },
+    {
+      "symbol": "META",
+      "name": "Meta Platforms, Inc.",
+      "sector": "Media",
+      "marketCap": 1559690479079
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla Inc",
+      "sector": "Automobiles",
+      "marketCap": 1424692595385
+    },
+    {
+      "symbol": "AVGO",
+      "name": "Broadcom Inc",
+      "sector": "Semiconductors",
+      "marketCap": 1401967407605
+    },
+    {
+      "symbol": "LLY",
+      "name": "Eli Lilly and Company",
+      "sector": "Pharmaceuticals",
+      "marketCap": 1273768714616
+    },
+    {
+      "symbol": "BRK-B",
+      "name": "Berkshire Hathaway Inc",
+      "sector": "Financial Services",
+      "marketCap": 1221889512394
+    },
+    {
+      "symbol": "WMT",
+      "name": "Walmart Inc.",
+      "sector": "Retail",
+      "marketCap": 979897000000
+    },
+    {
+      "symbol": "JPM",
+      "name": "JPMorgan Chase & Co.",
+      "sector": "Banking",
+      "marketCap": 889136691572
+    },
+    {
+      "symbol": "MU",
+      "name": "Micron Technology, Inc.",
+      "sector": "Semiconductors",
+      "marketCap": 780682001090
+    },
+    {
+      "symbol": "V",
+      "name": "Visa Inc.",
+      "sector": "Financial Services",
+      "marketCap": 768738890000
+    },
+    {
+      "symbol": "XOM",
+      "name": "Exxonmobil Holdings Corp",
+      "sector": "Energy",
+      "marketCap": 763792750000
+    },
+    {
+      "symbol": "AMD",
+      "name": "Advanced Micro Devices, Inc.",
+      "sector": "Semiconductors",
+      "marketCap": 733046561206
+    },
+    {
+      "symbol": "JNJ",
+      "name": "Johnson & Johnson",
+      "sector": "Pharmaceuticals",
+      "marketCap": 664947269446
+    },
+    {
+      "symbol": "MA",
+      "name": "Mastercard Incorporated",
+      "sector": "Financial Services",
+      "marketCap": 568616640475
+    },
+    {
+      "symbol": "ABBV",
+      "name": "AbbVie Inc.",
+      "sector": "Biotechnology",
+      "marketCap": 514924254957
+    },
+    {
+      "symbol": "COST",
+      "name": "Costco Wholesale Corp",
+      "sector": "Retail",
+      "marketCap": 466863327528
+    },
+    {
+      "symbol": "CVX",
+      "name": "Chevron Corporation",
+      "sector": "Energy",
+      "marketCap": 414802122836
+    },
+    {
+      "symbol": "KO",
+      "name": "Coca-Cola Co",
+      "sector": "Beverages",
+      "marketCap": 411563010337
+    },
+    {
+      "symbol": "PLTR",
+      "name": "Palantir Technologies Inc.",
+      "sector": "Technology",
+      "marketCap": 386435173677
+    },
+    {
+      "symbol": "PG",
+      "name": "The Procter & Gamble Company",
+      "sector": "Consumer products",
+      "marketCap": 383361358578
+    },
+    {
+      "symbol": "CSCO",
+      "name": "Cisco Systems Inc",
+      "sector": "Communications",
+      "marketCap": 369485573343
+    },
+    {
+      "symbol": "UNH",
+      "name": "UnitedHealth Group Incorporated",
+      "sector": "Health Care",
+      "marketCap": 365294176644
+    },
+    {
+      "symbol": "MRK",
+      "name": "Merck & Co Inc",
+      "sector": "Pharmaceuticals",
+      "marketCap": 362008094866
+    },
+    {
+      "symbol": "ORCL",
+      "name": "Oracle Corporation",
+      "sector": "Technology",
+      "marketCap": 351055768875
+    },
+    {
+      "symbol": "HD",
+      "name": "The Home Depot, Inc.",
+      "sector": "Retail",
+      "marketCap": 342676461710
+    },
+    {
+      "symbol": "BAC",
+      "name": "Bank of America Corporation",
+      "sector": "Banking",
+      "marketCap": 341008335062
+    },
+    {
+      "symbol": "GE",
+      "name": "General Electric Company",
+      "sector": "Aerospace & Defense",
+      "marketCap": 334020689813
+    },
+    {
+      "symbol": "PM",
+      "name": "Philip Morris International Inc.",
+      "sector": "Tobacco",
+      "marketCap": 308426776191
+    },
+    {
+      "symbol": "INTC",
+      "name": "Intel Corp",
+      "sector": "Semiconductors",
+      "marketCap": 299128202350
+    },
+    {
+      "symbol": "TXN",
+      "name": "Texas Instruments Incorporated",
+      "sector": "Semiconductors",
+      "marketCap": 285544079844
+    },
+    {
+      "symbol": "MS",
+      "name": "Morgan Stanley",
+      "sector": "Financial Services",
+      "marketCap": 284963548395
+    },
+    {
+      "symbol": "AMAT",
+      "name": "Applied Materials Inc",
+      "sector": "Semiconductors",
+      "marketCap": 264041758607
+    },
+    {
+      "symbol": "NFLX",
+      "name": "Netflix, Inc.",
+      "sector": "Media",
+      "marketCap": 260382140164
+    },
+    {
+      "symbol": "TMO",
+      "name": "Thermo Fisher Scientific Inc.",
+      "sector": "Life Sciences Tools & Services",
+      "marketCap": 257419595454
+    },
+    {
+      "symbol": "PANW",
+      "name": "Palo Alto Networks, Inc.",
+      "sector": "Technology",
+      "marketCap": 256963287276
+    },
+    {
+      "symbol": "CAT",
+      "name": "Caterpillar Inc",
+      "sector": "Machinery",
+      "marketCap": 256788164938
+    },
+    {
+      "symbol": "RTX",
+      "name": "RTX Corporation",
+      "sector": "Aerospace & Defense",
+      "marketCap": 255759458335
+    },
+    {
+      "symbol": "LRCX",
+      "name": "Lam Research Corporation",
+      "sector": "Semiconductors",
+      "marketCap": 250383831069
+    },
+    {
+      "symbol": "WFC",
+      "name": "Wells Fargo & Company",
+      "sector": "Banking",
+      "marketCap": 250354320000
+    },
+    {
+      "symbol": "GS",
+      "name": "The Goldman Sachs Group, Inc.",
+      "sector": "Financial Services",
+      "marketCap": 249732446090
+    },
+    {
+      "symbol": "AMGN",
+      "name": "Amgen Inc",
+      "sector": "Biotechnology",
+      "marketCap": 248917799923
+    },
+    {
+      "symbol": "IBM",
+      "name": "International Business Machines Corporation",
+      "sector": "Technology",
+      "marketCap": 231554599869
+    },
+    {
+      "symbol": "CRWD",
+      "name": "CrowdStrike Holdings, Inc.",
+      "sector": "Technology",
+      "marketCap": 222091461255
+    },
+    {
+      "symbol": "ANET",
+      "name": "Arista Networks, Inc.",
+      "sector": "Communications",
+      "marketCap": 215417158125
+    },
+    {
+      "symbol": "AXP",
+      "name": "American Express Company",
+      "sector": "Financial Services",
+      "marketCap": 215240484737
+    },
+    {
+      "symbol": "DELL",
+      "name": "Dell Technologies Inc",
+      "sector": "Technology",
+      "marketCap": 208883557504
+    },
+    {
+      "symbol": "GILD",
+      "name": "Gilead Sciences, Inc.",
+      "sector": "Biotechnology",
+      "marketCap": 207000107732
+    },
+    {
+      "symbol": "GEV",
+      "name": "GE Vernova Inc.",
+      "sector": "Electrical Equipment",
+      "marketCap": 204889165434
+    },
+    {
+      "symbol": "DIS",
+      "name": "The Walt Disney Company",
+      "sector": "Media",
+      "marketCap": 201590689194
+    },
+    {
+      "symbol": "C",
+      "name": "Citigroup Inc.",
+      "sector": "Banking",
+      "marketCap": 199698843760
+    },
+    {
+      "symbol": "MCD",
+      "name": "McDonald's Corp",
+      "sector": "Hotels, Restaurants & Leisure",
+      "marketCap": 195677022761
+    },
+    {
+      "symbol": "PEP",
+      "name": "PepsiCo, Inc.",
+      "sector": "Beverages",
+      "marketCap": 192609823024
+    },
+    {
+      "symbol": "BLK",
+      "name": "BlackRock, Inc.",
+      "sector": "Financial Services",
+      "marketCap": 191538304982
+    },
+    {
+      "symbol": "ABT",
+      "name": "Abbott Laboratories",
+      "sector": "Health Care",
+      "marketCap": 190221039773
+    },
+    {
+      "symbol": "VZ",
+      "name": "Verizon Communications Inc",
+      "sector": "Telecommunication",
+      "marketCap": 185387880000
+    },
+    {
+      "symbol": "APH",
+      "name": "Amphenol Corp",
+      "sector": "Electrical Equipment",
+      "marketCap": 184182200160
+    },
+    {
+      "symbol": "NEE",
+      "name": "NextEra Energy, Inc.",
+      "sector": "Utilities",
+      "marketCap": 182360742426
+    },
+    {
+      "symbol": "DE",
+      "name": "Deere & Co",
+      "sector": "Machinery",
+      "marketCap": 181093897713
+    },
+    {
+      "symbol": "UNP",
+      "name": "Union Pacific Corporation",
+      "sector": "Road & Rail",
+      "marketCap": 180652129883
+    },
+    {
+      "symbol": "KLAC",
+      "name": "KLA Corporation",
+      "sector": "Semiconductors",
+      "marketCap": 180447255012
+    },
+    {
+      "symbol": "QCOM",
+      "name": "QUALCOMM Incorporated",
+      "sector": "Semiconductors",
+      "marketCap": 176631330470
+    },
+    {
+      "symbol": "ADI",
+      "name": "Analog Devices, Inc.",
+      "sector": "Semiconductors",
+      "marketCap": 176168614478
+    },
+    {
+      "symbol": "CRM",
+      "name": "Salesforce, Inc.",
+      "sector": "Technology",
+      "marketCap": 175833950472
+    },
+    {
+      "symbol": "WELL",
+      "name": "Welltower Inc.",
+      "sector": "Real Estate",
+      "marketCap": 172104870000
+    },
+    {
+      "symbol": "TMUS",
+      "name": "T-Mobile US Inc",
+      "sector": "Telecommunication",
+      "marketCap": 171612749199
+    },
+    {
+      "symbol": "PFE",
+      "name": "Pfizer Inc.",
+      "sector": "Pharmaceuticals",
+      "marketCap": 167518699805
+    },
+    {
+      "symbol": "COP",
+      "name": "ConocoPhillips",
+      "sector": "Energy",
+      "marketCap": 163706267370
+    },
+    {
+      "symbol": "DHR",
+      "name": "Danaher Corporation",
+      "sector": "Life Sciences Tools & Services",
+      "marketCap": 161987966889
+    },
+    {
+      "symbol": "SCHW",
+      "name": "The Charles Schwab Corporation",
+      "sector": "Financial Services",
+      "marketCap": 158216927240
+    },
+    {
+      "symbol": "ISRG",
+      "name": "Intuitive Surgical, Inc.",
+      "sector": "Health Care",
+      "marketCap": 156960272641
+    },
+    {
+      "symbol": "BX",
+      "name": "Blackstone Inc.",
+      "sector": "Financial Services",
+      "marketCap": 148586927698
+    },
+    {
+      "symbol": "T",
+      "name": "AT&T Inc.",
+      "sector": "Telecommunication",
+      "marketCap": 145709924168
+    },
+    {
+      "symbol": "VRTX",
+      "name": "Vertex Pharmaceuticals Incorporated",
+      "sector": "Biotechnology",
+      "marketCap": 141654240000
+    },
+    {
+      "symbol": "BA",
+      "name": "Boeing Co",
+      "sector": "Aerospace & Defense",
+      "marketCap": 137410821533
+    },
+    {
+      "symbol": "UBER",
+      "name": "Uber Technologies, Inc.",
+      "sector": "Road & Rail",
+      "marketCap": 136259187782
+    },
+    {
+      "symbol": "SPGI",
+      "name": "S&P Global Inc.",
+      "sector": "Financial Services",
+      "marketCap": 135615217832
+    },
+    {
+      "symbol": "PGR",
+      "name": "The Progressive Corporation",
+      "sector": "Insurance",
+      "marketCap": 131961328451
+    },
+    {
+      "symbol": "LMT",
+      "name": "Lockheed Martin Corporation",
+      "sector": "Aerospace & Defense",
+      "marketCap": 130998105661
+    },
+    {
+      "symbol": "APP",
+      "name": "AppLovin Corporation",
+      "sector": "Media",
+      "marketCap": 130922161545
+    },
+    {
+      "symbol": "BMY",
+      "name": "Bristol-Myers Squibb Company",
+      "sector": "Pharmaceuticals",
+      "marketCap": 127019497402
+    },
+    {
+      "symbol": "MO",
+      "name": "Altria Group Inc",
+      "sector": "Tobacco",
+      "marketCap": 126620819507
+    },
+    {
+      "symbol": "LOW",
+      "name": "Lowe's Companies Inc",
+      "sector": "Retail",
+      "marketCap": 125984682000
+    },
+    {
+      "symbol": "NEM",
+      "name": "Newmont Corporation",
+      "sector": "Metals & Mining",
+      "marketCap": 125648854971
+    },
+    {
+      "symbol": "SYK",
+      "name": "Stryker Corporation",
+      "sector": "Health Care",
+      "marketCap": 124055777043
+    },
+    {
+      "symbol": "MRVL",
+      "name": "Marvell Technology, Inc.",
+      "sector": "Semiconductors",
+      "marketCap": 123818285811
+    },
+    {
+      "symbol": "MCK",
+      "name": "McKesson Corp",
+      "sector": "Health Care",
+      "marketCap": 123683713430
+    },
+    {
+      "symbol": "PLD",
+      "name": "Prologis, Inc.",
+      "sector": "Real Estate",
+      "marketCap": 123098004394
+    },
+    {
+      "symbol": "COF",
+      "name": "Capital One Financial Corp",
+      "sector": "Financial Services",
+      "marketCap": 121431493957
+    },
+    {
+      "symbol": "SBUX",
+      "name": "Starbucks Corp",
+      "sector": "Hotels, Restaurants & Leisure",
+      "marketCap": 120177935083
+    },
+    {
+      "symbol": "ADP",
+      "name": "Automatic Data Processing Inc",
+      "sector": "Professional Services",
+      "marketCap": 119750276441
+    },
+    {
+      "symbol": "BKNG",
+      "name": "Booking Holdings Inc.",
+      "sector": "Hotels, Restaurants & Leisure",
+      "marketCap": 119486759438
+    },
+    {
+      "symbol": "PH",
+      "name": "Parker-Hannifin Corporation",
+      "sector": "Machinery",
+      "marketCap": 115744710460
+    },
+    {
+      "symbol": "ABNB",
+      "name": "Airbnb, Inc.",
+      "sector": "Hotels, Restaurants & Leisure",
+      "marketCap": 113763291525
+    },
+    {
+      "symbol": "CME",
+      "name": "CME Group Inc.",
+      "sector": "Financial Services",
+      "marketCap": 109488394816
+    },
+    {
+      "symbol": "CVS",
+      "name": "CVS Health Corporation",
+      "sector": "Health Care",
+      "marketCap": 107241661523
+    }
+  ]
+}

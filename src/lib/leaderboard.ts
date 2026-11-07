@@ -1,4 +1,5 @@
-import { FMP_BASE_URL, failureReason, fetchFmp, numeric, type FmpFailureReason } from "./fmp";
+import snapshot from "@/data/largest-us-companies.json";
+import { FMP_BASE_URL, canUseFallback, failureReason, fetchFmp, numeric, type FmpFailureReason } from "./fmp";
 
 // The Stocks page's leaderboards: the largest US companies and today's biggest moves,
 // one FMP request each.
@@ -23,7 +24,10 @@ export type LeaderboardRow = {
   sector: string | null;
 };
 
-export type LeaderboardResult = { ok: true; rows: LeaderboardRow[] } | { ok: false; reason: FmpFailureReason };
+export type LeaderboardResult =
+  // `snapshotDate` is set when the largest companies come from the bundled snapshot, not FMP's screener.
+  | { ok: true; rows: LeaderboardRow[]; snapshotDate?: string }
+  | { ok: false; reason: FmpFailureReason };
 
 export const LEADERBOARD_SIZE = 50;
 // Prices move all day; the largest companies barely change order.
@@ -90,6 +94,34 @@ export function rankRows(id: LeaderboardId, rows: LeaderboardRow[]): Leaderboard
   return sorted.filter((row) => !seen.has(row.symbol) && seen.add(row.symbol)).slice(0, LEADERBOARD_SIZE);
 }
 
+// Without the screener (some FMP plans don't include it, and every plan has a daily limit): the bundled
+// snapshot (`npm run largest:update`), with today's market cap for the companies FMP's batch covers.
+async function largestFromSnapshot(apiKey: string): Promise<LeaderboardResult> {
+  const live = new Map<string, number>();
+  try {
+    const url = new URL(`${FMP_BASE_URL}/market-capitalization-batch`);
+    url.searchParams.set("symbols", snapshot.companies.map((company) => company.symbol).join(","));
+    url.searchParams.set("apikey", apiKey);
+    const payload = await fetchFmp(url, LARGEST_REVALIDATE_SECONDS);
+    for (const row of Array.isArray(payload) ? payload : []) {
+      const parsed = normalizeRow(row);
+      if (parsed?.marketCap) live.set(parsed.symbol, parsed.marketCap);
+    }
+  } catch {
+    // The snapshot's own figures stand.
+  }
+  const rows = snapshot.companies.map((company): LeaderboardRow => ({
+    symbol: company.symbol,
+    name: company.name,
+    price: null,
+    changePercent: null,
+    marketCap: live.get(company.symbol) ?? company.marketCap,
+    volume: null,
+    sector: company.sector,
+  }));
+  return { ok: true, rows: rankRows("largest", rows), snapshotDate: snapshot.asOf };
+}
+
 export async function getLeaderboard(id: LeaderboardId): Promise<LeaderboardResult> {
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) return { ok: false, reason: "not-configured" };
@@ -103,6 +135,8 @@ export async function getLeaderboard(id: LeaderboardId): Promise<LeaderboardResu
     const rows = rankRows(id, payload.flatMap((row) => normalizeRow(row) ?? []));
     return rows.length ? { ok: true, rows } : { ok: false, reason: "no-data" };
   } catch (error) {
-    return { ok: false, reason: failureReason(error) };
+    const reason = failureReason(error);
+    if (id === "largest" && canUseFallback(reason)) return largestFromSnapshot(apiKey);
+    return { ok: false, reason };
   }
 }

@@ -8,6 +8,7 @@ FMP is the main data source. Its free plan doesn't cover every company (CrowdStr
 | Trailing valuation ratios (P/E, P/S, P/B, P/FCF, dividend yield) | Finnhub `stock/metric` | Ratios tab (TTM column only) |
 | Quote: price, change, open, day and 52-week range, market cap | Finnhub `quote`, `stock/profile2`, `stock/metric` | Every company page |
 | Revenue, net income and EPS over the trailing twelve months | SEC quarterly rows | Overview |
+| Largest companies | A bundled snapshot ranked by FMP's `market-capitalization-batch` (see [`stock-overview.md`](./stock-overview.md)) | Stocks |
 
 Only `plan-restricted` and `rate-limited` failures fall back (`canUseFallback` in `src/lib/fmp.ts`); an invalid key or a missing company still shows its error. Pages say where their figures came from when it isn't FMP.
 

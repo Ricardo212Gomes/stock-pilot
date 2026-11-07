@@ -32,6 +32,10 @@ Every company tab shares the same header (`CompanyHeader`: the quote, or the com
 
 Each shows the top 50 with rank, ticker and name (linking to the company), price, and market cap, daily change or volume; the largest list adds the sector. Field names that differ between FMP's endpoints (`changesPercentage`, `changePercentage`, `companyName`, `name`) are all read. If a request fails, the page explains why and the search still works.
 
+Some FMP plans don't include the screener (it returns 402), and every plan has a daily limit. In either case the largest companies come from `src/data/largest-us-companies.json` instead: the 100 largest US companies (name, Finnhub's industry as the sector, market cap) on the date it was built. One `market-capitalization-batch` request (cached 6 hours) replaces the snapshot's market cap with today's for the companies the plan covers, and the list is ranked again. The snapshot has no prices, so the Price column is hidden, and a note gives the snapshot's date.
+
+`npm run largest:update` rebuilds the snapshot from Finnhub's free `stock/profile2` for about 150 large US companies listed in `scripts/update-largest.mjs`, one request every 1.1 seconds (Finnhub allows 60 a minute), so it takes about three minutes. It needs `FINNHUB_API_KEY`, and leaves out companies based outside the US (Linde, Accenture, Medtronic), as the screener does. The **Largest companies snapshot** workflow (`.github/workflows/largest-companies.yml`) runs it every Sunday at 06:00 UTC, or on demand from the Actions tab, and commits the file when it changes; it uses the `FINNHUB_API_KEY` repository secret the notifications already need. Add newcomers to the script's list as they grow.
+
 ## Search
 
 The top bar search (`src/app/components/ticker-search.tsx`) takes a company name or a ticker. Matching runs in the browser over `src/data/us-stocks.json`, a list of about 5,900 US-listed stocks, so typing makes no API requests. The list is a separate ~70 KB (compressed) chunk, loaded the first time the search box gets focus.
