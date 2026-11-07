@@ -22,7 +22,7 @@ Each part is a card, shown when its data is there:
 | Ratings by month | Finnhub `stock/recommendation` (shared with Recommendations; its free plan has four months) | 24 hours |
 | Revenue and EPS estimates | FMP `analyst-estimates`, annual (shared with the overview and Compare) | 24 hours |
 | Reported revenue and EPS | FMP annual `income-statement` (shared with Financials and Compare) | 24 hours |
-| Next report and the last four, with revenue | FMP `earnings` (limit 5, shared with the overview) | 24 hours |
+| Next report and the last four, with revenue | FMP `earnings` (limit 5) | 24 hours |
 | EPS surprises when FMP has none | Finnhub `stock/earnings` (the last four quarters, by quarter end) | 24 hours |
 | Rating changes | FMP `grades` (every action since about 2012, about 300 KB) | 24 hours |
 

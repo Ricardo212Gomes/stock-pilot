@@ -19,7 +19,7 @@
 
 Search, the home page examples and breadcrumbs land on the Overview.
 
-Every company tab shares the same header (`CompanyHeader`: the quote, or the company name from the bundled stock list when no quote is available) and tab bar, and is titled "AAPL Overview — StockPilot", "AAPL Financials — StockPilot" and so on (`companyMetadata`). The top bar reads "AAPL · Overview", and the footer credits the tab's source.
+Every company tab shares the same header (`CompanyHeader`: the quote, from Finnhub first on every tab but the Overview so FMP's daily requests go to data only it has, or the company name from the bundled stock list when no quote is available) and tab bar, and is titled "AAPL Overview — StockPilot", "AAPL Financials — StockPilot" and so on (`companyMetadata`). The top bar reads "AAPL · Overview", and the footer credits the tab's source.
 
 ## Stocks: leaderboards without a ticker
 
@@ -66,19 +66,19 @@ The quote is required; if it fails, the page explains why. Every other figure is
 | Price, change, volume, open, previous close, day and 52-week range, market cap | FMP `quote` | 1 minute |
 | Revenue, net income and EPS (ttm) | Sum of the last 4 quarters from FMP `income-statement?period=quarter` | 24 hours |
 | Revenue and EPS growth (ttm, year over year) | Finnhub `stock/metric` | 24 hours |
-| Shares out | FMP `shares-float`, or market cap ÷ price | 24 hours |
+| Shares out | Finnhub `stock/profile2` (shared with the header quotes), else FMP `shares-float`, or market cap ÷ price | 24 hours |
 | PE ratio | Price ÷ EPS (ttm), when EPS is positive | — |
 | Forward PE | Price ÷ the next fiscal year's consensus EPS from FMP `analyst-estimates` | 24 hours |
 | Dividend and yield | Latest FMP `dividends` payment × its yearly frequency (quarterly × 4, monthly × 12…), ÷ price | 24 hours |
 | Ex-dividend date | Date of the latest FMP dividend, which may be announced for the future | 24 hours |
 | Beta, sector, industry, CEO, employees, website, description | FMP `profile` | 1 hour |
-| Analysts | FMP `grades-consensus` rating; the hover text gives the analyst count | 24 hours |
+| Analysts | Finnhub `stock/recommendation`: the average rating's band, the same request and label as the Forecast tab and Recommendations; the hover text gives the analyst count | 24 hours |
 | Price target | FMP `price-target-consensus`, with the gap to today's price | 24 hours |
-| Earnings date | The earliest upcoming FMP `earnings` date without reported EPS | 24 hours |
+| Earnings date | The next report in Finnhub's earnings calendar, with before the open, during the day or after the close when it says (the request the Transcripts tab makes) | 6 hours |
 
 TTM uses quarterly statements because the free plan restricts FMP's TTM statement endpoint, and quarterly requests to 5 rows (enough for four quarters, not for year-over-year growth). That's why growth comes from Finnhub.
 
-An uncached overview costs 11 FMP requests and 1 Finnhub request. The analyst estimates use the same parameters as the Financials page, so the two pages share that cached response.
+An uncached overview costs 6 FMP requests (7 without a Tiingo key, when the chart's prices come from FMP) and 4 Finnhub ones; see [`data-sources.md`](./data-sources.md) for why each piece comes from where.
 
 ## Display
 

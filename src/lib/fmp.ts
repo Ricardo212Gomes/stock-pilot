@@ -479,13 +479,13 @@ export async function getFinancialChartExtras(symbol: string): Promise<Financial
   };
 }
 
-// Five years of daily closes from FMP, or from Tiingo when FMP's plan doesn't cover the company, its daily
-// limit is reached or it has no prices.
+// Five years of daily closes for the Overview chart. Prices aren't FMP's alone, so with a Tiingo key they come
+// from Tiingo first (free, every US stock, the same cached request the other price fallbacks use), keeping
+// FMP's 250 daily requests for data only it has; FMP stands in when Tiingo can't, and the other way round.
 export async function getStockPriceHistory(symbol: string): Promise<StockPriceHistoryResult> {
-  const result = await fmpPriceHistory(symbol);
-  if (result.ok || !(canUseFallback(result.reason) || result.reason === "no-data" || result.reason === "not-configured")) return result;
-  const closes = await getTiingoCloses(symbol);
-  return closes ? { ok: true, data: closes, source: "tiingo" } : result;
+  const tiingo = await getTiingoCloses(symbol);
+  if (tiingo) return { ok: true, data: tiingo, source: "tiingo" };
+  return fmpPriceHistory(symbol);
 }
 
 async function fmpPriceHistory(symbol: string): Promise<StockPriceHistoryResult> {

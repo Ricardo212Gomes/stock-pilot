@@ -56,6 +56,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 
 | Doc | Covers |
 | --- | --- |
+| [`docs/data-sources.md`](./docs/data-sources.md) | Which API is used when: each provider's free plan, the rules for choosing, caching and failures, and what each page costs |
 | [`docs/fmp-data.md`](./docs/fmp-data.md) | FMP endpoints, response caching, error reasons and troubleshooting |
 | [`docs/data-fallbacks.md`](./docs/data-fallbacks.md) | SEC filings and Finnhub when FMP can't provide a company: what's covered and how filings become statements |
 | [`docs/financials.md`](./docs/financials.md) | Income statement, balance sheet, cash flow and ratios: columns, TTM, growth and the chart |

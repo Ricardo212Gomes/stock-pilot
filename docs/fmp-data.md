@@ -10,11 +10,15 @@ Base URL: `https://financialmodelingprep.com/stable`. The key is sent as the `ap
 | --- | --- | --- | --- |
 | `getCompanyFundamentals` | `income-statement`, `balance-sheet-statement`, `cash-flow-statement`, `ratios` (annual, last 5) | Yes; the page shows an error if any fail | 24 hours |
 | `getFinancialChartExtras` | `revenue-product-segmentation`, `revenue-geographic-segmentation`, `analyst-estimates` | No; each falls back to empty data on error | 24 hours |
-| `getStockPriceHistory` | `historical-price-eod/full` (last 5 years) | No; Tiingo stands in (see [`data-fallbacks.md`](./data-fallbacks.md)), else the page shows a notice instead of the chart | 6 hours |
+| `getStockPriceHistory` | `historical-price-eod/full` (last 5 years), asked only when Tiingo isn't set up or can't answer (see [`data-fallbacks.md`](./data-fallbacks.md)) | No; the page shows a notice instead of the chart | 6 hours |
 | `getCompanyProfile` | `profile` (price, beta, sector, industry) | No; the valuation tools ask the user for a price | 1 hour |
 | `getRiskFreeRate` | `treasury-rates` (latest 10-year yield) | No; the valuation tools fall back to 4.25% | 24 hours |
 
 An uncached Financials page costs about 9 FMP requests for the statements and quote (see [`financials.md`](./financials.md)), plus the segment and estimate requests for the charts below them, an intrinsic value page 6 (it shares the 4 statement requests with Financials), and an overview 11 (see [`stock-overview.md`](./stock-overview.md)). A cached page costs none until its window expires.
+
+## Refusals and limits
+
+Next caches only successful responses, so `fetchFmp` remembers what the plan refuses (402) for a day in memory, by endpoint, endpoint and company, or exact request, instead of asking again on every visit. Rate limits (429) are recorded for Settings › Data sources but not skipped, so cached answers keep coming. See [`data-sources.md`](./data-sources.md) for which pages use FMP and which use free sources instead.
 
 ## Caching
 

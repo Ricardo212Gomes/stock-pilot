@@ -234,7 +234,7 @@ describe("getStockPriceHistory", () => {
     await expect(getStockPriceHistory("AAPL")).resolves.toEqual({ ok: false, reason: "not-configured" });
   });
 
-  it("falls back to Tiingo when FMP's plan doesn't cover the company", async () => {
+  it("takes Tiingo's prices first when it's set up, leaving FMP's requests alone", async () => {
     vi.stubEnv("TIINGO_API_KEY", "tiingo-key");
     const fetchMock = vi.fn(async (input: URL | string) => {
       const url = new URL(String(input));
@@ -244,7 +244,7 @@ describe("getStockPriceHistory", () => {
           { date: "2024-01-01T00:00:00.000Z", close: 200, adjClose: 100 },
         ]);
       }
-      return new Response("Premium Query Parameter", { status: 402 });
+      return json([{ date: "2024-01-01", close: 999 }]);
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -256,9 +256,15 @@ describe("getStockPriceHistory", () => {
       ],
       source: "tiingo",
     });
-    // An invalid FMP key is a setup problem to report, not a gap to fill.
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("Invalid API KEY", { status: 401 })));
-    await expect(getStockPriceHistory("AVGO")).resolves.toEqual({ ok: false, reason: "invalid-key" });
+    expect(fetchMock.mock.calls.every(([input]) => new URL(String(input)).hostname === "api.tiingo.com")).toBe(true);
+  });
+
+  it("asks FMP when Tiingo can't answer", async () => {
+    vi.stubEnv("TIINGO_API_KEY", "tiingo-key");
+    vi.stubGlobal("fetch", vi.fn(async (input: URL | string) => (new URL(String(input)).hostname === "api.tiingo.com"
+      ? json({ detail: "Error: Ticker not found" }, 404)
+      : json([{ date: "2024-01-01", close: 10 }]))));
+    await expect(getStockPriceHistory("AAPL")).resolves.toEqual({ ok: true, data: [{ date: "2024-01-01", close: 10 }], source: "fmp" });
   });
 });
 
