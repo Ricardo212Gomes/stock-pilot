@@ -85,7 +85,7 @@ An uncached overview costs 11 FMP requests and 1 Finnhub request. The analyst es
 - Large numbers use compact notation with two decimals (5.06T, 466.82B). Price-level figures have two decimals, growth one.
 - Terms with a dotted underline explain themselves on hover, for example P/E, Beta and Forward PE.
 - The quote time is shown in New York time, where US listings trade.
-- The chart offers 5D, 1M, 6M, YTD, 1Y and 5Y from daily closes. Intraday prices need a paid FMP plan, so there's no 1-day intraday view, and the chart ends at the last daily close.
+- The chart offers 5D, 1M, 6M, YTD, 1Y and 5Y from daily closes. Intraday prices need a paid FMP plan, so there's no 1-day intraday view, and the chart ends at the last daily close. When FMP can't give the closes (a company its plan doesn't cover, or its daily limit), they come from Tiingo, adjusted for splits and dividends, and the footnote says so.
 
 ## Limits
 

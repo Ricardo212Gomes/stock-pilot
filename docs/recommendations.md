@@ -25,7 +25,7 @@ The rating label is the average on a 1 (Strong Buy) to 5 (Strong Sell) scale in 
 | --- | --- | --- |
 | Which companies to screen | The bundled 100 largest US companies (`src/data/largest-us-companies.json`, see [`stock-overview.md`](./stock-overview.md)), kept to those FMP's plan covers with one `market-capitalization-batch` request | 6 hours (shared with the Stocks page) |
 | Consensus price target, high and low | FMP `price-target-consensus` (shared with the overview) | 24 hours |
-| Daily closes for the last 400 days | FMP `historical-price-eod/light` | 24 hours |
+| Daily closes for the last 400 days | FMP `historical-price-eod/light`, or Tiingo when FMP's limit is reached (see [`data-fallbacks.md`](./data-fallbacks.md)) | 24 hours |
 | Analyst ratings by month | Finnhub `stock/recommendation` (free for every US stock) | 24 hours |
 
 On FMP's free plan, that's 36 of the 100 (Apple, Nvidia, Microsoft, Alphabet, Amazon, Meta, Tesla, JPMorgan and so on); a paid plan covers more. FMP's technical indicators and Finnhub's price targets and candles need paid plans, so the averages and RSI are worked out from the closes (`src/lib/technicals.ts`): 12 weeks is 60 sessions, a year 252.

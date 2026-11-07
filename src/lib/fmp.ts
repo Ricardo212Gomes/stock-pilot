@@ -1,4 +1,5 @@
 import { getSecStatements } from "./sec";
+import { getTiingoCloses } from "./tiingo";
 
 export const FMP_BASE_URL = "https://financialmodelingprep.com/stable";
 const ANNUAL_PERIODS = 5;
@@ -165,7 +166,8 @@ export type StockPricePoint = {
 };
 
 export type StockPriceHistoryResult =
-  | { ok: true; data: StockPricePoint[] }
+  // "tiingo" when FMP couldn't give the prices (see docs/data-fallbacks.md).
+  | { ok: true; data: StockPricePoint[]; source: "fmp" | "tiingo" }
   | { ok: false; reason: FmpFailureReason };
 
 class FmpRequestError extends Error {
@@ -429,7 +431,16 @@ export async function getFinancialChartExtras(symbol: string): Promise<Financial
   };
 }
 
+// Five years of daily closes from FMP, or from Tiingo when FMP's plan doesn't cover the company, its daily
+// limit is reached or it has no prices.
 export async function getStockPriceHistory(symbol: string): Promise<StockPriceHistoryResult> {
+  const result = await fmpPriceHistory(symbol);
+  if (result.ok || !(canUseFallback(result.reason) || result.reason === "no-data" || result.reason === "not-configured")) return result;
+  const closes = await getTiingoCloses(symbol);
+  return closes ? { ok: true, data: closes, source: "tiingo" } : result;
+}
+
+async function fmpPriceHistory(symbol: string): Promise<StockPriceHistoryResult> {
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) return { ok: false, reason: "not-configured" };
 
@@ -458,7 +469,7 @@ export async function getStockPriceHistory(symbol: string): Promise<StockPriceHi
     if (prices.length === 0) return { ok: false, reason: "no-data" };
 
     prices.sort((left, right) => left.date.localeCompare(right.date));
-    return { ok: true, data: prices };
+    return { ok: true, data: prices, source: "fmp" };
   } catch (error) {
     return { ok: false, reason: failureReason(error) };
   }

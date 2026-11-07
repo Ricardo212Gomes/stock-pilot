@@ -18,7 +18,7 @@ The Financials page (`/stock/financials`) has one interactive chart per statemen
 
 ### Price history
 
-The stock price chart above the fundamentals uses TradingView Lightweight Charts (`lightweight-charts`), not Recharts. It plots daily closing prices from FMP's `historical-price-eod/full` endpoint, which returns up to five years of data.
+The stock price chart above the fundamentals uses TradingView Lightweight Charts (`lightweight-charts`), not Recharts. It plots daily closing prices from FMP's `historical-price-eod/full` endpoint, which returns up to five years of data, or from Tiingo's daily prices when FMP can't (see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md)).
 
 - Range buttons: 1M, 6M, 1Y (default) and 5Y, counted back from the latest close.
 - The header shows the latest close and the change over the selected range. The line is green when the change is zero or positive, and red otherwise.

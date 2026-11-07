@@ -10,7 +10,7 @@ Base URL: `https://financialmodelingprep.com/stable`. The key is sent as the `ap
 | --- | --- | --- | --- |
 | `getCompanyFundamentals` | `income-statement`, `balance-sheet-statement`, `cash-flow-statement`, `ratios` (annual, last 5) | Yes; the page shows an error if any fail | 24 hours |
 | `getFinancialChartExtras` | `revenue-product-segmentation`, `revenue-geographic-segmentation`, `analyst-estimates` | No; each falls back to empty data on error | 24 hours |
-| `getStockPriceHistory` | `historical-price-eod/full` (last 5 years) | No; the page shows a notice instead of the chart | 6 hours |
+| `getStockPriceHistory` | `historical-price-eod/full` (last 5 years) | No; Tiingo stands in (see [`data-fallbacks.md`](./data-fallbacks.md)), else the page shows a notice instead of the chart | 6 hours |
 | `getCompanyProfile` | `profile` (price, beta, sector, industry) | No; the valuation tools ask the user for a price | 1 hour |
 | `getRiskFreeRate` | `treasury-rates` (latest 10-year yield) | No; the valuation tools fall back to 4.25% | 24 hours |
 

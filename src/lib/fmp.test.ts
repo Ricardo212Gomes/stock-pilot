@@ -211,6 +211,7 @@ describe("getStockPriceHistory", () => {
         { date: "2024-01-01", close: 10 },
         { date: "2024-01-03", close: 12 },
       ],
+      source: "fmp",
     });
 
     const [input, init] = fetchMock.mock.calls[0] as unknown as [URL, { next?: { revalidate?: number } }];
@@ -218,7 +219,8 @@ describe("getStockPriceHistory", () => {
     expect(init.next?.revalidate).toBe(60 * 60 * 6);
   });
 
-  it("reports no-data, not-configured and HTTP failures", async () => {
+  it("reports no-data, not-configured and HTTP failures when Tiingo can't stand in", async () => {
+    vi.stubEnv("TIINGO_API_KEY", "");
     mockFmp({ "historical-price-eod/full": [] });
     await expect(getStockPriceHistory("AAPL")).resolves.toEqual({ ok: false, reason: "no-data" });
 
@@ -227,6 +229,33 @@ describe("getStockPriceHistory", () => {
 
     vi.stubEnv("FMP_API_KEY", "");
     await expect(getStockPriceHistory("AAPL")).resolves.toEqual({ ok: false, reason: "not-configured" });
+  });
+
+  it("falls back to Tiingo when FMP's plan doesn't cover the company", async () => {
+    vi.stubEnv("TIINGO_API_KEY", "tiingo-key");
+    const fetchMock = vi.fn(async (input: URL | string) => {
+      const url = new URL(String(input));
+      if (url.hostname === "api.tiingo.com") {
+        return json([
+          { date: "2024-01-02T00:00:00.000Z", close: 220, adjClose: 110 },
+          { date: "2024-01-01T00:00:00.000Z", close: 200, adjClose: 100 },
+        ]);
+      }
+      return new Response("Premium Query Parameter", { status: 402 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getStockPriceHistory("MU")).resolves.toEqual({
+      ok: true,
+      data: [
+        { date: "2024-01-01", close: 100 },
+        { date: "2024-01-02", close: 110 },
+      ],
+      source: "tiingo",
+    });
+    // An invalid FMP key is a setup problem to report, not a gap to fill.
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("Invalid API KEY", { status: 401 })));
+    await expect(getStockPriceHistory("MU")).resolves.toEqual({ ok: false, reason: "invalid-key" });
   });
 });
 

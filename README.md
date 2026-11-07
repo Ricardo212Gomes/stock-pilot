@@ -1,6 +1,6 @@
 # StockPilot
 
-StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with four calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Alpha Vantage and FINVIZ, on their free plans.
+StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with four calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Tiingo, Alpha Vantage and FINVIZ, on their free plans.
 
 ## Configure FMP
 
@@ -12,9 +12,10 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 4. Set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io) API key to enable the News page. The Finnhub secret is not needed.
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
 6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
-7. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**; see [`docs/favorites.md`](./docs/favorites.md).
-8. Optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send favorites' upcoming earnings, earnings call summaries, relevant news and SEC filing analyses to Telegram; see [`docs/notifications.md`](./docs/notifications.md).
-9. Restart the Next.js development server after changing the environment file.
+7. Optionally set `TIINGO_API_KEY` to a free [Tiingo](https://www.tiingo.com) key, so price charts and the price signals work for companies FMP's free plan doesn't cover, and when it hits its daily limit; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
+8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**; see [`docs/favorites.md`](./docs/favorites.md).
+9. Optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send favorites' upcoming earnings, earnings call summaries, relevant news and SEC filing analyses to Telegram; see [`docs/notifications.md`](./docs/notifications.md).
+10. Restart the Next.js development server after changing the environment file.
 
 All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 

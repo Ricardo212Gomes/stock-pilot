@@ -18,7 +18,7 @@ Each part is a card, shown when its data is there:
 | --- | --- | --- |
 | Consensus, median, high and low targets | FMP `price-target-consensus` (shared with the overview and Recommendations) | 24 hours |
 | Average target by period | FMP `price-target-summary` | 24 hours |
-| The last year of closes | FMP `historical-price-eod/light`, the same request as Recommendations (`src/lib/daily-closes.ts`) | 24 hours |
+| The last year of closes | FMP `historical-price-eod/light`, the same request as Recommendations (`src/lib/daily-closes.ts`), or Tiingo when FMP can't | 24 hours |
 | Ratings by month | Finnhub `stock/recommendation` (shared with Recommendations; its free plan has four months) | 24 hours |
 | Revenue and EPS estimates | FMP `analyst-estimates`, annual (shared with the overview and Compare) | 24 hours |
 | Reported revenue and EPS | FMP annual `income-statement` (shared with Financials and Compare) | 24 hours |
