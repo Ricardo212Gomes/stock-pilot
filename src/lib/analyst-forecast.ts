@@ -1,4 +1,5 @@
 import { getDailyCloses } from "./daily-closes";
+import { getCompanyReports, type CompanyReport } from "./earnings-calendar";
 import { numeric } from "./fmp";
 import { fetchFinnhub, finnhubSymbol } from "./finnhub";
 import { getRatingMonths, type RatingMonth } from "./analyst-ratings";
@@ -187,6 +188,17 @@ export function parseFinnhubEarnings(payload: unknown): EarningsSummary | null {
   return past.length > 0 ? { upcoming: null, past, source: "finnhub" } : null;
 }
 
+// The next report's date from Finnhub's calendar, so the Forecast tab and the Overview agree; FMP's estimates for
+// that report stay. Providers guess unannounced dates differently, so one source sets it everywhere.
+export function withCalendarDate(earnings: EarningsSummary | null, reports: CompanyReport[] | null, today: string): EarningsSummary | null {
+  const next = reports?.find((report) => report.date >= today);
+  if (!next) return earnings;
+  const upcoming: EarningsReport = earnings?.upcoming
+    ? { ...earnings.upcoming, date: next.date }
+    : { date: next.date, dateIsQuarterEnd: false, epsEstimate: null, epsActual: null, revenueEstimate: null, revenueActual: null };
+  return earnings ? { ...earnings, upcoming } : { upcoming, past: [], source: "finnhub" };
+}
+
 export function surprise(actual: number | null, estimate: number | null): number | null {
   return actual === null || estimate === null || estimate === 0 ? null : (actual - estimate) / Math.abs(estimate);
 }
@@ -211,7 +223,7 @@ export async function getAnalystForecast(symbol: string, now = new Date()): Prom
   const today = now.toISOString().slice(0, 10);
   const since = new Date(now.getTime() - ACTION_WINDOW_DAYS * 86_400_000).toISOString().slice(0, 10);
   const yearAgo = new Date(now.getTime() - 366 * 86_400_000).toISOString().slice(0, 10);
-  const [targetRows, trendRows, estimates, incomeRows, gradeRows, earningsRows, history, ratingMonths] = await Promise.all([
+  const [targetRows, trendRows, estimates, incomeRows, gradeRows, earningsRows, history, ratingMonths, reports] = await Promise.all([
     // The same requests as the Overview, Financials and Compare pages make, so they share cached responses.
     optionalRows("price-target-consensus", { symbol }),
     optionalRows("price-target-summary", { symbol }),
@@ -222,6 +234,8 @@ export async function getAnalystForecast(symbol: string, now = new Date()): Prom
     // The same year of closes Recommendations loads, so the two share a cached response.
     getDailyCloses(symbol, now).catch((): PricePoint[] => []),
     getRatingMonths(symbol),
+    // The next report's date as on the Overview: Finnhub's calendar, the same cached request.
+    getCompanyReports(symbol, today),
   ]);
 
   let earnings = parseFmpEarnings(earningsRows, today);
@@ -229,6 +243,7 @@ export async function getAnalystForecast(symbol: string, now = new Date()): Prom
     const finnhub = await fetchFinnhub("stock/earnings", { symbol: finnhubSymbol(symbol) }, DAILY_REVALIDATE_SECONDS);
     earnings = finnhub.ok ? parseFinnhubEarnings(finnhub.payload) : null;
   }
+  earnings = withCalendarDate(earnings, reports, today);
 
   const actions = parseGrades(gradeRows);
   return {

@@ -9,6 +9,7 @@ import {
   parseTargets,
   parseTargetTrend,
   surprise,
+  withCalendarDate,
   yearGrowth,
 } from "./analyst-forecast";
 import type { AnalystEstimate } from "./stock-overview";
@@ -105,6 +106,14 @@ describe("earnings", () => {
       ["2026-09-30", true, 2.05],
       ["2026-06-30", true, 1.91],
     ]);
+  });
+
+  it("dates the next report from Finnhub's calendar, as the Overview does, keeping FMP's estimates", () => {
+    const fmp = parseFmpEarnings(fmpRows, "2026-11-07");
+    const reports = [{ date: "2026-10-30", time: "amc" as const, year: 2026, quarter: 4 }, { date: "2027-01-27", time: "unknown" as const, year: 2027, quarter: 1 }];
+    expect(withCalendarDate(fmp, reports, "2026-11-07")?.upcoming).toMatchObject({ date: "2027-01-27", epsEstimate: 2.94 });
+    expect(withCalendarDate(null, reports, "2026-11-07")).toMatchObject({ upcoming: { date: "2027-01-27", epsEstimate: null }, past: [] });
+    expect(withCalendarDate(fmp, null, "2026-11-07")?.upcoming?.date).toBe("2027-02-04");
   });
 
   it("measures the surprise against the estimate", () => {
