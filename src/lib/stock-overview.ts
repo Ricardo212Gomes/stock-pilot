@@ -85,7 +85,7 @@ async function fmpRows(endpoint: string, params: Record<string, string>, revalid
 }
 
 // Optional data: a failure leaves that figure blank instead of failing the page.
-async function optionalRows(endpoint: string, params: Record<string, string>, revalidate = DAILY_REVALIDATE_SECONDS): Promise<Row[]> {
+export async function optionalRows(endpoint: string, params: Record<string, string>, revalidate = DAILY_REVALIDATE_SECONDS): Promise<Row[]> {
   try {
     return await fmpRows(endpoint, params, revalidate);
   } catch {
@@ -124,7 +124,9 @@ export function nextEarningsDate(earnings: Row[], today: string): string | null 
     .sort()[0] ?? null;
 }
 
-export function trailingTwelveMonths(quarters: Row[]): { revenue: number | null; netIncome: number | null; eps: number | null } {
+export type TrailingTwelveMonths = { revenue: number | null; grossProfit: number | null; netIncome: number | null; eps: number | null };
+
+export function trailingTwelveMonths(quarters: Row[]): TrailingTwelveMonths {
   const recent = [...quarters]
     .filter((row) => str(row.date))
     .sort((left, right) => String(right.date).localeCompare(String(left.date)))
@@ -134,7 +136,7 @@ export function trailingTwelveMonths(quarters: Row[]): { revenue: number | null;
     const values = recent.map((row) => num(row[field]));
     return values.every((value) => value !== null) ? values.reduce((total, value) => total! + value!, 0)! : null;
   };
-  return { revenue: sum("revenue"), netIncome: sum("netIncome"), eps: sum("epsDiluted") ?? sum("eps") };
+  return { revenue: sum("revenue"), grossProfit: sum("grossProfit"), netIncome: sum("netIncome"), eps: sum("epsDiluted") ?? sum("eps") };
 }
 
 async function finnhubGrowth(symbol: string): Promise<{ revenue: number | null; eps: number | null }> {

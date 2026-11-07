@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "favorites" | "settings" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "favorites" | "settings" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -19,6 +19,7 @@ type AppShellProps = {
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
   if (section === "home") return "Home";
+  if (section === "compare") return "Compare stocks";
   if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
@@ -73,6 +74,17 @@ export function AppShell({
                 <path d="M3 16.5h14M4.5 14V9.5M8.2 14V5.5M11.8 14v-3M15.5 14V7" />
               </svg>
               <span>Stocks</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "compare" ? " sidebar-link-active" : ""}`}
+              href="/compare"
+              title="Compare stocks"
+              aria-current={activeSection === "compare" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 4.5h5v11h-5zM11.5 4.5h5v11h-5zM5 8h2M5 10.5h2M13 8h2M13 10.5h2" />
+              </svg>
+              <span>Compare</span>
             </Link>
             <Link
               className={`sidebar-link${activeSection === "favorites" ? " sidebar-link-active" : ""}`}
@@ -138,8 +150,8 @@ export function AppShell({
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 10 TOOLS</span>
-            <p>Stocks with four valuation calculators, favorites, market maps, news, earnings and dividends.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 11 TOOLS</span>
+            <p>Stocks with four valuation calculators, a comparison table, favorites, market maps, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-collapse">

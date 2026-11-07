@@ -39,6 +39,8 @@ The **Earnings** page at `/earnings` shows which companies report each day of th
 
 The **Dividends** page at `/dividends` shows a month of dividends on their ex-dividend or payment date, with the amount, yield and key dates. On the free FMP plan it covers about 25 large US companies, from about four weeks ago onward.
 
+The **Compare** page at `/compare?symbols=CELH,MNST,KO` puts up to five stocks side by side: P/E, expected EPS and revenue growth and margins, next to the range many established companies trade at.
+
 The **Favorites** page at `/favorites` lists the companies you've starred from their overview, with the latest price and links to each tool. It needs Google sign-in and a Postgres database.
 
 The **News** page at `/news` shows global market, deal, forex and crypto headlines from Finnhub; `/news?symbol=AAPL` shows the company's headlines from the last 14 days.
@@ -51,6 +53,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/data-fallbacks.md`](./docs/data-fallbacks.md) | SEC filings and Finnhub when FMP can't provide a company: what's covered and how filings become statements |
 | [`docs/financials.md`](./docs/financials.md) | Income statement, balance sheet, cash flow and ratios: columns, TTM, growth and the chart |
 | [`docs/stock-overview.md`](./docs/stock-overview.md) | The stock overview page, company tabs, and where each statistic comes from |
+| [`docs/compare.md`](./docs/compare.md) | The Compare page: each metric's calculation and source, fiscal-year matching and free-plan gaps |
 | [`docs/valuation.md`](./docs/valuation.md) | The four valuation tools: intrinsic value models, stock types, default assumptions, scenarios, AI autofill, Jeremy's and the Plumas projections (their differences and which stocks each suits) and the DCF calculator |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The AI review buttons on financial sections: configuration, what's sent, prompt rules and errors |
 | [`docs/earnings.md`](./docs/earnings.md) | The earnings calendar: data, company names, filters and surprises |
@@ -78,6 +81,6 @@ Tests live next to the code as `*.test.ts` and mock `fetch`, so they never call 
 
 ## Design system
 
-See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Stocks, Favorites) and Markets, and can collapse to an icon rail; the valuation calculators are a company's Valuation tab. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
+See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Stocks, Compare, Favorites) and Markets, and can collapse to an icon rail; the valuation calculators are a company's Valuation tab. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
 
 On the Financials page, the spark button beside each section title asks Gemini to explain that section's figures in plain language. Intraday prices and a dedicated dividend history are not included yet.

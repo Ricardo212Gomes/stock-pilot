@@ -19,6 +19,7 @@ const COMPANY_CARDS: Card[] = [
   { title: "Transcripts", detail: "Earnings calls speaker by speaker, with an AI summary of results, outlook and analysts' questions.", href: `/stock/transcripts?symbol=${EXAMPLE}`, cta: "Apple's latest call" },
   { title: "Filings", detail: "10-Ks, 10-Qs, earnings releases and other SEC filings, with the press release a click away.", href: `/stock/filings?symbol=${EXAMPLE}`, cta: "Apple filings" },
   { title: "News", detail: "Headlines that mention the company from the last two weeks.", href: `/news?symbol=${EXAMPLE}`, cta: "Apple news" },
+  { title: "Compare", detail: "Up to five stocks side by side: P/E, expected EPS and revenue growth and margins, next to a typical range.", href: "/compare?symbols=AAPL,MSFT,GOOGL", cta: "Compare Apple, Microsoft and Alphabet" },
 ];
 
 const VALUATION_CARDS: Card[] = [

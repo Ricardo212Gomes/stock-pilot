@@ -234,7 +234,8 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
           ? `FMP couldn't provide ${symbol} (its free plan doesn't cover every company and has a daily limit), so the quote comes from Finnhub and the trailing figures from SEC filings; analyst data and the price chart aren't available.`
           : "Quote and statistics from Financial Modeling Prep; growth rates from Finnhub."}{" "}
         TTM means trailing twelve months.
-        Prices may be delayed. <Link href={`/stock/financials?symbol=${symbol}`}>See the full financials</Link>.
+        Prices may be delayed. <Link href={`/stock/financials?symbol=${symbol}`}>See the full financials</Link> or{" "}
+        <Link href={`/compare?symbols=${symbol}`}>compare {symbol} with other stocks</Link>.
       </p>
     </AppShell>
   );

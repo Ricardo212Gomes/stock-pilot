@@ -21,10 +21,19 @@ export function TickerSearch({
   value = "",
   compact = false,
   action = "/stock",
+  name = "symbol",
+  params = {},
+  buttonLabel,
+  placeholder = "Company or ticker (e.g. Nvidia)",
 }: {
   value?: string;
   compact?: boolean;
   action?: string;
+  // The query parameter the chosen ticker goes in, and any others kept alongside it (Compare's list).
+  name?: string;
+  params?: Record<string, string>;
+  buttonLabel?: string;
+  placeholder?: string;
 }) {
   const router = useRouter();
   const listId = useId();
@@ -42,7 +51,7 @@ export function TickerSearch({
   function go(symbol: string) {
     setOpen(false);
     setQuery(symbol);
-    router.push(`${action}?symbol=${encodeURIComponent(symbol)}`);
+    router.push(`${action}?${new URLSearchParams({ ...params, [name]: symbol })}`);
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -76,6 +85,7 @@ export function TickerSearch({
 
   return (
     <form className={`ticker-search${compact ? " ticker-search-compact" : ""}`} action={action} method="get" onSubmit={onSubmit} role="search">
+      {Object.entries(params).map(([key, param]) => <input key={key} type="hidden" name={key} value={param} />)}
       <label className="visually-hidden" htmlFor={inputId}>Search by company name or ticker</label>
       <div className="search-input-wrap">
         <svg className="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -84,14 +94,14 @@ export function TickerSearch({
         </svg>
         <input
           id={inputId}
-          name="symbol"
+          name={name}
           type="text"
           role="combobox"
           aria-expanded={showList}
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={showList && active >= 0 ? `${listId}-${active}` : undefined}
-          placeholder="Company or ticker (e.g. Nvidia)"
+          placeholder={placeholder}
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -136,7 +146,7 @@ export function TickerSearch({
         )}
       </div>
       <button type="submit">
-        <span>{compact ? "Search" : "Explore company"}</span>
+        <span>{buttonLabel ?? (compact ? "Search" : "Explore company")}</span>
         <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M4 10h12M10 4l6 6-6 6" />
         </svg>
