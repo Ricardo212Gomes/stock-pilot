@@ -210,50 +210,9 @@ input:focus-visible {
   font-weight: 600;
 }
 
-.sidebar-note {
-  margin-top: auto;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--background);
-}
-
-.sidebar-tool-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.sidebar-tool-count span {
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: var(--accent);
-}
-
-.sidebar-note p {
-  margin: 8px 0 0;
-  color: var(--muted-foreground);
-  font-size: 15px;
-  line-height: 21px;
-}
-
 .sidebar-collapse {
+  margin-top: auto;
   padding-top: 12px;
-}
-
-/* Short windows: the tool summary gives way so the collapse button stays on screen. */
-@media (max-height: 860px) and (min-width: 641px) {
-  .sidebar-note {
-    display: none;
-  }
-
-  .sidebar-collapse {
-    margin-top: auto;
-  }
 }
 
 .sidebar-collapse-button {
@@ -305,8 +264,7 @@ input:focus-visible {
   .sidebar-collapsed .sidebar .brand > span:last-child,
   .sidebar-collapsed .sidebar-link span,
   .sidebar-collapsed .sidebar-collapse-button span,
-  .sidebar-collapsed .sidebar-section-label,
-  .sidebar-collapsed .sidebar-note {
+  .sidebar-collapsed .sidebar-section-label {
     display: none;
   }
 
@@ -323,7 +281,6 @@ input:focus-visible {
 
   .sidebar-collapsed .sidebar-collapse {
     width: 100%;
-    margin-top: auto;
   }
 
   .sidebar-collapsed .sidebar-collapse-button {
@@ -1669,8 +1626,7 @@ input:focus-visible {
     margin-top: 8px;
   }
 
-  .sidebar-section-label,
-  .sidebar-note {
+  .sidebar-section-label {
     display: none;
   }
 

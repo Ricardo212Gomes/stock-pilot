@@ -185,11 +185,6 @@ export function AppShell({
             </Link>
           </nav>
 
-          <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 14 TOOLS</span>
-            <p>Stocks with four valuation calculators, a comparison table, recommendations, favorites, market maps, a VIX fear gauge, market events, news, earnings and dividends.</p>
-          </div>
-
           <div className="sidebar-collapse">
             <SidebarToggle />
           </div>
