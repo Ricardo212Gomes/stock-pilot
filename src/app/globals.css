@@ -7303,3 +7303,64 @@ a.earnings-round:focus-visible {
   color: var(--muted-foreground);
   font-weight: 400;
 }
+
+/* Settings › Data sources: each source, what it's used for and its status since the server started. */
+.data-sources {
+  margin-top: 16px;
+}
+
+.data-sources .table-scroll {
+  margin-top: 12px;
+}
+
+.data-sources-table {
+  min-width: 0;
+  text-align: left;
+}
+
+.data-sources-table th,
+.data-sources-table td {
+  vertical-align: top;
+  white-space: normal;
+}
+
+.data-sources-table tbody th {
+  min-width: 200px;
+  font-weight: 400;
+}
+
+.data-sources-table small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.data-sources-table td:nth-child(2) {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.data-sources-status {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.data-sources-ok {
+  color: var(--positive);
+}
+
+.data-sources-warning {
+  color: var(--negative);
+}
+
+.data-sources-off {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 640px) {
+  .data-sources-optional {
+    display: none;
+  }
+}

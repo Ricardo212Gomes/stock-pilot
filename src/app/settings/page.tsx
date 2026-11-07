@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../components/app-shell";
+import { DataSources } from "./data-sources";
 import { TelegramSettings } from "./telegram-settings";
 import { currentUserId, isAuthConfigured, signIn } from "@/auth";
 import { isDatabaseConfigured } from "@/lib/db";
@@ -9,7 +10,7 @@ import { botUsername, isTelegramConfigured } from "@/lib/telegram";
 
 export const metadata: Metadata = {
   title: "Settings — StockPilot",
-  description: "Notifications for your favorites.",
+  description: "Notifications for your favorites, and the status of the app's data sources.",
 };
 
 function Notice({ title, children }: { title: string; children: React.ReactNode }) {
@@ -67,21 +68,25 @@ async function SettingsBody() {
   );
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  // Which services are set up isn't for everyone's eyes: signed-in users, or anyone when there are no accounts.
+  const showSources = !isAuthConfigured() || Boolean(await currentUserId());
   return (
     <AppShell contentClassName="dashboard-content" activeSection="settings" headerLabel="Settings" dataSource="Notifications sent with Telegram">
       <section className="company-heading">
         <div>
           <p className="section-label">ACCOUNT</p>
           <div className="company-title-row">
-            <h1>Notifications</h1>
+            <h1>Settings</h1>
           </div>
           <p className="company-subtitle">
-            Alerts about your <Link href="/favorites">favorites</Link>, sent to Telegram.
+            Alerts about your <Link href="/favorites">favorites</Link>, sent to Telegram, and the data sources behind
+            every page.
           </p>
         </div>
       </section>
       <SettingsBody />
+      {showSources && <DataSources />}
     </AppShell>
   );
 }
