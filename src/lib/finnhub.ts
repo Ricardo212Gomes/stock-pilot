@@ -1,3 +1,5 @@
+import { noteFailure, noteRateLimited } from "./provider-status";
+
 const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
 
 export type FinnhubFailureReason =
@@ -36,7 +38,12 @@ export async function fetchFinnhub(
       next: { revalidate },
       signal: AbortSignal.timeout(12_000),
     });
-    if (!response.ok) return { ok: false, reason: reasonForStatus(response.status) };
+    if (!response.ok) {
+      const reason = reasonForStatus(response.status);
+      if (reason === "rate-limited") noteRateLimited("finnhub");
+      else if (reason !== "plan-restricted") noteFailure("finnhub", reason);
+      return { ok: false, reason };
+    }
     return { ok: true, payload: await response.json() };
   } catch {
     return { ok: false, reason: "provider-error" };

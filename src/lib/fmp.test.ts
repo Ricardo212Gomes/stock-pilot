@@ -4,9 +4,12 @@ import {
   getCompanyProfile,
   getFinancialChartExtras,
   getRiskFreeRate,
+  fetchFmp,
   getStockPriceHistory,
   normalizeTicker,
+  rememberedRestrictions,
 } from "./fmp";
+import { providerEvents } from "./provider-status";
 
 type Routes = Record<string, unknown | ((url: URL) => Response)>;
 
@@ -255,7 +258,7 @@ describe("getStockPriceHistory", () => {
     });
     // An invalid FMP key is a setup problem to report, not a gap to fill.
     vi.stubGlobal("fetch", vi.fn(async () => new Response("Invalid API KEY", { status: 401 })));
-    await expect(getStockPriceHistory("MU")).resolves.toEqual({ ok: false, reason: "invalid-key" });
+    await expect(getStockPriceHistory("AVGO")).resolves.toEqual({ ok: false, reason: "invalid-key" });
   });
 });
 
@@ -371,5 +374,46 @@ describe("getRiskFreeRate", () => {
 
     vi.stubEnv("FMP_API_KEY", "");
     await expect(getRiskFreeRate()).resolves.toBeNull();
+  });
+});
+
+describe("fetchFmp's memory of refusals", () => {
+  const url = (path: string, params: Record<string, string>) => {
+    const value = new URL(`https://financialmodelingprep.com/stable/${path}`);
+    for (const [key, param] of Object.entries(params)) value.searchParams.set(key, param);
+    value.searchParams.set("apikey", "test-key");
+    return value;
+  };
+
+  it("remembers an endpoint the plan doesn't include, whatever the parameters", async () => {
+    const fetchMock = vi.fn(async () => new Response("Restricted Endpoint: This endpoint is not available under your current subscription", { status: 402 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchFmp(url("company-screener", { country: "US" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    await expect(fetchFmp(url("company-screener", { country: "US", limit: "200" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(rememberedRestrictions()).toBe(1);
+  });
+
+  it("remembers a company outside the plan per endpoint, even as the dates change", async () => {
+    const fetchMock = vi.fn(async (input: URL | string) => (new URL(String(input)).pathname.endsWith("/quote")
+      ? json([{ symbol: "MU", price: 900 }])
+      : new Response("Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription", { status: 402 })));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchFmp(url("historical-price-eod/light", { symbol: "MU", from: "2025-10-03" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    await expect(fetchFmp(url("historical-price-eod/light", { symbol: "mu", from: "2025-10-04" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Another endpoint is still asked.
+    await expect(fetchFmp(url("quote", { symbol: "MU" }), 60)).resolves.toEqual([{ symbol: "MU", price: 900 }]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("notes the daily limit without skipping later requests, so cached answers keep coming", async () => {
+    const fetchMock = vi.fn(async () => new Response("Limit Reach", { status: 429 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchFmp(url("quote", { symbol: "AAPL" }), 60)).rejects.toMatchObject({ reason: "rate-limited" });
+    await expect(fetchFmp(url("quote", { symbol: "AAPL" }), 60)).rejects.toMatchObject({ reason: "rate-limited" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(providerEvents("fmp").limitedAt).not.toBeNull();
+    expect(rememberedRestrictions()).toBe(0);
   });
 });

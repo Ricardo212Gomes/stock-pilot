@@ -1,3 +1,4 @@
+import { noteFailure, noteRateLimited } from "./provider-status";
 import { getSecStatements } from "./sec";
 import { getTiingoCloses } from "./tiingo";
 
@@ -187,17 +188,64 @@ export function failureReason(error: unknown): FmpFailureReason {
   return error instanceof FmpRequestError ? error.reason : "provider-error";
 }
 
+// FMP answers 402 for what the plan doesn't include: a whole endpoint ("Restricted Endpoint", like the company
+// screener), a company outside the free plan's sample ("…value set for 'symbol' is not available…"), or a
+// parameter value (a limit over 5). That holds until the plan changes, but Next only caches successful
+// responses, so without a memory every visit asks again: nine refused requests on a company's Overview. Each
+// refusal is remembered for a day by this server process, by endpoint, endpoint and company, or exact request.
+const RESTRICTION_MS = 24 * 60 * 60 * 1000;
+const MAX_RESTRICTIONS = 5000;
+const restrictions = new Map<string, number>();
+
+function restrictionKeys(url: URL): { endpoint: string; company: string | null; request: string } {
+  const params = new URLSearchParams(url.searchParams);
+  params.delete("apikey");
+  params.sort();
+  const symbol = url.searchParams.get("symbol");
+  return { endpoint: url.pathname, company: symbol ? `${url.pathname}|${symbol.toUpperCase()}` : null, request: `${url.pathname}?${params}` };
+}
+
+function remember(key: string, now: number): void {
+  if (restrictions.size >= MAX_RESTRICTIONS) {
+    for (const [stored, until] of restrictions) if (until <= now) restrictions.delete(stored);
+    if (restrictions.size >= MAX_RESTRICTIONS) restrictions.clear();
+  }
+  restrictions.set(key, now + RESTRICTION_MS);
+}
+
+// How many refusals are remembered now, for the Data sources card.
+export function rememberedRestrictions(now = Date.now()): number {
+  return [...restrictions.values()].filter((until) => until > now).length;
+}
+
+export function resetFmpRestrictions(): void {
+  restrictions.clear();
+}
+
 export async function fetchFmp(url: URL, revalidate: number): Promise<unknown> {
+  const keys = restrictionKeys(url);
+  const now = Date.now();
+  if ([keys.endpoint, keys.company, keys.request].some((key) => key && (restrictions.get(key) ?? 0) > now)) {
+    throw new FmpRequestError("plan-restricted", "FMP's plan doesn't include this request (remembered from an earlier answer).");
+  }
+
   const response = await fetch(url, {
     next: { revalidate },
     signal: AbortSignal.timeout(12_000),
   });
 
   if (!response.ok) {
-    throw new FmpRequestError(
-      reasonForStatus(response.status),
-      `FMP request failed with status ${response.status}`,
-    );
+    const reason = reasonForStatus(response.status);
+    if (reason === "plan-restricted") {
+      const message = await response.text().catch(() => "");
+      const key = /Restricted Endpoint/i.test(message) ? keys.endpoint : /'symbol'/i.test(message) && keys.company ? keys.company : keys.request;
+      remember(key, now);
+    } else if (reason === "rate-limited") {
+      noteRateLimited("fmp", now);
+    } else {
+      noteFailure("fmp", reason, now);
+    }
+    throw new FmpRequestError(reason, `FMP request failed with status ${response.status}`);
   }
 
   return response.json();

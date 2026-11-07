@@ -1,3 +1,4 @@
+import { noteFailure, noteFallback, noteRateLimited } from "./provider-status";
 import type { PricePoint } from "./technicals";
 
 // Tiingo's free end-of-day prices, the fallback when FMP can't give a company's price history (its free plan
@@ -42,10 +43,18 @@ export async function getTiingoCloses(symbol: string, now = new Date()): Promise
       next: { revalidate: REVALIDATE_SECONDS },
       signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // An unknown ticker is a 404; anything else is worth knowing about.
+      if (response.status === 429) noteRateLimited("tiingo");
+      else if (response.status !== 404) noteFailure("tiingo", `HTTP ${response.status}`);
+      return null;
+    }
     const closes = parseTiingoPrices(await response.json());
-    return closes.length > 0 ? closes : null;
+    if (closes.length === 0) return null;
+    noteFallback("tiingo");
+    return closes;
   } catch {
+    noteFailure("tiingo", "no response");
     return null;
   }
 }
