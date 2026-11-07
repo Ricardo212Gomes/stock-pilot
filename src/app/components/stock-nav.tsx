@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export type StockSection = "overview" | "financials" | "news" | "transcripts" | "filings" | "valuation";
+export type StockSection = "overview" | "financials" | "news" | "transcripts" | "filings" | "insiders" | "valuation";
 
 const SECTIONS: { id: StockSection; label: string; path: string }[] = [
   { id: "overview", label: "Overview", path: "/stock" },
@@ -8,6 +8,7 @@ const SECTIONS: { id: StockSection; label: string; path: string }[] = [
   { id: "news", label: "News", path: "/news" },
   { id: "transcripts", label: "Transcripts", path: "/stock/transcripts" },
   { id: "filings", label: "Filings", path: "/stock/filings" },
+  { id: "insiders", label: "Insiders", path: "/stock/insiders" },
   // Opens the first valuation tool; the others are its sub-tabs.
   { id: "valuation", label: "Valuation", path: "/valuation/intrinsic-value" },
 ];

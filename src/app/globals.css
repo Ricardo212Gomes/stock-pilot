@@ -6740,3 +6740,214 @@ a.earnings-round:focus-visible {
     width: 72px;
   }
 }
+
+/* Insiders: three summary cards, the monthly trades chart, who's trading and the transactions. Buys and
+   sales carry their word and a sign as well as colour; everything else stays neutral. */
+.insider-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.insider-card,
+.insider-section {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--title-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.insider-section {
+  margin-bottom: 16px;
+}
+
+.insider-card p {
+  margin: 0;
+}
+
+.insider-card-label {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.insider-card .insider-card-value {
+  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 32px;
+}
+
+.insider-card .insider-card-detail {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.insider-section h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.insider-legend {
+  display: flex;
+  gap: 16px;
+  margin: 10px 0 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.insider-legend > span,
+.insider-chart-tooltip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.insider-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.insider-swatch-bought {
+  background: var(--positive);
+}
+
+.insider-swatch-sold {
+  background: var(--negative);
+}
+
+/* Includes the x-axis band, so the labels never clip. */
+.insider-chart-plot {
+  height: 240px;
+}
+
+.insider-chart-tooltip {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-subtle);
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.insider-section .table-scroll {
+  margin-top: 12px;
+}
+
+.insider-table {
+  min-width: 0;
+}
+
+.insider-table thead th:first-child,
+.insider-table thead th:nth-child(2),
+.insider-table tbody th,
+.insider-table .insider-date {
+  text-align: left;
+}
+
+.insider-table tbody th,
+.insider-table .insider-date {
+  font-weight: 400;
+}
+
+.insider-name {
+  display: block;
+  font-weight: 600;
+}
+
+.insider-table th small,
+.insider-date small {
+  display: block;
+  max-width: 260px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 18px;
+  white-space: normal;
+}
+
+.insider-kind {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.insider-badge,
+.insider-planned {
+  padding: 0 7px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.insider-badge {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-weight: 600;
+}
+
+.insider-badge-buy {
+  color: var(--positive);
+}
+
+.insider-badge-sale {
+  color: var(--negative);
+}
+
+.insider-planned {
+  border: 1px solid var(--border-strong);
+  color: var(--muted-foreground);
+}
+
+.insider-trades-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.insider-empty,
+.insider-loading {
+  margin: 16px 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.insider-footnote p {
+  margin: 0 0 6px;
+}
+
+@media (max-width: 640px) {
+  .insider-optional {
+    display: none;
+  }
+
+  .insider-table th,
+  .insider-table td {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .insider-chart-plot {
+    height: 200px;
+  }
+}
+
+.insider-others {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}

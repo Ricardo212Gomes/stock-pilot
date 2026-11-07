@@ -1,4 +1,5 @@
 import universe from "@/data/largest-us-companies.json";
+import { mapLimit } from "./concurrency";
 import { FMP_BASE_URL, failureReason, fetchFmp, numeric, type FmpFailureReason } from "./fmp";
 import { fetchFinnhub, finnhubSymbol } from "./finnhub";
 import { summarizeRatings, type Candidate, type RatingCounts } from "./recommendation-signals";
@@ -20,18 +21,6 @@ type Row = Record<string, unknown>;
 
 function num(value: unknown): number | null {
   return numeric(typeof value === "number" ? value : null);
-}
-
-async function mapLimit<T, R>(items: T[], limit: number, task: (item: T) => Promise<R>): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  let next = 0;
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await task(items[index]);
-    }
-  }));
-  return results;
 }
 
 function fmpUrl(endpoint: string, params: Record<string, string>, apiKey: string): URL {
