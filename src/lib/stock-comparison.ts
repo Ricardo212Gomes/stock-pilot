@@ -3,7 +3,7 @@ import { fetchFinnhub, finnhubSymbol } from "./finnhub";
 import { getSecStatements } from "./sec";
 import {
   getAnalystEstimates,
-  getQuote,
+  getHeaderQuote,
   optionalRows,
   trailingTwelveMonths,
   type AnalystEstimate,
@@ -278,7 +278,7 @@ async function finnhubMetric(symbol: string): Promise<Row> {
 }
 
 export async function getComparedStock(symbol: string, today = new Date()): Promise<ComparedStockResult> {
-  const quote = await getQuote(symbol);
+  const quote = await getHeaderQuote(symbol);
   if (!quote.ok) return { ok: false, symbol, reason: quote.reason };
 
   const [fmpQuarters, fmpAnnual, estimates, finnhub] = await Promise.all([

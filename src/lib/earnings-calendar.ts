@@ -1,4 +1,4 @@
-import { fetchFinnhub, type FinnhubFailureReason } from "./finnhub";
+import { fetchFinnhub, finnhubSymbol, type FinnhubFailureReason } from "./finnhub";
 
 // Reported results arrive through the day, so the calendar refreshes hourly.
 const CALENDAR_REVALIDATE_SECONDS = 60 * 60;
@@ -89,6 +89,29 @@ export function surprise(actual: number | null, estimate: number | null): number
 
 function reportTime(value: unknown): ReportTime {
   return value === "bmo" || value === "amc" || value === "dmh" ? value : "unknown";
+}
+
+export type CompanyReport = { date: string; time: ReportTime; year: number | null; quarter: number | null };
+
+// One company's reports in Finnhub's calendar, from 100 days back to 120 ahead, oldest first; free for every
+// company. The Overview (the next report) and the Transcripts tab (the latest) share this cached request.
+export async function getCompanyReports(symbol: string, today: string): Promise<CompanyReport[] | null> {
+  const result = await fetchFinnhub("calendar/earnings", { symbol: finnhubSymbol(symbol), from: addDays(today, -100), to: addDays(today, 120) }, 60 * 60 * 6);
+  const rows = result.ok ? (result.payload as { earningsCalendar?: unknown } | null)?.earningsCalendar : null;
+  if (!Array.isArray(rows)) return null;
+  return rows
+    .flatMap((row): CompanyReport[] => {
+      const record = row as { date?: unknown; hour?: unknown; year?: unknown; quarter?: unknown };
+      return isIsoDate(record.date)
+        ? [{
+            date: record.date,
+            time: reportTime(record.hour),
+            year: Number.isInteger(record.year) ? (record.year as number) : null,
+            quarter: Number.isInteger(record.quarter) ? (record.quarter as number) : null,
+          }]
+        : [];
+    })
+    .sort((left, right) => left.date.localeCompare(right.date));
 }
 
 export function normalizeEvent(row: unknown, names: Map<string, string>): EarningsEvent | null {

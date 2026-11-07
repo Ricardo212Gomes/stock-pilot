@@ -13,7 +13,7 @@ import {
   type Filing,
   type FilingType,
 } from "@/lib/sec-filings";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 
 export const generateMetadata = companyMetadata("Filings", "A company's annual and quarterly reports, earnings releases and other SEC filings.");
 
@@ -56,7 +56,7 @@ export default async function FilingsPage({ searchParams }: FilingsPageProps) {
   const type: FilingType = FILING_TYPES.some((item) => item.id === rawType) ? (rawType as FilingType) : "important";
   const page = Math.max(1, Number.parseInt(single(params.page) ?? "1", 10) || 1);
 
-  const [quote, result] = await Promise.all([getQuote(symbol), getFilings(symbol)]);
+  const [quote, result] = await Promise.all([getHeaderQuote(symbol), getFilings(symbol)]);
 
   const matching = result.ok ? result.data.filings.filter((filing) => filingMatches(filing, type)) : [];
   const shown = matching.slice(0, page * PAGE_SIZE);

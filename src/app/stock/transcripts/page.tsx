@@ -5,7 +5,7 @@ import { companyMetadata } from "../../components/company-metadata";
 import { StockNav } from "../../components/stock-nav";
 import { normalizeTicker } from "@/lib/fmp";
 import { listedName } from "@/lib/listed-companies";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 import { getSavedSummary } from "@/lib/transcript-summary";
 import { TranscriptSummaryCard } from "./transcript-summary";
 import {
@@ -87,7 +87,7 @@ export default async function TranscriptsPage({ searchParams }: TranscriptsPageP
   const symbol = normalizeTicker(single(params.symbol)) ?? "AAPL";
   const requested = single(params.quarter);
 
-  const [quote, latest] = await Promise.all([getQuote(symbol), latestReportedQuarter(symbol)]);
+  const [quote, latest] = await Promise.all([getHeaderQuote(symbol), latestReportedQuarter(symbol)]);
   const quarters = recentQuarters(latest);
   let quarter: FiscalQuarter = isFiscalQuarter(requested) ? requested : latest;
   let result: TranscriptResult = await getTranscript(symbol, quarter, isFiscalQuarter(requested) && requested !== latest ? { emptyRetryMs: OLD_EMPTY_RETRY_MS } : {});

@@ -7,7 +7,7 @@ import {
   type FmpFailureReason,
 } from "@/lib/fmp";
 import { getStatementTable, type StatementTable } from "@/lib/financial-statements";
-import { getAnalystEstimates, getOutstandingShares, getQuote } from "@/lib/stock-overview";
+import { getAnalystEstimates, getOutstandingShares, getHeaderQuote } from "@/lib/stock-overview";
 import { buildDcfDefaults, type DcfDefaults } from "@/lib/simple-dcf";
 import { buildJeremyDefaults, type JeremyDefaults } from "@/lib/jeremy-projection";
 import { buildProjectionDefaults, type ProjectionDefaults } from "@/lib/plumas-projection";
@@ -96,7 +96,7 @@ export async function loadPriceProjectionData(symbol: string): Promise<PriceProj
   const [income, ratios, quote, floatShares, estimates, profile] = await Promise.all([
     getStatementTable(symbol, "income", "annual"),
     getStatementTable(symbol, "ratios", "annual"),
-    getQuote(symbol),
+    getHeaderQuote(symbol),
     getOutstandingShares(symbol),
     getAnalystEstimates(symbol),
     getCompanyProfile(symbol),
@@ -149,7 +149,7 @@ export async function loadDcfData(symbol: string): Promise<DcfDataResult> {
     getStatementTable(symbol, "income", "annual"),
     getStatementTable(symbol, "cash-flow", "annual"),
     getStatementTable(symbol, "balance", "annual"),
-    getQuote(symbol),
+    getHeaderQuote(symbol),
   ]);
   if (!income.ok) return income;
 

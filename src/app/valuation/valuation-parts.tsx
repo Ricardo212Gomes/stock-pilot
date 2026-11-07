@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 import { PROJECTION_GUIDE, type ProjectionFit } from "@/lib/projection-fit";
 import { STOCK_TYPES, type Classification } from "@/lib/valuation/classify";
 import { CompanyHeader } from "../components/company-header";
@@ -19,7 +19,7 @@ export async function readSymbol(searchParams: ValuationSearchParams): Promise<s
 // Above every valuation tool for a company: its header and tabs, with Valuation open and the four
 // tools as its sub-tabs, then what this tool does.
 export async function ValuationHeader({ symbol, tool, children }: { symbol: string; tool: ValuationTool; children: ReactNode }) {
-  const quote = await getQuote(symbol);
+  const quote = await getHeaderQuote(symbol);
   return (
     <>
       <CompanyHeader symbol={symbol} quote={quote} />

@@ -7298,3 +7298,8 @@ a.earnings-round:focus-visible {
     display: none;
   }
 }
+
+.overview-earnings-time {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}

@@ -15,7 +15,7 @@ import {
 } from "@/lib/analyst-forecast";
 import { normalizeTicker } from "@/lib/fmp";
 import { RATING_KEYS, summarizeRatings } from "@/lib/recommendation-signals";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 
 export const generateMetadata = companyMetadata("Forecast", "Analysts' price targets, ratings, revenue and EPS estimates and earnings surprises for a company.");
 
@@ -351,7 +351,7 @@ async function ForecastBody({ symbol, price }: { symbol: string; price: number |
 export default async function ForecastPage({ searchParams }: ForecastPageProps) {
   const raw = (await searchParams).symbol;
   const symbol = normalizeTicker(Array.isArray(raw) ? raw[0] : raw) ?? "AAPL";
-  const quote = await getQuote(symbol);
+  const quote = await getHeaderQuote(symbol);
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Forecast`} dataSource="Analyst data from Financial Modeling Prep and Finnhub">

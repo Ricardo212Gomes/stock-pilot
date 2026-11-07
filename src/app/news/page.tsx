@@ -16,7 +16,7 @@ import {
   type NewsCategory,
   type NewsItem,
 } from "@/lib/finnhub-news";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 
 export const generateMetadata = companyMetadata("News", "Global market news and company headlines.", "Market news");
 
@@ -208,7 +208,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
       headerLabel={symbol ? `${symbol} · News` : undefined}
       dataSource="News provided by Finnhub"
     >
-      {symbol && <CompanyHeader symbol={symbol} quote={await getQuote(symbol)} />}
+      {symbol && <CompanyHeader symbol={symbol} quote={await getHeaderQuote(symbol)} />}
       {symbol && <StockNav symbol={symbol} active="news" />}
       <section className="company-heading">
         <div>

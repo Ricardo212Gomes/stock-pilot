@@ -2,8 +2,8 @@ import universe from "@/data/largest-us-companies.json";
 import { mapLimit } from "./concurrency";
 import { getDailyCloses } from "./daily-closes";
 import { FMP_BASE_URL, failureReason, fetchFmp, numeric, type FmpFailureReason } from "./fmp";
-import { fetchFinnhub, finnhubSymbol } from "./finnhub";
-import { summarizeRatings, type Candidate, type RatingCounts } from "./recommendation-signals";
+import { getRatingMonths } from "./analyst-ratings";
+import { summarizeRatings, type Candidate } from "./recommendation-signals";
 import { optionalRows } from "./stock-overview";
 import { priceTrend } from "./technicals";
 
@@ -12,7 +12,6 @@ import { priceTrend } from "./technicals";
 // a year of daily closes (FMP). Everything is cached for a day, so a screen costs about two FMP requests per
 // company once a day, plus one to check which companies the plan covers.
 
-const DAILY_REVALIDATE_SECONDS = 60 * 60 * 24;
 // Companies loaded at once. Each needs one Finnhub request, and Finnhub's free plan allows 30 a second.
 const CONCURRENCY = 4;
 
@@ -38,13 +37,7 @@ async function coveredCompanies(symbols: string[], apiKey: string): Promise<Map<
 }
 
 async function analystRatings(symbol: string) {
-  const result = await fetchFinnhub("stock/recommendation", { symbol: finnhubSymbol(symbol) }, DAILY_REVALIDATE_SECONDS);
-  const rows = result.ok && Array.isArray(result.payload) ? (result.payload as Row[]) : [];
-  return summarizeRatings(rows.flatMap((row): (RatingCounts & { period: string })[] => (
-    typeof row.period === "string"
-      ? [{ period: row.period, strongBuy: num(row.strongBuy) ?? 0, buy: num(row.buy) ?? 0, hold: num(row.hold) ?? 0, sell: num(row.sell) ?? 0, strongSell: num(row.strongSell) ?? 0 }]
-      : []
-  )));
+  return summarizeRatings(await getRatingMonths(symbol));
 }
 
 export type RecommendationScreen = {

@@ -8,7 +8,10 @@ import {
   type CompanyProfile,
   type FmpFailureReason,
 } from "./fmp";
+import { getRatingMonths } from "./analyst-ratings";
+import { getCompanyReports, type ReportTime } from "./earnings-calendar";
 import { fetchFinnhub, finnhubSymbol } from "./finnhub";
+import { summarizeRatings } from "./recommendation-signals";
 import { getSecStatements } from "./sec";
 
 // The quote moves all day; everything else changes at most daily.
@@ -54,6 +57,8 @@ export type StockOverview = {
   priceTarget: number | null;
   priceTargetUpside: number | null;
   earningsDate: string | null;
+  // Before the open, during market hours or after the close, when Finnhub's calendar says.
+  earningsTime: Exclude<ReportTime, "unknown"> | null;
   profile: CompanyProfile | null;
 };
 
@@ -170,23 +175,36 @@ export type StockQuoteResult =
   | { ok: true; data: StockQuote }
   | { ok: false; reason: FmpFailureReason };
 
-export async function getQuote(symbol: string): Promise<StockQuoteResult> {
-  if (!process.env.FMP_API_KEY) return { ok: false, reason: "not-configured" };
+// FMP first by default: its quote has the day's volume, which the Overview shows. Pages that need only the
+// price, name and market cap (company headers, Favorites, Compare, the valuation tools) prefer Finnhub, whose
+// free quote covers every US stock at 60 requests a minute, so FMP's 250 a day go to data only it has.
+export async function getQuote(symbol: string, prefer: "fmp" | "finnhub" = "fmp"): Promise<StockQuoteResult> {
+  if (prefer === "finnhub" || !process.env.FMP_API_KEY) {
+    const finnhub = await finnhubQuote(symbol);
+    if (finnhub) return toQuote(symbol, finnhub, "finnhub");
+    if (!process.env.FMP_API_KEY) return { ok: false, reason: "not-configured" };
+  }
 
-  let quote: Row | undefined;
-  let source: StockQuote["source"] = "fmp";
   try {
-    quote = (await fmpRows("quote", { symbol }, QUOTE_REVALIDATE_SECONDS))[0];
+    const quote = (await fmpRows("quote", { symbol }, QUOTE_REVALIDATE_SECONDS))[0];
+    return quote ? toQuote(symbol, quote, "fmp") : { ok: false, reason: "no-data" };
   } catch (error) {
     const reason = failureReason(error);
-    if (!canUseFallback(reason)) return { ok: false, reason };
+    if (!canUseFallback(reason) || prefer === "finnhub") return { ok: false, reason };
     // Companies FMP's plan doesn't cover, or FMP's daily limit: Finnhub's free quote covers every US stock.
-    quote = (await finnhubQuote(symbol)) ?? undefined;
-    if (!quote) return { ok: false, reason };
-    source = "finnhub";
+    const finnhub = await finnhubQuote(symbol);
+    return finnhub ? toQuote(symbol, finnhub, "finnhub") : { ok: false, reason };
   }
-  const price = num(quote?.price);
-  if (!quote || price === null) return { ok: false, reason: "no-data" };
+}
+
+// The quote for a company page's header and lists: see getQuote.
+export function getHeaderQuote(symbol: string): Promise<StockQuoteResult> {
+  return getQuote(symbol, "finnhub");
+}
+
+function toQuote(symbol: string, quote: Row, source: StockQuote["source"]): StockQuoteResult {
+  const price = num(quote.price);
+  if (price === null) return { ok: false, reason: "no-data" };
 
   return {
     ok: true,
@@ -247,8 +265,12 @@ async function finnhubQuote(symbol: string): Promise<Row | null> {
   };
 }
 
-// Shares outstanding today, from FMP's float data; null when FMP can't provide them.
+// Shares outstanding today: Finnhub's company profile first (free for every company, in millions, and the same
+// cached request the Finnhub quote makes), else FMP's float data; null when neither has them.
 export async function getOutstandingShares(symbol: string): Promise<number | null> {
+  const profile = await fetchFinnhub("stock/profile2", { symbol: finnhubSymbol(symbol) }, DAILY_REVALIDATE_SECONDS);
+  const millions = profile.ok ? num((profile.payload as Row | null)?.shareOutstanding) : null;
+  if (millions !== null && millions > 0) return millions * 1e6;
   const float = await optionalRows("shares-float", { symbol });
   return num(float[0]?.outstandingShares);
 }
@@ -292,20 +314,22 @@ export async function getStockOverview(symbol: string, today = new Date()): Prom
   if (!quoteResult.ok) return quoteResult;
   const { raw: quote, price } = quoteResult.data;
 
-  const [profileResult, quarters, floatShares, target, grades, dividends, earnings, estimates, growth] = await Promise.all([
+  const isoToday = today.toISOString().slice(0, 10);
+  const [profileResult, quarters, floatShares, target, ratingMonths, dividends, reports, estimates, growth] = await Promise.all([
     getCompanyProfile(symbol),
     optionalRows("income-statement", { symbol, period: "quarter", limit: "5" }),
     getOutstandingShares(symbol),
     optionalRows("price-target-consensus", { symbol }),
-    optionalRows("grades-consensus", { symbol }),
+    // Analysts' ratings and the next report date come from Finnhub, free for every company, rather than FMP's
+    // grades-consensus and earnings: two fewer FMP requests a company, and the same rating as the Forecast tab.
+    getRatingMonths(symbol),
     optionalRows("dividends", { symbol, limit: "5" }),
-    optionalRows("earnings", { symbol, limit: "5" }),
+    getCompanyReports(symbol, isoToday),
     getAnalystEstimates(symbol),
     finnhubGrowth(symbol),
   ]);
 
   const profile = profileResult.ok ? profileResult.data : null;
-  const isoToday = today.toISOString().slice(0, 10);
   // Without FMP's quarters (a company its plan doesn't cover), the SEC's give the trailing year.
   let quarterRows = quarters;
   if (quarterRows.length === 0) {
@@ -319,8 +343,8 @@ export async function getStockOverview(symbol: string, today = new Date()): Prom
 
   const forwardEps = estimates.find((estimate) => estimate.date >= isoToday && (estimate.eps.avg ?? 0) > 0)?.eps.avg ?? null;
 
-  const gradeCounts = ["strongBuy", "buy", "hold", "sell", "strongSell"].map((key) => num(grades[0]?.[key]) ?? 0);
-  const analystCount = gradeCounts.reduce((total, count) => total + count, 0);
+  const ratings = summarizeRatings(ratingMonths);
+  const nextReport = reports?.find((report) => report.date >= isoToday) ?? null;
   const priceTarget = num(target[0]?.targetConsensus);
 
   return {
@@ -355,11 +379,12 @@ export async function getStockOverview(symbol: string, today = new Date()): Prom
       yearLow: num(quote.yearLow),
       yearHigh: num(quote.yearHigh),
       beta: profile?.beta ?? null,
-      analystConsensus: str(grades[0]?.consensus),
-      analystCount: analystCount > 0 ? analystCount : null,
+      analystConsensus: ratings?.label ?? null,
+      analystCount: ratings?.total ?? null,
       priceTarget,
       priceTargetUpside: priceTarget !== null ? priceTarget / price - 1 : null,
-      earningsDate: nextEarningsDate(earnings, isoToday),
+      earningsDate: nextReport?.date ?? null,
+      earningsTime: nextReport && nextReport.time !== "unknown" ? nextReport.time : null,
       profile,
     },
   };

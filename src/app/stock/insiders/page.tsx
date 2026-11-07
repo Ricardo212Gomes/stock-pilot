@@ -8,7 +8,7 @@ import { InsiderChart } from "./insider-chart";
 import { finnhubFailureMessage } from "@/lib/finnhub";
 import { normalizeTicker } from "@/lib/fmp";
 import { getInsiderActivity, type InsiderTransaction } from "@/lib/insiders";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 
 export const generateMetadata = companyMetadata("Insiders", "What a company's executives, directors and big holders bought and sold, from their SEC Form 4 filings.");
 
@@ -261,7 +261,7 @@ export default async function InsidersPage({ searchParams }: InsidersPageProps) 
   const params = await searchParams;
   const symbol = normalizeTicker(single(params.symbol)) ?? "AAPL";
   const view: View = single(params.view) === "all" ? "all" : "trades";
-  const quote = await getQuote(symbol);
+  const quote = await getHeaderQuote(symbol);
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol} headerLabel={`${symbol} · Insiders`} dataSource="Insider trades from Finnhub and SEC EDGAR">

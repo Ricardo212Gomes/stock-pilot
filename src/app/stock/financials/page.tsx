@@ -19,7 +19,7 @@ import {
   type ValueFormat,
 } from "@/lib/financial-statements";
 import { listedName } from "@/lib/listed-companies";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 
 export const generateMetadata = companyMetadata("Financials", "Income statement, balance sheet, cash flow and ratios, annual and quarterly.");
 
@@ -162,7 +162,7 @@ export default async function FinancialsPage({ searchParams }: FinancialsPagePro
 
   const statementIds = view === "overview" ? STATEMENTS.map((item) => item.id) : [view];
   const [quote, tables, fundamentals, chartExtras] = await Promise.all([
-    getQuote(symbol),
+    getHeaderQuote(symbol),
     Promise.all(statementIds.map((id) => getStatementTable(symbol, id, period))),
     view === "overview" ? getCompanyFundamentals(symbol) : Promise.resolve(null),
     view === "overview" ? getFinancialChartExtras(symbol) : Promise.resolve(null),

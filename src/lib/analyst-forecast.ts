@@ -1,7 +1,8 @@
 import { getDailyCloses } from "./daily-closes";
 import { numeric } from "./fmp";
 import { fetchFinnhub, finnhubSymbol } from "./finnhub";
-import { summarizeRatings, type AnalystRatings, type RatingCounts } from "./recommendation-signals";
+import { getRatingMonths, type RatingMonth } from "./analyst-ratings";
+import { summarizeRatings, type AnalystRatings } from "./recommendation-signals";
 import { getAnalystEstimates, nextEarningsDate, optionalRows, type AnalystEstimate } from "./stock-overview";
 import type { PricePoint } from "./technicals";
 
@@ -197,7 +198,7 @@ export type AnalystForecast = {
   closes: PricePoint[];
   ratings: AnalystRatings | null;
   // Rating counts by month, newest first.
-  ratingMonths: (RatingCounts & { period: string })[];
+  ratingMonths: RatingMonth[];
   estimates: EstimateYear[];
   actions: GradeAction[];
   actionCounts: ActionCounts;
@@ -206,22 +207,11 @@ export type AnalystForecast = {
   fmpCovered: boolean;
 };
 
-function finnhubRatingMonths(payload: unknown): (RatingCounts & { period: string })[] {
-  return (Array.isArray(payload) ? (payload as Row[]) : [])
-    .flatMap((row): (RatingCounts & { period: string })[] => {
-      const period = str(row.period);
-      return period
-        ? [{ period, strongBuy: num(row.strongBuy) ?? 0, buy: num(row.buy) ?? 0, hold: num(row.hold) ?? 0, sell: num(row.sell) ?? 0, strongSell: num(row.strongSell) ?? 0 }]
-        : [];
-    })
-    .sort((left, right) => right.period.localeCompare(left.period));
-}
-
 export async function getAnalystForecast(symbol: string, now = new Date()): Promise<AnalystForecast> {
   const today = now.toISOString().slice(0, 10);
   const since = new Date(now.getTime() - ACTION_WINDOW_DAYS * 86_400_000).toISOString().slice(0, 10);
   const yearAgo = new Date(now.getTime() - 366 * 86_400_000).toISOString().slice(0, 10);
-  const [targetRows, trendRows, estimates, incomeRows, gradeRows, earningsRows, history, recommendations] = await Promise.all([
+  const [targetRows, trendRows, estimates, incomeRows, gradeRows, earningsRows, history, ratingMonths] = await Promise.all([
     // The same requests as the Overview, Financials and Compare pages make, so they share cached responses.
     optionalRows("price-target-consensus", { symbol }),
     optionalRows("price-target-summary", { symbol }),
@@ -231,7 +221,7 @@ export async function getAnalystForecast(symbol: string, now = new Date()): Prom
     optionalRows("earnings", { symbol, limit: "5" }),
     // The same year of closes Recommendations loads, so the two share a cached response.
     getDailyCloses(symbol, now).catch((): PricePoint[] => []),
-    fetchFinnhub("stock/recommendation", { symbol: finnhubSymbol(symbol) }, DAILY_REVALIDATE_SECONDS),
+    getRatingMonths(symbol),
   ]);
 
   let earnings = parseFmpEarnings(earningsRows, today);
@@ -240,7 +230,6 @@ export async function getAnalystForecast(symbol: string, now = new Date()): Prom
     earnings = finnhub.ok ? parseFinnhubEarnings(finnhub.payload) : null;
   }
 
-  const ratingMonths = recommendations.ok ? finnhubRatingMonths(recommendations.payload) : [];
   const actions = parseGrades(gradeRows);
   return {
     targets: parseTargets(targetRows),

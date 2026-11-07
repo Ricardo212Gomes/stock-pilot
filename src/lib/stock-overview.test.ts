@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { annualDividend, getStockOverview, nextEarningsDate, trailingTwelveMonths } from "./stock-overview";
+import { annualDividend, getHeaderQuote, getQuote, getStockOverview, nextEarningsDate, trailingTwelveMonths } from "./stock-overview";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
@@ -39,13 +39,31 @@ const fmpRoutes: Record<string, unknown> = {
   ],
 };
 
-function mockServices(overrides: Record<string, unknown | (() => Response)> = {}, finnhub: () => Response = () =>
-  json({ metric: { revenueGrowthTTMYoy: 14.24, epsGrowthTTMYoy: 32.61 } })) {
+// Finnhub by endpoint: growth from the metrics, ratings, the earnings calendar, and a profile without shares
+// (so FMP's float data gives them).
+function finnhubRoutes(url: URL): Response {
+  switch (url.pathname.replace("/api/v1/", "")) {
+    case "stock/metric":
+      return json({ metric: { revenueGrowthTTMYoy: 14.24, epsGrowthTTMYoy: 32.61 } });
+    case "stock/recommendation":
+      return json([{ period: "2026-10-01", strongBuy: 1, buy: 69, hold: 33, sell: 9, strongSell: 0 }]);
+    case "calendar/earnings":
+      return json({ earningsCalendar: [
+        { date: "2027-01-28", hour: "amc", year: 2027, quarter: 1 },
+        { date: "2026-11-02", hour: "amc", year: 2026, quarter: 4 },
+        { date: "2026-07-30", hour: "amc", year: 2026, quarter: 3 },
+      ] });
+    default:
+      return json({});
+  }
+}
+
+function mockServices(overrides: Record<string, unknown | (() => Response)> = {}, finnhub: (url: URL) => Response = finnhubRoutes) {
   const routes = { ...fmpRoutes, ...overrides };
   const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
     void init;
     const url = new URL(input);
-    if (url.hostname === "finnhub.io") return finnhub();
+    if (url.hostname === "finnhub.io") return finnhub(url);
     const route = routes[url.pathname.replace("/stable/", "")];
     if (route === undefined) return json({ "Error Message": "not mocked" }, 404);
     return typeof route === "function" ? (route as () => Response)() : json(route);
@@ -127,6 +145,7 @@ describe("getStockOverview", () => {
       analystCount: 112,
       priceTarget: 329.38,
       earningsDate: "2026-11-02",
+      earningsTime: "amc",
     });
     expect(result.data.peRatio).toBeCloseTo(346.34 / 8.73);
     expect(result.data.forwardPe).toBeCloseTo(346.34 / 9.18);
@@ -135,6 +154,13 @@ describe("getStockOverview", () => {
 
     const quoteCall = fetchMock.mock.calls.find(([input]) => new URL(input).pathname.endsWith("/quote"));
     expect((quoteCall?.[1] as { next?: { revalidate?: number } }).next?.revalidate).toBe(60);
+  });
+
+  it("takes the share count from Finnhub's company profile when it has one", async () => {
+    mockServices({}, (url) => (url.pathname.endsWith("/stock/profile2") ? json({ shareOutstanding: 14840.39 }) : finnhubRoutes(url)));
+    const result = await getStockOverview("AAPL", TODAY);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.data.sharesOutstanding).toBeCloseTo(14840.39e6);
   });
 
   it("blanks optional figures that fail instead of failing the page", async () => {
@@ -189,5 +215,29 @@ describe("getStockOverview", () => {
 
     vi.stubEnv("FMP_API_KEY", "");
     await expect(getStockOverview("AAPL", TODAY)).resolves.toEqual({ ok: false, reason: "not-configured" });
+  });
+});
+
+describe("header quotes", () => {
+  const finnhubQuote = (url: URL) => {
+    if (url.pathname.endsWith("/quote")) return json({ c: 341.5, d: 2.1, dp: 0.62, o: 339, pc: 339.4, h: 342, l: 338.2, t: 1794002400 });
+    if (url.pathname.endsWith("/stock/profile2")) return json({ name: "Apple Inc", exchange: "NASDAQ NMS - GLOBAL MARKET", marketCapitalization: 5060000 });
+    return finnhubRoutes(url);
+  };
+
+  it("come from Finnhub, leaving FMP's daily requests alone", async () => {
+    const fetchMock = mockServices({}, finnhubQuote);
+    const result = await getHeaderQuote("AAPL");
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.data).toMatchObject({ price: 341.5, changePercent: 0.0062, marketCap: 5.06e12, exchange: "NASDAQ", source: "finnhub" });
+    expect(fetchMock.mock.calls.some(([input]) => new URL(input).hostname === "financialmodelingprep.com")).toBe(false);
+  });
+
+  it("fall back to FMP when Finnhub has no quote, while the Overview still asks FMP first", async () => {
+    mockServices({}, () => json({}, 429));
+    await expect(getHeaderQuote("AAPL")).resolves.toMatchObject({ ok: true, data: { price: 346.34, source: "fmp" } });
+    const fetchMock = mockServices({}, finnhubQuote);
+    await expect(getQuote("AAPL")).resolves.toMatchObject({ ok: true, data: { source: "fmp", raw: { volume: 25709038 } } });
+    expect(new URL(fetchMock.mock.calls[0][0]).hostname).toBe("financialmodelingprep.com");
   });
 });
