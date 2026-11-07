@@ -66,15 +66,6 @@ async function FavoritesBody() {
     <>
       <p className="earnings-summary">
         {favorites.length} of {MAX_FAVORITES} favorites, newest first. Prices are cached for a minute.
-        {favorites.length > 1 && (
-          <>
-            {" "}
-            <Link href={`/compare?symbols=${favorites.slice(0, 5).map((favorite) => encodeURIComponent(favorite.symbol)).join(",")}`}>
-              Compare {favorites.length > 5 ? "the newest five" : favorites.length === 2 ? "both" : `all ${favorites.length}`} side by side
-            </Link>
-            .
-          </>
-        )}
       </p>
       <div className="table-scroll">
         <table className="financial-table favorites-table">
