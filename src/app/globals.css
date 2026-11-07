@@ -5823,3 +5823,312 @@ a.earnings-round:focus-visible {
     }
   }
 }
+
+/* VIX fear gauge: the dial and today's reading beside earlier readings, then the history and the zones.
+   Zones run red (fear) through grey to blue (greed): a diverging scale that stays readable with colour
+   blindness, and every zone is named beside its colour. */
+.vix-zone-extreme-fear {
+  --zone: var(--negative);
+}
+
+.vix-zone-fear {
+  --zone: color-mix(in oklab, var(--negative) 55%, var(--card));
+}
+
+.vix-zone-neutral {
+  --zone: var(--border);
+}
+
+.vix-zone-greed {
+  --zone: color-mix(in oklab, var(--chart-1) 55%, var(--card));
+}
+
+.vix-zone-extreme-greed {
+  --zone: var(--chart-1);
+}
+
+.vix-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.vix-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--title-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.vix-card h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.vix-reading {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  text-align: center;
+}
+
+.vix-gauge {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+}
+
+.vix-gauge path {
+  fill: var(--zone);
+}
+
+/* In viewBox units: about 13px on screen at the gauge's full width. */
+.vix-gauge text {
+  fill: var(--muted-foreground);
+  font-size: 13.5px;
+}
+
+.vix-gauge .vix-gauge-current text {
+  fill: var(--foreground);
+  font-weight: 700;
+}
+
+.vix-gauge-needle {
+  stroke: var(--foreground);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.vix-gauge-hub {
+  fill: var(--foreground);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.vix-hero p {
+  margin: 0;
+}
+
+.vix-zone-name {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 32px;
+}
+
+.vix-hero .vix-value {
+  margin-top: 4px;
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 52px;
+}
+
+.vix-value-label,
+.vix-change {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.vix-value-label {
+  font-size: 15px;
+  vertical-align: middle;
+}
+
+.vix-change {
+  margin-left: 10px;
+  font-size: 18px;
+}
+
+.vix-hero .vix-asof {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.vix-hero .vix-meaning {
+  max-width: 420px;
+  margin: 12px auto 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.vix-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vix-compare-table th,
+.vix-compare-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-strong);
+  font-size: 15px;
+  line-height: 22px;
+  text-align: left;
+}
+
+.vix-compare-table th {
+  font-weight: 400;
+}
+
+.vix-compare-table th small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.vix-compare-table td:nth-child(2) {
+  padding-right: 16px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
+
+.vix-compare-table td:last-child {
+  text-align: right;
+}
+
+.vix-zone-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.vix-zone-swatch {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  background: var(--zone);
+  /* Keeps the pale neutral swatch visible on the card. */
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 15%, transparent);
+}
+
+.vix-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+.vix-stats div {
+  display: grid;
+  gap: 2px;
+}
+
+.vix-stats dt {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.vix-stats dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.vix-percentile {
+  margin: 14px 0 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.vix-percentile strong {
+  color: var(--foreground);
+}
+
+.vix-chart {
+  margin-bottom: 16px;
+}
+
+.vix-chart-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.vix-chart-heading h2 {
+  margin: 0;
+}
+
+/* Includes the x-axis band, so the labels never clip. */
+.vix-chart-plot {
+  height: 300px;
+}
+
+.vix-chart-tooltip {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-subtle);
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.vix-chart-tooltip strong {
+  color: var(--foreground);
+  font-size: 15px;
+}
+
+.vix-zone-table {
+  min-width: 0;
+  text-align: left;
+}
+
+.vix-zone-table thead th:first-child,
+.vix-zone-table tbody th {
+  font-weight: 400;
+}
+
+.vix-zone-table td:last-child {
+  min-width: 260px;
+  white-space: normal;
+}
+
+.vix-zone-table .vix-zone-row-current th,
+.vix-zone-table .vix-zone-row-current td {
+  background: var(--highlight);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .vix-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  /* The dial shrinks to about half its width, so the labels grow to stay near 13px. */
+  .vix-gauge text {
+    font-size: 24px;
+  }
+
+  .vix-hero .vix-value {
+    font-size: 40px;
+    line-height: 44px;
+  }
+
+  .vix-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vix-chart-plot {
+    height: 240px;
+  }
+}
