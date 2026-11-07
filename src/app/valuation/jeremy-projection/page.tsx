@@ -2,7 +2,7 @@ import { AppShell } from "../../components/app-shell";
 import { companyMetadata } from "../../components/company-metadata";
 import { loadPriceProjectionData } from "../data";
 import { JeremyProjection } from "../jeremy-projection";
-import { LoadError, ProjectionFitCard, SecSourceNote, ToolBreadcrumb, ToolHeading, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
+import { LoadError, ProjectionFitCard, SecSourceNote, ToolStart, ValuationHeader, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
 export const generateMetadata = companyMetadata("Jeremy's Projection", "Bull, base and bear cases for a stock's revenue, net income, EPS, price and yearly return, from this year's analyst consensus.");
 
@@ -20,10 +20,9 @@ export default async function JeremyProjectionPage({ searchParams }: { searchPar
         </ToolStart>
       ) : (
         <>
-          <ToolBreadcrumb symbol={symbol} tool="jeremy-projection" />
-          <ToolHeading symbol={symbol} tool="jeremy-projection">
+          <ValuationHeader symbol={symbol} tool="jeremy-projection">
             Bull, base and bear cases from this year&apos;s analyst consensus, following Jeremy Lefebvre&apos;s (1000xStocks) projection.
-          </ToolHeading>
+          </ValuationHeader>
           {!loaded.ok ? (
             <LoadError symbol={symbol} reason={loaded.reason} />
           ) : (

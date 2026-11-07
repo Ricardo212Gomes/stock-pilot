@@ -3078,6 +3078,14 @@ input:focus-visible {
 
 /* Financial statements */
 
+/* Under a company's Valuation sub-tabs: what the open tool does. */
+.valuation-tool-intro {
+  margin: -4px 0 16px;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 22px;
+}
+
 .statement-toolbar {
   display: flex;
   flex-wrap: wrap;

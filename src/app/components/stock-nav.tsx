@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export type StockSection = "overview" | "financials" | "news" | "transcripts" | "filings";
+export type StockSection = "overview" | "financials" | "news" | "transcripts" | "filings" | "valuation";
 
 const SECTIONS: { id: StockSection; label: string; path: string }[] = [
   { id: "overview", label: "Overview", path: "/stock" },
@@ -8,6 +8,8 @@ const SECTIONS: { id: StockSection; label: string; path: string }[] = [
   { id: "news", label: "News", path: "/news" },
   { id: "transcripts", label: "Transcripts", path: "/stock/transcripts" },
   { id: "filings", label: "Filings", path: "/stock/filings" },
+  // Opens the first valuation tool; the others are its sub-tabs.
+  { id: "valuation", label: "Valuation", path: "/valuation/intrinsic-value" },
 ];
 
 // The same tabs on every page about one company, like a quote site's stock header.

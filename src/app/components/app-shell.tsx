@@ -29,17 +29,6 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   return ticker ? `${ticker} · Overview` : "Stocks";
 }
 
-const VALUATION_ICONS: Record<ValuationTool, string> = {
-  // A balance scale: what a company is worth.
-  "intrinsic-value": "M10 3.5v13M6 16.5h8M4 6h12M4 6l-2 5a2 2 0 0 0 4 0L4 6M16 6l-2 5a2 2 0 0 0 4 0l-2-5",
-  // A rising line: where the price could go.
-  "jeremy-projection": "M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4",
-  // A feather ("pluma"), for the Plumas projection.
-  "plumas-projection": "M4 16 15.5 4.5M15.5 4.5c0 5.5-3.5 9.5-9 9.5M15.5 4.5c-5.5 0-9.5 3.5-9.5 9M9 11h3.5M7.5 12.5h2",
-  // A percent sign: cash flows discounted at a rate.
-  "dcf-calculator": "M5.5 14.5l9-9M7 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3ZM13 14.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z",
-};
-
 export function AppShell({
   children,
   contentClassName,
@@ -49,6 +38,8 @@ export function AppShell({
   dataSource,
 }: AppShellProps) {
   const valuationPath = VALUATION_TOOLS.find(({ id }) => id === activeSection)?.path;
+  // The valuation tools are a company's Valuation tab, so they sit under Stocks.
+  const onStocks = activeSection === "research" || valuationPath !== undefined;
   return (
     <div className="site-page">
       <div className="app-layout">
@@ -72,11 +63,11 @@ export function AppShell({
               <span>Home</span>
             </Link>
             <Link
-              className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
+              className={`sidebar-link${onStocks ? " sidebar-link-active" : ""}`}
               // Always the leaderboards: a company's own pages are its tabs.
               href="/stock"
               title="Stocks"
-              aria-current={activeSection === "research" ? "page" : undefined}
+              aria-current={onStocks ? "page" : undefined}
             >
               <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M3 16.5h14M4.5 14V9.5M8.2 14V5.5M11.8 14v-3M15.5 14V7" />
@@ -94,25 +85,6 @@ export function AppShell({
               </svg>
               <span>Favorites</span>
             </Link>
-          </nav>
-
-          <nav className="sidebar-nav sidebar-nav-markets" aria-label="Valuation">
-            <p className="sidebar-section-label">VALUATION</p>
-            {VALUATION_TOOLS.map((tool) => (
-              <Link
-                key={tool.id}
-                className={`sidebar-link${activeSection === tool.id ? " sidebar-link-active" : ""}`}
-                // Coming from another page keeps the company; clicking the open tool starts it over.
-                href={tickerValue && activeSection !== tool.id ? `${tool.path}?symbol=${tickerValue}` : tool.path}
-                title={tool.label}
-                aria-current={activeSection === tool.id ? "page" : undefined}
-              >
-                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                  <path d={VALUATION_ICONS[tool.id]} />
-                </svg>
-                <span>{tool.label}</span>
-              </Link>
-            ))}
           </nav>
 
           <nav className="sidebar-nav sidebar-nav-markets" aria-label="Markets">
@@ -167,7 +139,7 @@ export function AppShell({
 
           <div className="sidebar-note">
             <span className="sidebar-tool-count"><span aria-hidden="true" /> 10 TOOLS</span>
-            <p>Stocks, favorites, four valuation calculators, market maps, news, earnings and dividends.</p>
+            <p>Stocks with four valuation calculators, favorites, market maps, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-collapse">

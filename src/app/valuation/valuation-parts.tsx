@@ -2,10 +2,12 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
-import { listedName } from "@/lib/listed-companies";
+import { getQuote } from "@/lib/stock-overview";
 import { PROJECTION_GUIDE, type ProjectionFit } from "@/lib/projection-fit";
 import { STOCK_TYPES, type Classification } from "@/lib/valuation/classify";
-import { valuationTool, type ValuationTool } from "./tools";
+import { CompanyHeader } from "../components/company-header";
+import { StockNav } from "../components/stock-nav";
+import { VALUATION_TOOLS, valuationTool, type ValuationTool } from "./tools";
 
 export type ValuationSearchParams = Promise<{ symbol?: string | string[] }>;
 
@@ -14,25 +16,30 @@ export async function readSymbol(searchParams: ValuationSearchParams): Promise<s
   return typeof symbol === "string" ? normalizeTicker(symbol) : null;
 }
 
-export function ToolBreadcrumb({ symbol, tool }: { symbol: string; tool: ValuationTool }) {
+// Above every valuation tool for a company: its header and tabs, with Valuation open and the four
+// tools as its sub-tabs, then what this tool does.
+export async function ValuationHeader({ symbol, tool, children }: { symbol: string; tool: ValuationTool; children: ReactNode }) {
+  const quote = await getQuote(symbol);
   return (
-    <div className="breadcrumb">
-      <Link href={`/stock?symbol=${encodeURIComponent(symbol)}`}>{symbol}</Link><span>/</span><span>{valuationTool(tool).label}</span>
-    </div>
-  );
-}
-
-export function ToolHeading({ symbol, tool, children }: { symbol: string; tool: ValuationTool; children: ReactNode }) {
-  return (
-    <section className="company-heading">
-      <div>
-        <p className="section-label">{valuationTool(tool).label.toUpperCase()}</p>
-        <div className="company-title-row">
-          <h1>{listedName(symbol) ? `${listedName(symbol)} (${symbol})` : symbol}</h1>
-        </div>
-        <p className="company-subtitle">{children}</p>
+    <>
+      <CompanyHeader symbol={symbol} quote={quote} />
+      <StockNav symbol={symbol} active="valuation" />
+      <div className="statement-toolbar">
+        <nav className="statement-tabs" aria-label="Valuation tools">
+          {VALUATION_TOOLS.map((item) => (
+            <Link
+              key={item.id}
+              href={`${item.path}?symbol=${encodeURIComponent(symbol)}`}
+              className={item.id === tool ? "statement-tab-active" : ""}
+              aria-current={item.id === tool ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </div>
-    </section>
+      <p className="valuation-tool-intro">{children}</p>
+    </>
   );
 }
 

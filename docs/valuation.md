@@ -1,6 +1,6 @@
 # Valuation tools
 
-The sidebar's **Valuation** section has four separate calculators, each taking a ticker from the top search:
+A company's **Valuation** tab, the last of its tabs, holds four separate calculators as sub-tabs:
 
 | Tool | Route |
 | --- | --- |
@@ -9,7 +9,7 @@ The sidebar's **Valuation** section has four separate calculators, each taking a
 | Plumas Projection | `/valuation/plumas-projection?symbol=AAPL` |
 | DCF Calculator | `/valuation/dcf-calculator?symbol=AAPL` |
 
-The sidebar links keep the current ticker, so you can switch tools for the same company; clicking the tool that's already open starts it over without a ticker. (The sidebar's Stocks and News always open the leaderboards and market news; a company's own pages are its tabs.) They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (breadcrumb, heading, start screen and load error); `tools.ts` lists the tools for the sidebar. The old `/projections` page redirects to these (`?view=3y` to Jeremy's Projection and `?view=dcf` to the DCF Calculator), as do the old `/valuation/three-year-projection` (to Jeremy's Projection, whose template it followed) and `/valuation/financial-projections` (to the Plumas Projection).
+Each page has the company header and tabs with Valuation open, then the tools as sub-tabs for the same ticker (`ValuationHeader`); the Valuation tab opens Intrinsic Value. The sidebar has no valuation section: Stocks stays highlighted on these pages, and the top bar's search keeps you on the same tool for the new ticker. Without a ticker, each page shows a short start screen. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (the header with the sub-tabs, start screen and load error); `tools.ts` lists the tools for the sub-tabs. The old `/projections` page redirects to these (`?view=3y` to Jeremy's Projection and `?view=dcf` to the DCF Calculator), as do the old `/valuation/three-year-projection` (to Jeremy's Projection, whose template it followed) and `/valuation/financial-projections` (to the Plumas Projection).
 
 ## Intrinsic Value
 

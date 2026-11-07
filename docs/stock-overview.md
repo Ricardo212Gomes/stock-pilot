@@ -13,6 +13,7 @@
 | News | `/news?symbol=AAPL` |
 | Transcripts | `/stock/transcripts?symbol=AAPL` (earnings calls; see [`transcripts.md`](./transcripts.md)) |
 | Filings | `/stock/filings?symbol=AAPL` (SEC filings; see [`filings.md`](./filings.md)) |
+| Valuation | `/valuation/intrinsic-value?symbol=AAPL`, with Jeremy's Projection, the Plumas Projection and the DCF Calculator as sub-tabs (see [`valuation.md`](./valuation.md)) |
 
 Search, the home page examples and breadcrumbs land on the Overview.
 

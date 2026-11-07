@@ -49,14 +49,12 @@ const VERDICT_HELP = {
 
 export function ProjectionWorkbench({
   symbol,
-  companyName,
   currency,
   classification,
   defaults,
   priceNotice,
 }: {
   symbol: string;
-  companyName: string | null;
   currency: string;
   classification: Classification;
   defaults: DefaultAssumptions;
@@ -142,19 +140,6 @@ export function ProjectionWorkbench({
 
   return (
     <>
-      <section className="company-heading">
-        <div>
-          <p className="section-label">INTRINSIC VALUE</p>
-          <div className="company-title-row">
-            <h1>{companyName ? `${companyName} (${symbol})` : symbol}</h1>
-            <span className="access-badge">{typeInfo.label.toUpperCase()}</span>
-          </div>
-          <p className="company-subtitle">
-            Intrinsic value estimates from {MODEL_ORDER.length} valuation models, built on its annual filings.
-          </p>
-        </div>
-      </section>
-
       <ol className="projection-guide" aria-label="How to use this page">
         <li>
           <strong>Check the stock type.</strong>
