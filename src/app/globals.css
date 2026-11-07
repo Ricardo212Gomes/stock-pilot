@@ -5493,6 +5493,7 @@ a.earnings-round:focus-visible {
 
 .leaderboard-tabs {
   flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
