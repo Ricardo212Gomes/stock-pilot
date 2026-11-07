@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "compare" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -23,6 +23,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
   if (section === "vix") return "VIX fear gauge";
+  if (section === "events") return "Market events";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
   if (section === "earnings") return "Earnings calendar";
   if (section === "dividends") return "Dividend calendar";
@@ -125,6 +126,17 @@ export function AppShell({
               <span>Fear gauge</span>
             </Link>
             <Link
+              className={`sidebar-link${activeSection === "events" ? " sidebar-link-active" : ""}`}
+              href="/events"
+              title="Market events"
+              aria-current={activeSection === "events" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M5 3.5v13M5 5.5h9.5l-2 3 2 3H5M5 16.5h-1.5M5 16.5h1.5" />
+              </svg>
+              <span>Events</span>
+            </Link>
+            <Link
               className={`sidebar-link${activeSection === "news" ? " sidebar-link-active" : ""}`}
               // Market news; a company's news is its News tab.
               href="/news"
@@ -162,8 +174,8 @@ export function AppShell({
           </nav>
 
           <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 12 TOOLS</span>
-            <p>Stocks with four valuation calculators, a comparison table, favorites, market maps, a VIX fear gauge, news, earnings and dividends.</p>
+            <span className="sidebar-tool-count"><span aria-hidden="true" /> 13 TOOLS</span>
+            <p>Stocks with four valuation calculators, a comparison table, favorites, market maps, a VIX fear gauge, market events, news, earnings and dividends.</p>
           </div>
 
           <div className="sidebar-collapse">

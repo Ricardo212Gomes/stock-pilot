@@ -6132,3 +6132,358 @@ a.earnings-round:focus-visible {
     height: 240px;
   }
 }
+
+/* Market events: four "up next" cards, then the filters and a timeline grouped by month. Categories are
+   told apart by name and a small outline icon, not colour; a filled dot marks high-impact events. */
+.events-next {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.events-next-card,
+.events-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--title-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.events-next-card p {
+  margin: 0;
+}
+
+.events-next-label {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.events-next-card .events-next-date {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.events-next-meta {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.events-next-card .events-next-detail {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.events-next-detail strong {
+  color: var(--foreground);
+}
+
+.events-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.events-heading h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.events-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 16px 0 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.events-filters,
+.events-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.events-filters {
+  gap: 8px;
+}
+
+.events-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.events-filter[aria-pressed="true"] {
+  border-color: var(--selected);
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-weight: 600;
+}
+
+.events-filter:hover {
+  border-color: var(--ring);
+}
+
+.events-filter-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: center;
+}
+
+.event-category-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.events-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--foreground);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.events-check input {
+  accent-color: var(--primary);
+}
+
+.events-empty {
+  margin: 24px 0 8px;
+  color: var(--muted-foreground);
+}
+
+.events-month h3 {
+  margin: 20px 0 4px;
+  padding: 6px 10px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.events-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: 56px 24px minmax(0, 1fr);
+  column-gap: 8px;
+}
+
+.event-date {
+  display: grid;
+  align-content: start;
+  justify-items: end;
+  padding-top: 12px;
+}
+
+.event-weekday {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 18px;
+  text-align: right;
+}
+
+.event-day {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 26px;
+}
+
+/* The line runs down every row; the dot sits level with the date. */
+.event-marker {
+  position: relative;
+}
+
+.event-marker::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--border);
+  content: "";
+}
+
+.event-marker::after {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 0 0 2px var(--card);
+  content: "";
+}
+
+.event-high .event-marker::after {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.event-body {
+  min-width: 0;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.event-row:last-child .event-body {
+  border-bottom: 0;
+}
+
+.event-body p {
+  margin: 0;
+}
+
+.event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.event-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.event-badge,
+.event-tag {
+  padding: 0 7px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.event-badge {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-weight: 600;
+}
+
+.event-tag {
+  border: 1px solid var(--border);
+}
+
+.event-countdown {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.event-body .event-title {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.event-body .event-detail {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.event-body .event-outcome {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.event-body .event-source {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.event-source a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.event-ai-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+.event-past {
+  opacity: 0.6;
+}
+
+.events-footnote p {
+  margin: 0 0 6px;
+}
+
+.events-missing {
+  color: var(--destructive);
+}
+
+@media (max-width: 640px) {
+  .event-row {
+    grid-template-columns: 44px 20px minmax(0, 1fr);
+    column-gap: 6px;
+  }
+
+  .event-day {
+    font-size: 19px;
+  }
+
+  .events-options {
+    width: 100%;
+  }
+}

@@ -32,6 +32,7 @@ const VALUATION_CARDS: Card[] = [
 const MARKET_CARDS: Card[] = [
   { title: "Market maps", detail: "Heat maps of the S&P 500, the Nasdaq 100 and crypto.", href: "/maps", cta: "Open the maps" },
   { title: "Fear gauge", detail: "The VIX as a fear and greed gauge, against last week, month and year.", href: "/vix", cta: "Check the market's mood" },
+  { title: "Market events", detail: "Fed decisions, CPI and jobs reports, elections and deadlines in the news, on one timeline.", href: "/events", cta: "See what's coming" },
   { title: "Market news", detail: "Markets, deals, currencies and crypto headlines.", href: "/news", cta: "Read the news" },
   { title: "Earnings calendar", detail: "Who reports each day, with estimates and results.", href: "/earnings", cta: "This week's earnings" },
   { title: "Dividend calendar", detail: "Ex-dividend and payment dates, with yields.", href: "/dividends", cta: "This month's dividends" },

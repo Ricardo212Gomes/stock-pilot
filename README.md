@@ -45,6 +45,8 @@ The **Favorites** page at `/favorites` lists the companies you've starred from t
 
 The **Fear gauge** page at `/vix` shows the VIX as a fear and greed gauge, compares it with a week, month and year ago, and charts its history, from FMP and Cboe's free daily history.
 
+The **Events** page at `/events` is a timeline of what can move US markets: Fed decisions and their outcomes, the CPI, jobs, PCE and GDP reports, US elections and deadlines, and elections in major economies, from the Fed, FRED, BLS, BEA, Census and Wikipedia. On request, AI adds summits, trade and funding deadlines it finds in the news.
+
 The **News** page at `/news` shows global market, deal, forex and crypto headlines from Finnhub; `/news?symbol=AAPL` shows the company's headlines from the last 14 days.
 
 ## Documentation
@@ -61,6 +63,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/earnings.md`](./docs/earnings.md) | The earnings calendar: data, company names, filters and surprises |
 | [`docs/dividends.md`](./docs/dividends.md) | The dividend calendar: data, free-plan limits and the two date views |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
+| [`docs/events.md`](./docs/events.md) | The market events timeline: each source, how events are worked out, the AI news scan and its checks |
 | [`docs/vix.md`](./docs/vix.md) | The VIX fear gauge: zones, the dial, data sources and fallbacks |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`docs/auth.md`](./docs/auth.md) | Google sign-in: setup, session cookie and the top bar menu |
