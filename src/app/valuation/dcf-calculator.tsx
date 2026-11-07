@@ -10,6 +10,7 @@ import {
   STAGE_YEARS,
   calculateDcf,
   dcfSensitivityGrid,
+  impliedDcfGrowth,
   type DcfDefaults,
   type DcfInputs,
   type DcfNoteKey,
@@ -23,9 +24,15 @@ type Field = { key: FieldKey; label: string; unit: Unit; help: string };
 
 const SOURCE_LABEL: Record<Source, string> = { data: "From filings", ai: "AI suggestion", edited: "Your value" };
 // These start from sensible conventions rather than the company's filings.
-const CONVENTION_KEYS = new Set<FieldKey>(["discountRate", "terminalGrowth", "terminalMultiple", "marginOfSafety"]);
+const CONVENTION_KEYS = new Set<FieldKey>(["discountRate", "terminalGrowth", "terminalMultiple", "marginOfSafety", "firstYearCashFlow"]);
 
 const GROWTH_FIELDS: Field[] = [
+  {
+    key: "firstYearCashFlow",
+    label: "Year 1 free cash flow (optional)",
+    unit: "millions",
+    help: "Leave it blank to grow today's free cash flow from year 1. Type a forecast, such as the company's guidance or an analyst estimate, when next year will differ a lot from the last twelve months: years 2–10 then grow from it.",
+  },
   { key: "growthEarly", label: `Growth, years 1–${STAGE_YEARS}`, unit: "percent", help: "How fast free cash flow grows each year over the next five years." },
   { key: "growthLate", label: `Growth, years ${STAGE_YEARS + 1}–${PROJECTION_YEARS}`, unit: "percent", help: "Growth in the following five years. It's usually lower, because growth slows as companies mature." },
 ];
@@ -59,6 +66,11 @@ export function DcfCalculator({ symbol, defaults }: { symbol: string; defaults: 
 
   const result = useMemo(() => calculateDcf(inputs), [inputs]);
   const sensitivity = useMemo(() => dcfSensitivityGrid(inputs), [inputs]);
+  const implied = useMemo(() => impliedDcfGrowth(inputs), [inputs]);
+  const { history } = defaults;
+  // With a year 1 forecast, growth starts in year 2.
+  const firstGrowthYear = inputs.firstYearCashFlow !== null ? 2 : 1;
+  const growthFields = GROWTH_FIELDS.map((field) => (field.key === "growthEarly" ? { ...field, label: `Growth, years ${firstGrowthYear}–${STAGE_YEARS}` } : field));
   const source = (key: FieldKey): Source => sources[key] ?? "data";
   const sourceLabel = (key: FieldKey) =>
     source(key) === "data" && CONVENTION_KEYS.has(key) ? "Default" : SOURCE_LABEL[source(key)];
@@ -67,7 +79,7 @@ export function DcfCalculator({ symbol, defaults }: { symbol: string; defaults: 
   function update(key: FieldKey, value: number | null) {
     setInputs((current) => {
       // Amounts that can be missing stay null; rates fall back to zero while being typed.
-      const nullable = key === "price" || key === "freeCashFlow" || key === "shares";
+      const nullable = key === "price" || key === "freeCashFlow" || key === "firstYearCashFlow" || key === "shares";
       return { ...current, [key]: nullable ? value : value ?? 0 };
     });
     setSources((current) => ({ ...current, [key]: "edited" }));
@@ -160,8 +172,11 @@ export function DcfCalculator({ symbol, defaults }: { symbol: string; defaults: 
 
         <fieldset className="assumption-group">
           <legend>Free cash flow growth</legend>
-          <p className="assumption-group-description">Two stages: faster growth first, then slower as the business matures.</p>
-          {GROWTH_FIELDS.map(renderField)}
+          <p className="assumption-group-description">
+            Two stages: faster growth first, then slower as the business matures.
+            {history.cagr && ` Free cash flow grew ${formatPercent(history.cagr.rate)} a year over fiscal ${history.cagr.from}–${history.cagr.to}.`}
+          </p>
+          {growthFields.map(renderField)}
         </fieldset>
 
         <fieldset className="assumption-group">
@@ -218,6 +233,10 @@ export function DcfCalculator({ symbol, defaults }: { symbol: string; defaults: 
                     tone={result.upside === null ? "" : result.upside >= 0 ? "positive-value" : "negative-value"}
                   />
                   <Value label={`Buy below (${formatPercent(inputs.marginOfSafety, 0)} margin)`} value={formatMoney(result.buyBelow, currency)} />
+                  <Value
+                    label="Implied growth"
+                    value={implied === null ? "—" : `${implied.beyond === "above" ? "> " : implied.beyond === "below" ? "< " : ""}${formatPercent(implied.rate)}`}
+                  />
                 </dl>
               </div>
               {inputs.price !== null && (
@@ -229,6 +248,78 @@ export function DcfCalculator({ symbol, defaults }: { symbol: string; defaults: 
                 </p>
               )}
             </section>
+
+            <section className="projection-section" aria-labelledby="dcf-reverse">
+              <div className="content-section-heading">
+                <div>
+                  <p className="section-label">REVERSE DCF</p>
+                  <h2 id="dcf-reverse">What growth does the price assume?</h2>
+                </div>
+              </div>
+              <p className="reverse-dcf-answer">
+                {implied === null
+                  ? "Enter a current price to see the growth it implies."
+                  : implied.beyond === "above"
+                    ? <>At {formatMoney(inputs.price, currency)}, the price implies more than <strong>100%</strong> free cash flow growth a year, with your discount rate and terminal value: more than any growth here can justify.</>
+                    : implied.beyond === "below"
+                      ? <>At {formatMoney(inputs.price, currency)}, the price holds up even if free cash flow shrinks <strong>50%</strong> a year: either the market expects a collapse, or an input is off.</>
+                      : (
+                        <>
+                          At {formatMoney(inputs.price, currency)}, the price implies about <strong>{formatPercent(implied.rate)}</strong> free cash flow
+                          growth a year {firstGrowthYear === 2 ? `in years 2–${PROJECTION_YEARS}, after your year 1 forecast,` : `for ${PROJECTION_YEARS} years,`} with
+                          your discount rate and terminal value. You assume <strong>{formatPercent(inputs.growthEarly)}</strong> in
+                          years {firstGrowthYear}–{STAGE_YEARS} and <strong>{formatPercent(inputs.growthLate)}</strong> in years {STAGE_YEARS + 1}–{PROJECTION_YEARS}
+                          {history.cagr ? <>, and free cash flow grew <strong>{formatPercent(history.cagr.rate)}</strong> a year over fiscal {history.cagr.from}–{history.cagr.to}</> : null}.
+                        </>
+                      )}
+              </p>
+              <p className="projection-section-intro">
+                Instead of guessing growth, a reverse DCF asks what today&apos;s price already expects: the one growth rate for every
+                projected year that makes the value equal the price. Well above what the business has done, and the stock leaves little
+                room for disappointment; well below, and the price may be too cautious.
+              </p>
+            </section>
+
+            {history.years.length > 0 && (
+              <section className="projection-section" aria-labelledby="dcf-history">
+                <div className="content-section-heading">
+                  <div>
+                    <p className="section-label">HISTORY</p>
+                    <h2 id="dcf-history">Free cash flow so far</h2>
+                  </div>
+                </div>
+                <div className="table-scroll">
+                  <table className="financial-table three-year-table dcf-history-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Fiscal year</th>
+                        {history.years.map((year) => <th scope="col" key={year.label}>{year.label}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Free cash flow</th>
+                        {history.years.map((year) => <td key={year.label}>{formatMoney(year.freeCashFlow, currency, true)}</td>)}
+                      </tr>
+                      <tr className="dcf-history-growth">
+                        <th scope="row">Growth</th>
+                        {history.years.map((year) => (
+                          <td key={year.label} className={year.growth === null ? "" : year.growth >= 0 ? "positive-value" : "negative-value"}>
+                            {formatSignedPercent(year.growth)}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p className="table-footnote">
+                  {history.cagr
+                    ? `Compound growth over fiscal ${history.cagr.from}–${history.cagr.to}: ${formatSignedPercent(history.cagr.rate)} a year. `
+                    : ""}
+                  Free cash flow swings with investment cycles, so the default growth uses revenue, which is steadier. TTM is the last twelve months, the starting point.
+                </p>
+              </section>
+            )}
 
             <section className="projection-section" aria-labelledby="dcf-breakdown">
               <div className="content-section-heading">
@@ -337,11 +428,12 @@ export function DcfCalculator({ symbol, defaults }: { symbol: string; defaults: 
             </div>
           </div>
           <ol className="three-year-steps">
-            <li><strong>Project</strong> free cash flow for {PROJECTION_YEARS} years: one growth rate for years 1–{STAGE_YEARS}, another for years {STAGE_YEARS + 1}–{PROJECTION_YEARS}.</li>
+            <li><strong>Project</strong> free cash flow for {PROJECTION_YEARS} years: one growth rate for years 1–{STAGE_YEARS}, another for years {STAGE_YEARS + 1}–{PROJECTION_YEARS}. With a year 1 forecast, year 1 is that figure and growth starts in year 2.</li>
             <li><strong>Discount</strong> each year to today: cash flow ÷ (1 + discount rate)<sup>year</sup>.</li>
             <li><strong>Terminal value</strong> for everything after year {PROJECTION_YEARS}: either year-{PROJECTION_YEARS} cash flow × (1 + g) ÷ (discount rate − g), or that cash flow × an exit multiple. It is discounted like year {PROJECTION_YEARS}.</li>
             <li><strong>Enterprise value</strong> is the sum of those present values. Add cash and subtract debt to get the <strong>equity value</strong>.</li>
             <li>Divide by shares outstanding for the <strong>intrinsic value per share</strong>, then compare it with the price.</li>
+            <li>The <strong>reverse DCF</strong> runs it backwards: it finds the one growth rate for every projected year that makes the value equal today&apos;s price, with the other inputs unchanged.</li>
           </ol>
           <p className="projection-section-intro">
             The terminal value is usually most of the result, so the discount rate and terminal assumptions matter most;

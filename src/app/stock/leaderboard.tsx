@@ -15,11 +15,17 @@ function change(value: number | null): string {
   return value === null ? "—" : `${value >= 0 ? "+" : ""}${(value * 100).toFixed(2)}%`;
 }
 
+function formatSnapshotDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
+}
+
 // The Stocks page before a ticker is chosen: the largest companies and today's movers.
 export async function Leaderboard({ list }: { list: LeaderboardId }) {
   const board = LEADERBOARDS.find((item) => item.id === list)!;
   const result = await getLeaderboard(list);
   const largest = list === "largest";
+  // The snapshot has no prices; each company's page has them.
+  const showPrice = !(result.ok && result.snapshotDate);
 
   return (
     <>
@@ -46,14 +52,22 @@ export async function Leaderboard({ list }: { list: LeaderboardId }) {
         </section>
       ) : (
         <>
-          <p className="earnings-summary">{board.description} Select a company to research it.</p>
+          <p className="earnings-summary">
+            {board.description} Select a company to research it.
+            {result.snapshotDate && (
+              <>
+                {" "}FMP&apos;s plan doesn&apos;t include its company screener right now, so this ranks a snapshot of the
+                largest US companies from {formatSnapshotDate(result.snapshotDate)}, with today&apos;s market cap where FMP has it.
+              </>
+            )}
+          </p>
           <div className="table-scroll">
             <table className="financial-table leaderboard-table">
               <thead>
                 <tr>
                   <th scope="col">#</th>
                   <th scope="col">Company</th>
-                  <th scope="col">Price</th>
+                  {showPrice && <th scope="col">Price</th>}
                   {!largest && <th scope="col">Change</th>}
                   <th scope="col">{list === "active" ? "Volume" : "Market cap"}</th>
                   {largest && <th scope="col" className="leaderboard-optional">Sector</th>}
@@ -69,7 +83,7 @@ export async function Leaderboard({ list }: { list: LeaderboardId }) {
                         <span>{row.name}</span>
                       </Link>
                     </th>
-                    <td>{price(row.price)}</td>
+                    {showPrice && <td>{price(row.price)}</td>}
                     {!largest && (
                       <td className={row.changePercent === null ? "" : row.changePercent >= 0 ? "positive-value" : "negative-value"}>
                         {change(row.changePercent)}

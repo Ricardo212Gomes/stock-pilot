@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getLeaderboard, normalizeRow, rankRows } from "./leaderboard";
+import { getLeaderboard, LEADERBOARD_SIZE, normalizeRow, rankRows } from "./leaderboard";
 
 beforeEach(() => vi.stubEnv("FMP_API_KEY", "fmp-key"));
 afterEach(() => {
@@ -61,5 +61,33 @@ describe("getLeaderboard", () => {
     await expect(getLeaderboard("active")).resolves.toEqual({ ok: false, reason: "no-data" });
     vi.stubEnv("FMP_API_KEY", "");
     await expect(getLeaderboard("largest")).resolves.toEqual({ ok: false, reason: "not-configured" });
+  });
+
+  it("ranks the bundled snapshot when the screener isn't in the plan, with today's market caps where FMP has them", async () => {
+    const fetchMock = vi.fn(async (input: URL | string) => {
+      const url = new URL(String(input));
+      if (url.pathname === "/stable/company-screener") return new Response("Restricted Endpoint", { status: 402 });
+      // A tiny cap for Apple, so it drops to the bottom of the ranking.
+      return Response.json([{ symbol: "AAPL", date: "2026-11-06", marketCap: 1 }]);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await getLeaderboard("largest");
+    if (!result.ok) throw new Error("expected the snapshot");
+    expect(result.snapshotDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.rows).toHaveLength(LEADERBOARD_SIZE);
+    expect(result.rows.map((row) => row.symbol)).not.toContain("AAPL");
+    expect(result.rows[0]).toMatchObject({ price: null, marketCap: expect.any(Number) });
+    const batch = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(batch.pathname).toBe("/stable/market-capitalization-batch");
+    expect(batch.searchParams.get("symbols")).toContain("AAPL");
+  });
+
+  it("falls back to the snapshot's own figures at the daily limit, but not for the movers", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ "Error Message": "Limit Reach" }, { status: 429 })));
+    const result = await getLeaderboard("largest");
+    expect(result).toMatchObject({ ok: true, snapshotDate: expect.any(String) });
+    if (result.ok) expect(result.rows[0].marketCap).toBeGreaterThan(result.rows[1].marketCap!);
+    await expect(getLeaderboard("gainers")).resolves.toEqual({ ok: false, reason: "rate-limited" });
   });
 });

@@ -4,9 +4,12 @@ import {
   getCompanyProfile,
   getFinancialChartExtras,
   getRiskFreeRate,
+  fetchFmp,
   getStockPriceHistory,
   normalizeTicker,
+  rememberedRestrictions,
 } from "./fmp";
+import { providerEvents } from "./provider-status";
 
 type Routes = Record<string, unknown | ((url: URL) => Response)>;
 
@@ -211,6 +214,7 @@ describe("getStockPriceHistory", () => {
         { date: "2024-01-01", close: 10 },
         { date: "2024-01-03", close: 12 },
       ],
+      source: "fmp",
     });
 
     const [input, init] = fetchMock.mock.calls[0] as unknown as [URL, { next?: { revalidate?: number } }];
@@ -218,7 +222,8 @@ describe("getStockPriceHistory", () => {
     expect(init.next?.revalidate).toBe(60 * 60 * 6);
   });
 
-  it("reports no-data, not-configured and HTTP failures", async () => {
+  it("reports no-data, not-configured and HTTP failures when Tiingo can't stand in", async () => {
+    vi.stubEnv("TIINGO_API_KEY", "");
     mockFmp({ "historical-price-eod/full": [] });
     await expect(getStockPriceHistory("AAPL")).resolves.toEqual({ ok: false, reason: "no-data" });
 
@@ -227,6 +232,39 @@ describe("getStockPriceHistory", () => {
 
     vi.stubEnv("FMP_API_KEY", "");
     await expect(getStockPriceHistory("AAPL")).resolves.toEqual({ ok: false, reason: "not-configured" });
+  });
+
+  it("takes Tiingo's prices first when it's set up, leaving FMP's requests alone", async () => {
+    vi.stubEnv("TIINGO_API_KEY", "tiingo-key");
+    const fetchMock = vi.fn(async (input: URL | string) => {
+      const url = new URL(String(input));
+      if (url.hostname === "api.tiingo.com") {
+        return json([
+          { date: "2024-01-02T00:00:00.000Z", close: 220, adjClose: 110 },
+          { date: "2024-01-01T00:00:00.000Z", close: 200, adjClose: 100 },
+        ]);
+      }
+      return json([{ date: "2024-01-01", close: 999 }]);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getStockPriceHistory("MU")).resolves.toEqual({
+      ok: true,
+      data: [
+        { date: "2024-01-01", close: 100 },
+        { date: "2024-01-02", close: 110 },
+      ],
+      source: "tiingo",
+    });
+    expect(fetchMock.mock.calls.every(([input]) => new URL(String(input)).hostname === "api.tiingo.com")).toBe(true);
+  });
+
+  it("asks FMP when Tiingo can't answer", async () => {
+    vi.stubEnv("TIINGO_API_KEY", "tiingo-key");
+    vi.stubGlobal("fetch", vi.fn(async (input: URL | string) => (new URL(String(input)).hostname === "api.tiingo.com"
+      ? json({ detail: "Error: Ticker not found" }, 404)
+      : json([{ date: "2024-01-01", close: 10 }]))));
+    await expect(getStockPriceHistory("AAPL")).resolves.toEqual({ ok: true, data: [{ date: "2024-01-01", close: 10 }], source: "fmp" });
   });
 });
 
@@ -342,5 +380,46 @@ describe("getRiskFreeRate", () => {
 
     vi.stubEnv("FMP_API_KEY", "");
     await expect(getRiskFreeRate()).resolves.toBeNull();
+  });
+});
+
+describe("fetchFmp's memory of refusals", () => {
+  const url = (path: string, params: Record<string, string>) => {
+    const value = new URL(`https://financialmodelingprep.com/stable/${path}`);
+    for (const [key, param] of Object.entries(params)) value.searchParams.set(key, param);
+    value.searchParams.set("apikey", "test-key");
+    return value;
+  };
+
+  it("remembers an endpoint the plan doesn't include, whatever the parameters", async () => {
+    const fetchMock = vi.fn(async () => new Response("Restricted Endpoint: This endpoint is not available under your current subscription", { status: 402 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchFmp(url("company-screener", { country: "US" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    await expect(fetchFmp(url("company-screener", { country: "US", limit: "200" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(rememberedRestrictions()).toBe(1);
+  });
+
+  it("remembers a company outside the plan per endpoint, even as the dates change", async () => {
+    const fetchMock = vi.fn(async (input: URL | string) => (new URL(String(input)).pathname.endsWith("/quote")
+      ? json([{ symbol: "MU", price: 900 }])
+      : new Response("Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription", { status: 402 })));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchFmp(url("historical-price-eod/light", { symbol: "MU", from: "2025-10-03" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    await expect(fetchFmp(url("historical-price-eod/light", { symbol: "mu", from: "2025-10-04" }), 60)).rejects.toMatchObject({ reason: "plan-restricted" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Another endpoint is still asked.
+    await expect(fetchFmp(url("quote", { symbol: "MU" }), 60)).resolves.toEqual([{ symbol: "MU", price: 900 }]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("notes the daily limit without skipping later requests, so cached answers keep coming", async () => {
+    const fetchMock = vi.fn(async () => new Response("Limit Reach", { status: 429 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchFmp(url("quote", { symbol: "AAPL" }), 60)).rejects.toMatchObject({ reason: "rate-limited" });
+    await expect(fetchFmp(url("quote", { symbol: "AAPL" }), 60)).rejects.toMatchObject({ reason: "rate-limited" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(providerEvents("fmp").limitedAt).not.toBeNull();
+    expect(rememberedRestrictions()).toBe(0);
   });
 });

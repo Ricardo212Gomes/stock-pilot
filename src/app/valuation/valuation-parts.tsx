@@ -2,8 +2,12 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { normalizeTicker } from "@/lib/fmp";
 import { providerFailureMessage } from "@/lib/fmp-messages";
-import { listedName } from "@/lib/listed-companies";
-import { valuationTool, type ValuationTool } from "./tools";
+import { getHeaderQuote } from "@/lib/stock-overview";
+import { PROJECTION_GUIDE, type ProjectionFit } from "@/lib/projection-fit";
+import { STOCK_TYPES, type Classification } from "@/lib/valuation/classify";
+import { CompanyHeader } from "../components/company-header";
+import { StockNav } from "../components/stock-nav";
+import { VALUATION_TOOLS, valuationTool, type ValuationTool } from "./tools";
 
 export type ValuationSearchParams = Promise<{ symbol?: string | string[] }>;
 
@@ -12,25 +16,30 @@ export async function readSymbol(searchParams: ValuationSearchParams): Promise<s
   return typeof symbol === "string" ? normalizeTicker(symbol) : null;
 }
 
-export function ToolBreadcrumb({ symbol, tool }: { symbol: string; tool: ValuationTool }) {
+// Above every valuation tool for a company: its header and tabs, with Valuation open and the four
+// tools as its sub-tabs, then what this tool does.
+export async function ValuationHeader({ symbol, tool, children }: { symbol: string; tool: ValuationTool; children: ReactNode }) {
+  const quote = await getHeaderQuote(symbol);
   return (
-    <div className="breadcrumb">
-      <Link href={`/stock?symbol=${encodeURIComponent(symbol)}`}>{symbol}</Link><span>/</span><span>{valuationTool(tool).label}</span>
-    </div>
-  );
-}
-
-export function ToolHeading({ symbol, tool, children }: { symbol: string; tool: ValuationTool; children: ReactNode }) {
-  return (
-    <section className="company-heading">
-      <div>
-        <p className="section-label">{valuationTool(tool).label.toUpperCase()}</p>
-        <div className="company-title-row">
-          <h1>{listedName(symbol) ? `${listedName(symbol)} (${symbol})` : symbol}</h1>
-        </div>
-        <p className="company-subtitle">{children}</p>
+    <>
+      <CompanyHeader symbol={symbol} quote={quote} />
+      <StockNav symbol={symbol} active="valuation" />
+      <div className="statement-toolbar">
+        <nav className="statement-tabs" aria-label="Valuation tools">
+          {VALUATION_TOOLS.map((item) => (
+            <Link
+              key={item.id}
+              href={`${item.path}?symbol=${encodeURIComponent(symbol)}`}
+              className={item.id === tool ? "statement-tab-active" : ""}
+              aria-current={item.id === tool ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </div>
-    </section>
+      <p className="valuation-tool-intro">{children}</p>
+    </>
   );
 }
 
@@ -68,6 +77,48 @@ export function LoadError({ symbol, reason }: { symbol: string; reason: Paramete
             : providerFailureMessage(reason, "the financial statements")}
         </p>
       </div>
+    </section>
+  );
+}
+
+// Which of the two projections suits the company, and what each is best for.
+export function ProjectionFitCard({
+  symbol,
+  current,
+  fit,
+  classification,
+}: {
+  symbol: string;
+  current: ValuationTool;
+  fit: ProjectionFit;
+  classification: Classification;
+}) {
+  const best = valuationTool(fit.tool);
+  return (
+    <section className="projection-fit" aria-labelledby="projection-fit-heading">
+      <div className="projection-fit-verdict">
+        <p className="section-label" id="projection-fit-heading">WHICH PROJECTION FITS {symbol}?</p>
+        <p className="projection-fit-answer">
+          <span className="model-role model-role-primary">Best fit</span>
+          <strong>{best.label}</strong>
+          {fit.tool === current
+            ? <span className="projection-fit-here">This page</span>
+            : <Link href={`${best.path}?symbol=${encodeURIComponent(symbol)}`}>Open {best.label} →</Link>}
+        </p>
+        <p className="projection-fit-reason">
+          <strong>{STOCK_TYPES[classification.type].label}.</strong> {classification.reasons[0]} {fit.reason}
+        </p>
+      </div>
+      <dl className="projection-fit-guide">
+        {(Object.keys(PROJECTION_GUIDE) as (keyof typeof PROJECTION_GUIDE)[]).map((tool) => (
+          <div key={tool} className={tool === fit.tool ? "projection-fit-match" : undefined}>
+            <dt>
+              {tool === current ? valuationTool(tool).label : <Link href={`${valuationTool(tool).path}?symbol=${encodeURIComponent(symbol)}`}>{valuationTool(tool).label}</Link>}
+            </dt>
+            <dd><strong>Best for {PROJECTION_GUIDE[tool].bestFor.toLowerCase()}.</strong> {PROJECTION_GUIDE[tool].how}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }

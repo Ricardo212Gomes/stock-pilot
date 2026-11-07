@@ -16,6 +16,8 @@ export const generateMetadata = companyMetadata("Overview", "Price, key statisti
 
 const ABOUT_LENGTH = 600;
 
+const REPORT_TIME_LABELS = { bmo: "before the open", dmh: "during the day", amc: "after the close" } as const;
+
 type StockPageProps = {
   searchParams: Promise<{ symbol?: string | string[]; list?: string | string[] }>;
 };
@@ -118,7 +120,11 @@ function statRows(data: StockOverview): [Stat[], Stat[]] {
         help: "Average analyst price target, and how far it is from today's price.",
         value: data.priceTarget === null ? "—" : <>{plain(data.priceTarget)} <span className={(data.priceTargetUpside ?? 0) >= 0 ? "positive-value" : "negative-value"}>({signedPercent(data.priceTargetUpside)})</span></>,
       },
-      { label: "Earnings Date", help: "Next scheduled earnings report.", value: formatDate(data.earningsDate) },
+      {
+        label: "Earnings Date",
+        help: "Next scheduled earnings report, from Finnhub's earnings calendar.",
+        value: data.earningsDate ? <>{formatDate(data.earningsDate)}{data.earningsTime && <span className="overview-earnings-time"> · {REPORT_TIME_LABELS[data.earningsTime]}</span>}</> : "—",
+      },
     ],
   ];
 }
@@ -231,10 +237,12 @@ export default async function StockOverviewPage({ searchParams }: StockPageProps
 
       <p className="news-footnote">
         {data.quoteSource === "finnhub"
-          ? `FMP couldn't provide ${symbol} (its free plan doesn't cover every company and has a daily limit), so the quote comes from Finnhub and the trailing figures from SEC filings; analyst data and the price chart aren't available.`
+          ? `FMP couldn't provide ${symbol} (its free plan doesn't cover every company and has a daily limit), so the quote comes from Finnhub and the trailing figures from SEC filings; analyst data isn't available${history?.ok ? "" : ", and nor is the price chart"}.`
           : "Quote and statistics from Financial Modeling Prep; growth rates from Finnhub."}{" "}
+        {history?.ok && history.source === "tiingo" && "The price chart comes from Tiingo (closes adjusted for splits and dividends). "}
         TTM means trailing twelve months.
-        Prices may be delayed. <Link href={`/stock/financials?symbol=${symbol}`}>See the full financials</Link>.
+        Prices may be delayed. <Link href={`/stock/financials?symbol=${symbol}`}>See the full financials</Link> or{" "}
+        <Link href={`/compare?symbols=${symbol}`}>compare {symbol} with other stocks</Link>.
       </p>
     </AppShell>
   );

@@ -2,7 +2,7 @@ import { AppShell } from "../../components/app-shell";
 import { companyMetadata } from "../../components/company-metadata";
 import { loadDcfData } from "../data";
 import { DcfCalculator } from "../dcf-calculator";
-import { LoadError, SecSourceNote, ToolBreadcrumb, ToolHeading, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
+import { LoadError, SecSourceNote, ToolStart, ValuationHeader, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
 export const generateMetadata = companyMetadata("DCF Calculator", "Discount ten years of free cash flow plus a terminal value to a value per share.");
 
@@ -19,10 +19,9 @@ export default async function DcfCalculatorPage({ searchParams }: { searchParams
         </ToolStart>
       ) : (
         <>
-          <ToolBreadcrumb symbol={symbol} tool="dcf-calculator" />
-          <ToolHeading symbol={symbol} tool="dcf-calculator">
+          <ValuationHeader symbol={symbol} tool="dcf-calculator">
             Ten years of free cash flow and a terminal value, discounted to a value per share.
-          </ToolHeading>
+          </ValuationHeader>
           {!loaded.ok ? (
             <LoadError symbol={symbol} reason={loaded.reason} />
           ) : (

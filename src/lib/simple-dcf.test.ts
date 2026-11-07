@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { StatementTable } from "./financial-statements";
-import { buildDcfDefaults, calculateDcf, dcfSensitivityGrid, type DcfInputs } from "./simple-dcf";
+import { buildDcfDefaults, calculateDcf, dcfSensitivityGrid, impliedDcfGrowth, type DcfInputs } from "./simple-dcf";
 import { parseDcfResponse } from "./simple-dcf-autofill";
 
 function inputs(overrides: Partial<DcfInputs> = {}): DcfInputs {
   return {
     price: 100,
     freeCashFlow: 1000,
+    firstYearCashFlow: null,
     shares: 100,
     cash: 500,
     debt: 200,
@@ -76,6 +77,59 @@ describe("calculateDcf", () => {
   });
 });
 
+describe("a year 1 forecast and the reverse DCF", () => {
+  // The reference spreadsheet (amounts in millions): fiscal 2025 free cash flow $26,900, a 2026 forecast of
+  // $48,000 growing 20% a year after it, a 9% discount rate and 3% perpetual growth.
+  const sheet = inputs({
+    price: 306,
+    freeCashFlow: 26_900,
+    firstYearCashFlow: 48_000,
+    shares: 4_774,
+    cash: 23_975,
+    debt: 59_419,
+    growthEarly: 0.2,
+    growthLate: 0.2,
+    discountRate: 0.09,
+    terminalGrowth: 0.03,
+  });
+
+  it("reproduces the reference DCF", () => {
+    const result = calculateDcf(sheet);
+    if (!result.ok) throw new Error(result.reason);
+    const whole = (values: number[]) => values.map((value) => Math.round(value));
+    expect(whole(result.years.map((year) => year.freeCashFlow))).toEqual([48_000, 57_600, 69_120, 82_944, 99_533, 119_439, 143_327, 171_993, 206_391, 247_669]);
+    expect(whole(result.years.map((year) => year.presentValue))).toEqual([44_037, 48_481, 53_373, 58_760, 64_689, 71_218, 78_405, 86_317, 95_028, 104_618]);
+    expect(whole([result.terminalValue, result.presentValueOfTerminal, result.enterpriseValue, result.equityValue])).toEqual([4_251_659, 1_795_947, 2_500_873, 2_465_429]);
+    expect(result.valuePerShare).toBeCloseTo(516.43, 2);
+    expect(Math.round(result.upside! * 100)).toBe(69);
+    // Its low and high cases: 15% and 25% growth.
+    const at = (growth: number) => calculateDcf({ ...sheet, growthEarly: growth, growthLate: growth });
+    expect([at(0.15), at(0.25)].map((low) => (low.ok ? Math.round(low.valuePerShare) : null))).toEqual([368, 720]);
+  });
+
+  it("finds the growth today's price implies, after the year 1 forecast", () => {
+    const implied = impliedDcfGrowth(sheet);
+    // 12.32%: the sheet shows 12.20%, where its goal seek stopped ($303.46, not $306).
+    expect(implied?.beyond).toBeNull();
+    expect(implied?.rate).toBeCloseTo(0.1232, 4);
+    const check = calculateDcf({ ...sheet, growthEarly: implied!.rate, growthLate: implied!.rate });
+    expect(check.ok && check.valuePerShare).toBeCloseTo(306, 6);
+    // Growing today's $26,900 from year 1 instead takes 18.4% a year.
+    expect(impliedDcfGrowth({ ...sheet, firstYearCashFlow: null })?.rate).toBeCloseTo(0.1844, 4);
+  });
+
+  it("says which side a price beyond −50% to +100% a year is on, and needs a price", () => {
+    expect(impliedDcfGrowth({ ...sheet, price: 1_000_000 })).toEqual({ rate: 1, beyond: "above" });
+    expect(impliedDcfGrowth({ ...sheet, price: 0.01 })).toEqual({ rate: -0.5, beyond: "below" });
+    expect(impliedDcfGrowth({ ...sheet, price: null })).toBeNull();
+  });
+
+  it("can start from a forecast when today's free cash flow is negative", () => {
+    expect(calculateDcf({ ...sheet, freeCashFlow: -500 }).ok).toBe(true);
+    expect(calculateDcf({ ...sheet, firstYearCashFlow: -1 })).toMatchObject({ ok: false, reason: expect.stringMatching(/Year 1 free cash flow/) });
+  });
+});
+
 describe("dcfSensitivityGrid", () => {
   it("centres on the inputs and rises with growth, falls with the discount rate", () => {
     const grid = dcfSensitivityGrid(inputs({ growthEarly: 0.08 }));
@@ -97,7 +151,24 @@ describe("buildDcfDefaults", () => {
     expect(defaults).toMatchObject({ price: 346, freeCashFlow: 136.7e9, shares: 14.75e9, cash: 62.4e9, debt: 84.3e9, discountRate: 0.1 });
     expect(defaults.growthEarly).toBeCloseTo(416 / 383 - 1);
     expect(defaults.growthLate).toBeCloseTo((416 / 383 - 1) / 2);
+    expect(defaults.firstYearCashFlow).toBeNull();
     expect(notes.cash).toMatch(/latest quarter/);
+  });
+
+  it("lists free cash flow by fiscal year, oldest first, then TTM, with its compound growth", () => {
+    const { history } = buildDcfDefaults({
+      income: table("income", { revenue: [466e9, 416e9, 383e9], shares: [14.75e9, 15e9, 15.8e9] }),
+      cashFlow: table("cash-flow", { freeCashFlow: [136.7e9, 121e9, 100e9], freeCashFlowGrowth: [null, 0.1, null] }),
+      balance: null,
+      price: 346,
+    });
+    expect(history.years).toEqual([
+      { label: "2023", freeCashFlow: 100e9, growth: null },
+      { label: "2025", freeCashFlow: 121e9, growth: 0.1 },
+      { label: "TTM", freeCashFlow: 136.7e9, growth: null },
+    ]);
+    // Fiscal 2023 to 2025: two years.
+    expect(history.cagr).toEqual({ rate: expect.closeTo(0.1, 6), from: 2023, to: 2025 });
   });
 
   it("keeps growth between 0% and 25% and handles missing statements", () => {

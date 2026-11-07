@@ -4,14 +4,22 @@ FMP is the main data source. Its free plan doesn't cover every company (CrowdStr
 
 | What | Fallback | Where |
 | --- | --- | --- |
-| Income statement, balance sheet, cash flow (annual, quarterly, TTM) | SEC EDGAR company facts | Financials, Intrinsic Value, 3-Year Projection, DCF Calculator |
+| Income statement, balance sheet, cash flow (annual, quarterly, TTM) | SEC EDGAR company facts | Financials, Intrinsic Value, Jeremy's and Plumas projections, DCF Calculator |
 | Trailing valuation ratios (P/E, P/S, P/B, P/FCF, dividend yield) | Finnhub `stock/metric` | Ratios tab (TTM column only) |
 | Quote: price, change, open, day and 52-week range, market cap | Finnhub `quote`, `stock/profile2`, `stock/metric` | Every company page |
 | Revenue, net income and EPS over the trailing twelve months | SEC quarterly rows | Overview |
+| Daily closing prices | Tiingo end-of-day prices, adjusted for splits and dividends (needs `TIINGO_API_KEY`) | Overview chart, Recommendations, Forecast chart |
+| Largest companies | A bundled snapshot ranked by FMP's `market-capitalization-batch` (see [`stock-overview.md`](./stock-overview.md)) | Stocks |
 
 Only `plan-restricted` and `rate-limited` failures fall back (`canUseFallback` in `src/lib/fmp.ts`); an invalid key or a missing company still shows its error. Pages say where their figures came from when it isn't FMP.
 
-Not available without FMP: the daily price chart, historical (per-year) valuation ratios, analyst ratings, price targets and estimates (so forward P/E), dividend history, revenue segments and volume.
+Not available without FMP: historical (per-year) valuation ratios, analyst ratings, price targets and estimates (so forward P/E), dividend history, revenue segments and volume.
+
+## Tiingo prices
+
+`src/lib/tiingo.ts` reads `https://api.tiingo.com/tiingo/daily/{ticker}/prices` with the key in an `Authorization: Token` header, so it never appears in URLs or logs. Tiingo's free plan covers every US stock but allows 50 requests an hour, 1,000 a day and 500 different stocks a month, so the app asks for five years at once and keeps the answer for a day: the Overview chart (`getStockPriceHistory` in `fmp.ts`) asks Tiingo first, to save FMP's daily requests, and the year of closes behind Recommendations and the Forecast chart (`getDailyCloses` in `daily-closes.ts`) asks only when FMP fails; all three share that one request. The closes are adjusted for splits and dividends, so a split doesn't show as a crash; the latest one equals the actual close.
+
+For the one-year closes, Tiingo stands in when FMP says the plan doesn't cover the company (402), its daily limit is reached (429) or it has no prices; an invalid FMP key is still reported. Without `TIINGO_API_KEY`, those cases behave as before. The Overview's footnote says when the chart comes from Tiingo. Tiingo has no analyst data, so Recommendations still screens only the companies FMP's plan has price targets for.
 
 ## SEC company facts
 
@@ -35,3 +43,4 @@ Checked against FMP for Apple's fiscal 2025, every income, balance sheet and cas
 - `src/lib/financial-statements.ts`: `secStatementTable` and Finnhub TTM ratios.
 - `src/lib/fmp.ts`: `canUseFallback` and the fundamentals fallback.
 - `src/lib/stock-overview.ts`: the Finnhub quote and SEC trailing figures.
+- `src/lib/tiingo.ts`: Tiingo's daily prices.

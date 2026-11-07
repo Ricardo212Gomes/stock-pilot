@@ -19,16 +19,21 @@ const COMPANY_CARDS: Card[] = [
   { title: "Transcripts", detail: "Earnings calls speaker by speaker, with an AI summary of results, outlook and analysts' questions.", href: `/stock/transcripts?symbol=${EXAMPLE}`, cta: "Apple's latest call" },
   { title: "Filings", detail: "10-Ks, 10-Qs, earnings releases and other SEC filings, with the press release a click away.", href: `/stock/filings?symbol=${EXAMPLE}`, cta: "Apple filings" },
   { title: "News", detail: "Headlines that mention the company from the last two weeks.", href: `/news?symbol=${EXAMPLE}`, cta: "Apple news" },
+  { title: "Recommendations", detail: "Large stocks rated Buy, well below analysts' targets and pulled back under their 12-week average.", href: "/recommendations", cta: "See today's matches" },
+  { title: "Compare", detail: "Up to five stocks side by side: P/E, expected EPS and revenue growth and margins, next to a typical range.", href: "/compare?symbols=AAPL,MSFT,GOOGL", cta: "Compare Apple, Microsoft and Alphabet" },
 ];
 
 const VALUATION_CARDS: Card[] = [
   { title: "Intrinsic Value", detail: "Six valuation models picked for the type of company, with every assumption explained.", href: `/valuation/intrinsic-value?symbol=${EXAMPLE}`, cta: "Value Apple" },
-  { title: "3-Year Projection", detail: "Price and yearly return in five scenarios, from revenue growth, net income growth and P/E.", href: `/valuation/three-year-projection?symbol=${EXAMPLE}`, cta: "Project Apple" },
+  { title: "Jeremy's Projection", detail: "Best for growth stocks: bull, base and bear cases from this year's analyst consensus, with revenue and net income growth and a P/E range.", href: `/valuation/jeremy-projection?symbol=${EXAMPLE}`, cta: "Project Apple" },
+  { title: "Plumas Projection", detail: "Best for mature, dividend, cyclical and loss-making companies: five years from the last report, down to costs, interest and buybacks.", href: `/valuation/plumas-projection?symbol=${EXAMPLE}`, cta: "Project Apple in detail" },
   { title: "DCF Calculator", detail: "Ten years of free cash flow and a terminal value, discounted to a value per share.", href: `/valuation/dcf-calculator?symbol=${EXAMPLE}`, cta: "Discount Apple's cash flows" },
 ];
 
 const MARKET_CARDS: Card[] = [
   { title: "Market maps", detail: "Heat maps of the S&P 500, the Nasdaq 100 and crypto.", href: "/maps", cta: "Open the maps" },
+  { title: "Fear gauge", detail: "The VIX as a fear and greed gauge, against last week, month and year.", href: "/vix", cta: "Check the market's mood" },
+  { title: "Market events", detail: "Fed decisions, CPI and jobs reports, elections and deadlines in the news, on one timeline.", href: "/events", cta: "See what's coming" },
   { title: "Market news", detail: "Markets, deals, currencies and crypto headlines.", href: "/news", cta: "Read the news" },
   { title: "Earnings calendar", detail: "Who reports each day, with estimates and results.", href: "/earnings", cta: "This week's earnings" },
   { title: "Dividend calendar", detail: "Ex-dividend and payment dates, with yields.", href: "/dividends", cta: "This month's dividends" },

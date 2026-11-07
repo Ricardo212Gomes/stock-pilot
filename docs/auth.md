@@ -8,7 +8,7 @@ There is no database. After Google confirms the account, Auth.js stores the user
 
 - `src/auth.ts`: the Auth.js configuration with the Google provider, and `isAuthConfigured()`.
 - `src/app/api/auth/[...nextauth]/route.ts`: the Auth.js endpoints (`/api/auth/signin/google`, `/api/auth/callback/google`, `/api/auth/signout`, `/api/auth/session`).
-- `src/app/components/user-menu.tsx`: the top bar control. It shows **Sign in** when signed out, and the Google avatar (or initials) when signed in, which opens a menu with the name, email and **Sign out**. Both buttons are server actions, so the menu needs no client JavaScript.
+- `src/app/components/user-menu.tsx`: the top bar control. It shows **Sign in** when signed out, and the Google avatar (or initials) when signed in, which opens a menu with the name, email, a **Settings** link (notifications and data sources) and **Sign out**. Both buttons are server actions, so the menu needs no client JavaScript.
 
 ## Set up
 

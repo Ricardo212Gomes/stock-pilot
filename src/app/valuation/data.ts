@@ -7,10 +7,12 @@ import {
   type FmpFailureReason,
 } from "@/lib/fmp";
 import { getStatementTable, type StatementTable } from "@/lib/financial-statements";
-import { getQuote } from "@/lib/stock-overview";
+import { getAnalystEstimates, getOutstandingShares, getHeaderQuote } from "@/lib/stock-overview";
 import { buildDcfDefaults, type DcfDefaults } from "@/lib/simple-dcf";
-import { buildProjectionDefaults, type ProjectionDefaults } from "@/lib/three-year-projection";
-import { classifyStock, type Classification } from "@/lib/valuation/classify";
+import { buildJeremyDefaults, type JeremyDefaults } from "@/lib/jeremy-projection";
+import { buildProjectionDefaults, type ProjectionDefaults } from "@/lib/plumas-projection";
+import { recommendProjection, type ProjectionFit } from "@/lib/projection-fit";
+import { classifyStock, type Classification, type ClassifierYear } from "@/lib/valuation/classify";
 import { buildDefaults, type DefaultAssumptions } from "@/lib/valuation/defaults";
 
 export type ProjectionData = {
@@ -57,37 +59,75 @@ export async function loadProjectionData(symbol: string): Promise<ProjectionData
   };
 }
 
-export type ThreeYearData = {
+export type PriceProjectionData = {
   income: StatementTable;
-  ratios: StatementTable | null;
-  defaults: ProjectionDefaults;
+  plumas: ProjectionDefaults;
+  jeremy: JeremyDefaults;
+  // The stock type, and which of the two projections suits it.
+  classification: Classification;
+  fit: ProjectionFit;
 };
 
-export type ThreeYearDataResult =
-  | { ok: true; data: ThreeYearData }
+export type PriceProjectionDataResult =
+  | { ok: true; data: PriceProjectionData }
   | { ok: false; reason: FmpFailureReason };
 
-// The same cached statement tables as the Financials page: the last fiscal year's revenue, net
-// income and shares, their growth history, and the fiscal-year P/E history.
-export async function loadThreeYearData(symbol: string): Promise<ThreeYearDataResult> {
-  const [income, ratios, quote] = await Promise.all([
+// Each fiscal year's figures for the stock classifier, newest first, from the statement tables.
+function classifierYears(income: StatementTable, ratios: StatementTable | null): ClassifierYear[] {
+  const value = (table: StatementTable | null, id: string, columnId: string) => {
+    const index = table?.columns.findIndex((column) => column.id === columnId) ?? -1;
+    return index >= 0 ? table?.rows.find((row) => row.id === id)?.values[index] ?? null : null;
+  };
+  return income.columns
+    .filter((column) => column.id !== "ttm")
+    .map((column) => ({
+      fiscalYear: column.label.replace(/^FY\s*/, ""),
+      revenue: value(income, "revenue", column.id),
+      netIncome: value(income, "netIncome", column.id),
+      eps: value(income, "eps", column.id),
+      dividendYield: value(ratios, "dividendYield", column.id),
+    }));
+}
+
+// Both projections, from the same cached statement tables as the Financials page (the income
+// statement and the fiscal-year ratios), the quote, today's share count, analysts' estimates and the
+// profile's sector, which with the history decides which projection suits the company.
+export async function loadPriceProjectionData(symbol: string): Promise<PriceProjectionDataResult> {
+  const [income, ratios, quote, floatShares, estimates, profile] = await Promise.all([
     getStatementTable(symbol, "income", "annual"),
     getStatementTable(symbol, "ratios", "annual"),
-    getQuote(symbol),
+    getHeaderQuote(symbol),
+    getOutstandingShares(symbol),
+    getAnalystEstimates(symbol),
+    getCompanyProfile(symbol),
   ]);
   if (!income.ok) return income;
 
   const ratiosTable = ratios.ok ? ratios.data : null;
+  const price = quote.ok ? quote.data.price : null;
+  const marketCap = quote.ok ? quote.data.marketCap : null;
+  const today = new Date();
+  const plumas = buildProjectionDefaults({
+    income: income.data,
+    ratios: ratiosTable,
+    price,
+    shares: floatShares ?? (marketCap !== null && price ? marketCap / price : null),
+    estimates,
+    today,
+  });
+  const years = classifierYears(income.data, ratiosTable);
+  const classification = classifyStock(years, profile.ok ? profile.data : null);
+  const buybacks = plumas.history.flatMap((year) => (year.buybackYield === null ? [] : [year.buybackYield]));
   return {
     ok: true,
     data: {
       income: income.data,
-      ratios: ratiosTable,
-      defaults: buildProjectionDefaults({
-        income: income.data,
-        ratios: ratiosTable,
-        price: quote.ok ? quote.data.price : null,
-        currentYear: new Date().getUTCFullYear(),
+      plumas,
+      jeremy: buildJeremyDefaults({ plumas, estimates, today }),
+      classification,
+      fit: recommendProjection(classification, {
+        buybackYield: buybacks.length ? buybacks.reduce((sum, value) => sum + value, 0) / buybacks.length : null,
+        dividendYield: years[0]?.dividendYield ?? null,
       }),
     },
   };
@@ -109,7 +149,7 @@ export async function loadDcfData(symbol: string): Promise<DcfDataResult> {
     getStatementTable(symbol, "income", "annual"),
     getStatementTable(symbol, "cash-flow", "annual"),
     getStatementTable(symbol, "balance", "annual"),
-    getQuote(symbol),
+    getHeaderQuote(symbol),
   ]);
   if (!income.ok) return income;
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { autofillAssumptions, autofillDcf, autofillThreeYear } from "./actions";
+import { autofillAssumptions, autofillDcf, autofillPlumasProjection } from "./actions";
 
 const statements = {
   "income-statement": [
@@ -11,6 +11,7 @@ const statements = {
   ratios: [{ date: "2024-12-31", priceToEarningsRatio: 20 }],
   profile: [{ symbol: "TEST", price: 25, beta: 1.1, sector: "Technology", industry: "Software", currency: "USD" }],
   quote: [{ symbol: "TEST", name: "Test Corp", price: 25 }],
+  "shares-float": [{ symbol: "TEST", outstandingShares: 98 }],
   "treasury-rates": [{ date: "2026-10-20", year10: 4.5 }],
 };
 
@@ -106,35 +107,29 @@ describe("autofillAssumptions", () => {
   });
 });
 
-describe("autofillThreeYear", () => {
+describe("autofillPlumasProjection", () => {
   it("rejects invalid tickers and explains FMP failures without calling Gemini", async () => {
     let fetchMock = mockServices();
-    await expect(autofillThreeYear("<x>")).resolves.toEqual({ ok: false, error: "Enter a valid ticker symbol first." });
+    await expect(autofillPlumasProjection("<x>")).resolves.toEqual({ ok: false, error: "Enter a valid ticker symbol first." });
     expect(fetchMock).not.toHaveBeenCalled();
 
     fetchMock = mockServices({ fmpStatus: 429 });
-    const result = await autofillThreeYear("TEST");
+    const result = await autofillPlumasProjection("TEST");
     expect(!result.ok && result.error).toMatch(/request limit/);
     expect(fetchMock.mock.calls.some(([input]) => String(input).includes("generativelanguage"))).toBe(false);
   });
 
-  it("asks for structured scenarios built from server-side data", async () => {
+  it("asks for every scenario year by year, from server-side data", async () => {
     const fetchMock = mockServices({
       gemini: () => geminiReply(JSON.stringify({
         summary: "Modest growth.",
-        assumptions: [
-          { key: "bearish.revenueGrowth", value: 0.03, rationale: "Below recent growth." },
-          { key: "bullish.peHigh", value: 24, rationale: "Near the recent P/E." },
-        ],
+        scenarios: [{ id: "bearish", rationale: "Below recent growth.", revenueGrowth: [0.03, 0.03, 0.02, 0.02, 0.02] }],
       })),
     });
-    await expect(autofillThreeYear("test")).resolves.toEqual({
+    await expect(autofillPlumasProjection("test")).resolves.toEqual({
       ok: true,
       summary: "Modest growth.",
-      suggestions: {
-        "bearish.revenueGrowth": { value: 0.03, rationale: "Below recent growth." },
-        "bullish.peHigh": { value: 24, rationale: "Near the recent P/E." },
-      },
+      scenarios: { bearish: { rationale: "Below recent growth.", inputs: { revenueGrowth: [0.03, 0.03, 0.02, 0.02, 0.02] } } },
     });
 
     const call = fetchMock.mock.calls.find(([input]) => String(input).includes("generativelanguage"));
@@ -143,7 +138,10 @@ describe("autofillThreeYear", () => {
       generationConfig: { responseMimeType: string };
     };
     expect(body.generationConfig.responseMimeType).toBe("application/json");
-    expect(body.contents[0].parts[0].text).toMatch(/Suggest projection assumptions for TEST for fiscal years \d{4} to \d{4}.*currently priced at 25 USD/);
+    const prompt = body.contents[0].parts[0].text;
+    expect(prompt).toMatch(/Fill in the projection for TEST: fiscal years 2025 to 2029, starting from fiscal 2024/);
+    // Today's share count comes from FMP's float data.
+    expect(prompt).toContain('"price":25,"sharesOutstandingToday":98');
   });
 });
 

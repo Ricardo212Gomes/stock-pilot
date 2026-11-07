@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "favorites" | "settings" | ValuationTool | "maps" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "recommendations" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -19,8 +19,12 @@ type AppShellProps = {
 
 function headerContext(section: AppShellProps["activeSection"], ticker: string): string {
   if (section === "home") return "Home";
+  if (section === "compare") return "Compare stocks";
+  if (section === "recommendations") return "Recommendations";
   if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
+  if (section === "vix") return "VIX fear gauge";
+  if (section === "events") return "Market events";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
   if (section === "earnings") return "Earnings calendar";
   if (section === "dividends") return "Dividend calendar";
@@ -28,15 +32,6 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (tool) return ticker ? `${ticker} · ${tool.label}` : tool.label;
   return ticker ? `${ticker} · Overview` : "Stocks";
 }
-
-const VALUATION_ICONS: Record<ValuationTool, string> = {
-  // A balance scale: what a company is worth.
-  "intrinsic-value": "M10 3.5v13M6 16.5h8M4 6h12M4 6l-2 5a2 2 0 0 0 4 0L4 6M16 6l-2 5a2 2 0 0 0 4 0l-2-5",
-  // A rising line: where the price could go.
-  "three-year-projection": "M3 16.5h14M4 13l4-4 3 2.5L16.5 5M12.5 5h4v4",
-  // A percent sign: cash flows discounted at a rate.
-  "dcf-calculator": "M5.5 14.5l9-9M7 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3ZM13 14.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z",
-};
 
 export function AppShell({
   children,
@@ -47,6 +42,8 @@ export function AppShell({
   dataSource,
 }: AppShellProps) {
   const valuationPath = VALUATION_TOOLS.find(({ id }) => id === activeSection)?.path;
+  // The valuation tools are a company's Valuation tab, so they sit under Stocks.
+  const onStocks = activeSection === "research" || valuationPath !== undefined;
   return (
     <div className="site-page">
       <div className="app-layout">
@@ -70,16 +67,38 @@ export function AppShell({
               <span>Home</span>
             </Link>
             <Link
-              className={`sidebar-link${activeSection === "research" ? " sidebar-link-active" : ""}`}
+              className={`sidebar-link${onStocks ? " sidebar-link-active" : ""}`}
               // Always the leaderboards: a company's own pages are its tabs.
               href="/stock"
               title="Stocks"
-              aria-current={activeSection === "research" ? "page" : undefined}
+              aria-current={onStocks ? "page" : undefined}
             >
               <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M3 16.5h14M4.5 14V9.5M8.2 14V5.5M11.8 14v-3M15.5 14V7" />
               </svg>
               <span>Stocks</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "compare" ? " sidebar-link-active" : ""}`}
+              href="/compare"
+              title="Compare stocks"
+              aria-current={activeSection === "compare" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 4.5h5v11h-5zM11.5 4.5h5v11h-5zM5 8h2M5 10.5h2M13 8h2M13 10.5h2" />
+              </svg>
+              <span>Compare</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "recommendations" ? " sidebar-link-active" : ""}`}
+              href="/recommendations"
+              title="Recommendations"
+              aria-current={activeSection === "recommendations" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 15.5 8 11l3 3 5.5-6.5M12.5 8.5h4v4" />
+              </svg>
+              <span>Recommendations</span>
             </Link>
             <Link
               className={`sidebar-link${activeSection === "favorites" ? " sidebar-link-active" : ""}`}
@@ -94,25 +113,6 @@ export function AppShell({
             </Link>
           </nav>
 
-          <nav className="sidebar-nav sidebar-nav-markets" aria-label="Valuation">
-            <p className="sidebar-section-label">VALUATION</p>
-            {VALUATION_TOOLS.map((tool) => (
-              <Link
-                key={tool.id}
-                className={`sidebar-link${activeSection === tool.id ? " sidebar-link-active" : ""}`}
-                // Coming from another page keeps the company; clicking the open tool starts it over.
-                href={tickerValue && activeSection !== tool.id ? `${tool.path}?symbol=${tickerValue}` : tool.path}
-                title={tool.label}
-                aria-current={activeSection === tool.id ? "page" : undefined}
-              >
-                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                  <path d={VALUATION_ICONS[tool.id]} />
-                </svg>
-                <span>{tool.label}</span>
-              </Link>
-            ))}
-          </nav>
-
           <nav className="sidebar-nav sidebar-nav-markets" aria-label="Markets">
             <p className="sidebar-section-label">MARKETS</p>
             <Link
@@ -125,6 +125,28 @@ export function AppShell({
                 <path d="M3 3.5h6v6H3zM11 3.5h6v4h-6zM11 9.5h6v7h-6zM3 11.5h6v5H3z" />
               </svg>
               <span>Maps</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "vix" ? " sidebar-link-active" : ""}`}
+              href="/vix"
+              title="VIX fear gauge"
+              aria-current={activeSection === "vix" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 14.5a7 7 0 0 1 14 0M10 14.5l3.2-4.2M5.2 9.6l1 .8M10 7.5v1.2M14.8 9.6l-1 .8" />
+              </svg>
+              <span>Fear gauge</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "events" ? " sidebar-link-active" : ""}`}
+              href="/events"
+              title="Market events"
+              aria-current={activeSection === "events" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M5 3.5v13M5 5.5h9.5l-2 3 2 3H5M5 16.5h-1.5M5 16.5h1.5" />
+              </svg>
+              <span>Events</span>
             </Link>
             <Link
               className={`sidebar-link${activeSection === "news" ? " sidebar-link-active" : ""}`}
@@ -162,11 +184,6 @@ export function AppShell({
               <span>Dividends</span>
             </Link>
           </nav>
-
-          <div className="sidebar-note">
-            <span className="sidebar-tool-count"><span aria-hidden="true" /> 9 TOOLS</span>
-            <p>Stocks, favorites, three valuation calculators, market maps, news, earnings and dividends.</p>
-          </div>
 
           <div className="sidebar-collapse">
             <SidebarToggle />

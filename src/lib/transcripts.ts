@@ -1,6 +1,5 @@
 import { getSql, isDatabaseConfigured } from "./db";
-import { addDays } from "./earnings-calendar";
-import { fetchFinnhub } from "./finnhub";
+import { getCompanyReports } from "./earnings-calendar";
 
 // Earnings call transcripts from Alpha Vantage. Its free key allows 25 requests a day and one a
 // second, so every answer is saved (in Postgres when DATABASE_URL is set) and fetched only once.
@@ -60,15 +59,11 @@ export async function latestReportedQuarter(symbol: string, today = new Date().t
 
 // The latest reported quarter and, when Finnhub's calendar still lists it, the report date.
 export async function latestReport(symbol: string, today = new Date().toISOString().slice(0, 10)): Promise<{ quarter: FiscalQuarter; date: string | null }> {
-  const result = await fetchFinnhub("calendar/earnings", { symbol, from: addDays(today, -100), to: addDays(today, 120) }, 60 * 60 * 6);
-  const rows = result.ok ? (result.payload as { earningsCalendar?: unknown })?.earningsCalendar : null;
-  if (Array.isArray(rows)) {
+  const rows = await getCompanyReports(symbol, today);
+  if (rows) {
     const reports = rows
-      .map((row) => row as { date?: unknown; year?: unknown; quarter?: unknown })
-      .filter((row) => typeof row.date === "string" && Number.isInteger(row.year) && Number.isInteger(row.quarter))
-      .map((row) => ({ date: row.date as string, quarter: `${row.year}Q${row.quarter}` }))
-      .filter((row): row is { date: string; quarter: FiscalQuarter } => isFiscalQuarter(row.quarter))
-      .sort((left, right) => left.date.localeCompare(right.date));
+      .map((row) => ({ date: row.date, quarter: `${row.year}Q${row.quarter}` }))
+      .filter((row): row is { date: string; quarter: FiscalQuarter } => isFiscalQuarter(row.quarter));
     const past = reports.filter((row) => row.date <= today);
     if (past.length) return past[past.length - 1];
     if (reports.length) return { quarter: previousQuarter(reports[0].quarter), date: null };

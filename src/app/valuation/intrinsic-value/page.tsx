@@ -1,10 +1,9 @@
 import { AppShell } from "../../components/app-shell";
 import { companyMetadata } from "../../components/company-metadata";
 import { providerFailureMessage } from "@/lib/fmp-messages";
-import { listedName } from "@/lib/listed-companies";
 import { loadProjectionData } from "../data";
 import { ProjectionWorkbench } from "../projection-workbench";
-import { LoadError, SecSourceNote, ToolBreadcrumb, ToolStart, readSymbol, type ValuationSearchParams } from "../valuation-parts";
+import { LoadError, SecSourceNote, ToolStart, ValuationHeader, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
 export const generateMetadata = companyMetadata("Intrinsic Value", "Estimate a company's intrinsic value with DCF, dividend, earnings and residual income models.");
 
@@ -14,7 +13,11 @@ export default async function IntrinsicValuePage({ searchParams }: { searchParam
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""} activeSection="intrinsic-value">
-      {symbol && <ToolBreadcrumb symbol={symbol} tool="intrinsic-value" />}
+      {symbol && loaded && (
+        <ValuationHeader symbol={symbol} tool="intrinsic-value">
+          Intrinsic value estimates from six valuation models picked for the type of company, built on its annual filings.
+        </ValuationHeader>
+      )}
       {!symbol || !loaded ? (
         <ToolStart tool="intrinsic-value" title="What is a company actually worth?">
           Search for a ticker above to estimate its intrinsic value: the price its future cash, earnings or
@@ -26,7 +29,6 @@ export default async function IntrinsicValuePage({ searchParams }: { searchParam
       ) : (
         <ProjectionWorkbench
           symbol={symbol}
-          companyName={loaded.data.profile?.companyName ?? listedName(symbol)}
           currency={loaded.data.fundamentals.annualFinancials[0]?.currency ?? loaded.data.profile?.currency ?? "USD"}
           classification={loaded.data.classification}
           defaults={loaded.data.defaults}

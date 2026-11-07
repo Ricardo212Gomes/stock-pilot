@@ -6,7 +6,7 @@ import { FavoriteButton } from "../components/favorite-button";
 import { currentUserId, isAuthConfigured, signIn } from "@/auth";
 import { isDatabaseConfigured } from "@/lib/db";
 import { listFavorites, MAX_FAVORITES, type Favorite } from "@/lib/favorites";
-import { getQuote } from "@/lib/stock-overview";
+import { getHeaderQuote } from "@/lib/stock-overview";
 import { formatMoney, formatSignedPercent } from "@/lib/valuation/format";
 
 export const metadata: Metadata = {
@@ -61,11 +61,11 @@ async function FavoritesBody() {
     return <Notice title="No favorites yet"><p>Open a company and select <strong>Add to favorites</strong> next to its name to follow it here.</p></Notice>;
   }
 
-  const quotes = await Promise.all(favorites.map((favorite) => getQuote(favorite.symbol)));
+  const quotes = await Promise.all(favorites.map((favorite) => getHeaderQuote(favorite.symbol)));
   return (
     <>
       <p className="earnings-summary">
-        {favorites.length} of {MAX_FAVORITES} favorites, newest first. Prices are cached for a few minutes.
+        {favorites.length} of {MAX_FAVORITES} favorites, newest first. Prices are cached for a minute.
       </p>
       <div className="table-scroll">
         <table className="financial-table favorites-table">

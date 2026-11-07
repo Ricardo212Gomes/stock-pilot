@@ -10,13 +10,16 @@
 | --- | --- |
 | Overview | `/stock?symbol=AAPL` |
 | Financials | `/stock/financials?symbol=AAPL` (statements, ratios and the AI review; see [`financials.md`](./financials.md)) |
+| Forecast | `/stock/forecast?symbol=AAPL` (analysts' price targets, ratings, estimates, earnings surprises and rating changes; see [`forecast.md`](./forecast.md)) |
 | News | `/news?symbol=AAPL` |
 | Transcripts | `/stock/transcripts?symbol=AAPL` (earnings calls; see [`transcripts.md`](./transcripts.md)) |
 | Filings | `/stock/filings?symbol=AAPL` (SEC filings; see [`filings.md`](./filings.md)) |
+| Insiders | `/stock/insiders?symbol=AAPL` (insider buys and sales from Form 4s; see [`insiders.md`](./insiders.md)) |
+| Valuation | `/valuation/intrinsic-value?symbol=AAPL`, with Jeremy's Projection, the Plumas Projection and the DCF Calculator as sub-tabs (see [`valuation.md`](./valuation.md)) |
 
 Search, the home page examples and breadcrumbs land on the Overview.
 
-Every company tab shares the same header (`CompanyHeader`: the quote, or the company name from the bundled stock list when no quote is available) and tab bar, and is titled "AAPL Overview — StockPilot", "AAPL Financials — StockPilot" and so on (`companyMetadata`). The top bar reads "AAPL · Overview", and the footer credits the tab's source.
+Every company tab shares the same header (`CompanyHeader`: the quote, from Finnhub first on every tab but the Overview so FMP's daily requests go to data only it has, or the company name from the bundled stock list when no quote is available) and tab bar, and is titled "AAPL Overview — StockPilot", "AAPL Financials — StockPilot" and so on (`companyMetadata`). The top bar reads "AAPL · Overview", and the footer credits the tab's source.
 
 ## Stocks: leaderboards without a ticker
 
@@ -30,6 +33,10 @@ Every company tab shares the same header (`CompanyHeader`: the quote, or the com
 | Most active (`active`) | `most-actives` | 15 minutes |
 
 Each shows the top 50 with rank, ticker and name (linking to the company), price, and market cap, daily change or volume; the largest list adds the sector. Field names that differ between FMP's endpoints (`changesPercentage`, `changePercentage`, `companyName`, `name`) are all read. If a request fails, the page explains why and the search still works.
+
+Some FMP plans don't include the screener (it returns 402), and every plan has a daily limit. In either case the largest companies come from `src/data/largest-us-companies.json` instead: the 100 largest US companies (name, Finnhub's industry as the sector, market cap) on the date it was built. One `market-capitalization-batch` request (cached 6 hours) replaces the snapshot's market cap with today's for the companies the plan covers, and the list is ranked again. The snapshot has no prices, so the Price column is hidden, and a note gives the snapshot's date.
+
+`npm run largest:update` rebuilds the snapshot from Finnhub's free `stock/profile2` for about 150 large US companies listed in `scripts/update-largest.mjs`, one request every 1.1 seconds (Finnhub allows 60 a minute), so it takes about three minutes. It needs `FINNHUB_API_KEY`, and leaves out companies based outside the US (Linde, Accenture, Medtronic), as the screener does. The **Largest companies snapshot** workflow (`.github/workflows/largest-companies.yml`) runs it every Sunday at 06:00 UTC, or on demand from the Actions tab, and commits the file when it changes; it uses the `FINNHUB_API_KEY` repository secret the notifications already need. Add newcomers to the script's list as they grow.
 
 ## Search
 
@@ -59,26 +66,26 @@ The quote is required; if it fails, the page explains why. Every other figure is
 | Price, change, volume, open, previous close, day and 52-week range, market cap | FMP `quote` | 1 minute |
 | Revenue, net income and EPS (ttm) | Sum of the last 4 quarters from FMP `income-statement?period=quarter` | 24 hours |
 | Revenue and EPS growth (ttm, year over year) | Finnhub `stock/metric` | 24 hours |
-| Shares out | FMP `shares-float`, or market cap ÷ price | 24 hours |
+| Shares out | Finnhub `stock/profile2` (shared with the header quotes), else FMP `shares-float`, or market cap ÷ price | 24 hours |
 | PE ratio | Price ÷ EPS (ttm), when EPS is positive | — |
 | Forward PE | Price ÷ the next fiscal year's consensus EPS from FMP `analyst-estimates` | 24 hours |
 | Dividend and yield | Latest FMP `dividends` payment × its yearly frequency (quarterly × 4, monthly × 12…), ÷ price | 24 hours |
 | Ex-dividend date | Date of the latest FMP dividend, which may be announced for the future | 24 hours |
 | Beta, sector, industry, CEO, employees, website, description | FMP `profile` | 1 hour |
-| Analysts | FMP `grades-consensus` rating; the hover text gives the analyst count | 24 hours |
+| Analysts | Finnhub `stock/recommendation`: the average rating's band, the same request and label as the Forecast tab and Recommendations; the hover text gives the analyst count | 24 hours |
 | Price target | FMP `price-target-consensus`, with the gap to today's price | 24 hours |
-| Earnings date | The earliest upcoming FMP `earnings` date without reported EPS | 24 hours |
+| Earnings date | The next report in Finnhub's earnings calendar, with before the open, during the day or after the close when it says (the request the Transcripts tab makes) | 6 hours |
 
 TTM uses quarterly statements because the free plan restricts FMP's TTM statement endpoint, and quarterly requests to 5 rows (enough for four quarters, not for year-over-year growth). That's why growth comes from Finnhub.
 
-An uncached overview costs 11 FMP requests and 1 Finnhub request. The analyst estimates use the same parameters as the Financials page, so the two pages share that cached response.
+An uncached overview costs 6 FMP requests (7 without a Tiingo key, when the chart's prices come from FMP) and 4 Finnhub ones; see [`data-sources.md`](./data-sources.md) for why each piece comes from where.
 
 ## Display
 
 - Large numbers use compact notation with two decimals (5.06T, 466.82B). Price-level figures have two decimals, growth one.
 - Terms with a dotted underline explain themselves on hover, for example P/E, Beta and Forward PE.
 - The quote time is shown in New York time, where US listings trade.
-- The chart offers 5D, 1M, 6M, YTD, 1Y and 5Y from daily closes. Intraday prices need a paid FMP plan, so there's no 1-day intraday view, and the chart ends at the last daily close.
+- The chart offers 5D, 1M, 6M, YTD, 1Y and 5Y from daily closes. Intraday prices need a paid FMP plan, so there's no 1-day intraday view, and the chart ends at the last daily close. When FMP can't give the closes (a company its plan doesn't cover, or its daily limit), they come from Tiingo, adjusted for splits and dividends, and the footnote says so.
 
 ## Limits
 
