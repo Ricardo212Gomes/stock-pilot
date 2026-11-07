@@ -39,5 +39,6 @@ A company without closes is skipped; one without a target or ratings stays in, f
 - `src/lib/recommendations.ts`: the universe, coverage check and loading.
 - `src/lib/recommendation-signals.ts`: the rules, rating summary and ranking, shared with the browser.
 - `src/lib/technicals.ts`: moving averages, RSI and the 52-week range.
+- `src/lib/daily-closes.ts`: the year of closes, shared with the Forecast tab.
 - `src/app/recommendations/page.tsx`: the page.
 - `src/app/recommendations/recommendations-table.tsx`: the criteria and the table (client).

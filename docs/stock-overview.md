@@ -10,6 +10,7 @@
 | --- | --- |
 | Overview | `/stock?symbol=AAPL` |
 | Financials | `/stock/financials?symbol=AAPL` (statements, ratios and the AI review; see [`financials.md`](./financials.md)) |
+| Forecast | `/stock/forecast?symbol=AAPL` (analysts' price targets, ratings, estimates, earnings surprises and rating changes; see [`forecast.md`](./forecast.md)) |
 | News | `/news?symbol=AAPL` |
 | Transcripts | `/stock/transcripts?symbol=AAPL` (earnings calls; see [`transcripts.md`](./transcripts.md)) |
 | Filings | `/stock/filings?symbol=AAPL` (SEC filings; see [`filings.md`](./filings.md)) |

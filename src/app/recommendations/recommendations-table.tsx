@@ -37,9 +37,9 @@ function signedPercent(value: number | null): string {
 // The split of ratings as a thin bar beside its figures; the legend above the table names the colours.
 function RatingBar({ ratings }: { ratings: AnalystRatings }) {
   return (
-    <span className="reco-rating-bar" aria-hidden="true">
+    <span className="rating-bar" aria-hidden="true">
       {RATING_KEYS.filter((key) => ratings[key] > 0).map((key) => (
-        <span key={key} className={`reco-rating-${key}`} style={{ flexGrow: ratings[key] }} />
+        <span key={key} className={`rating-${key}`} style={{ flexGrow: ratings[key] }} />
       ))}
     </span>
   );
@@ -154,9 +154,9 @@ export function RecommendationsTable({ candidates, covered, universe, asOf }: { 
           </div>
         </div>
 
-        <p className="reco-legend" aria-hidden="true">
+        <p className="rating-legend" aria-hidden="true">
           {RATING_KEYS.map((key) => (
-            <span key={key}><span className={`reco-swatch reco-rating-${key}`} />{RATING_NAMES[key]}</span>
+            <span key={key}><span className={`rating-swatch rating-${key}`} />{RATING_NAMES[key]}</span>
           ))}
         </p>
 

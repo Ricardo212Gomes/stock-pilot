@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-export type StockSection = "overview" | "financials" | "news" | "transcripts" | "filings" | "insiders" | "valuation";
+export type StockSection = "overview" | "financials" | "forecast" | "news" | "transcripts" | "filings" | "insiders" | "valuation";
 
 const SECTIONS: { id: StockSection; label: string; path: string }[] = [
   { id: "overview", label: "Overview", path: "/stock" },
   { id: "financials", label: "Financials", path: "/stock/financials" },
+  { id: "forecast", label: "Forecast", path: "/stock/forecast" },
   { id: "news", label: "News", path: "/news" },
   { id: "transcripts", label: "Transcripts", path: "/stock/transcripts" },
   { id: "filings", label: "Filings", path: "/stock/filings" },

@@ -1,10 +1,11 @@
 import universe from "@/data/largest-us-companies.json";
 import { mapLimit } from "./concurrency";
+import { getDailyCloses } from "./daily-closes";
 import { FMP_BASE_URL, failureReason, fetchFmp, numeric, type FmpFailureReason } from "./fmp";
 import { fetchFinnhub, finnhubSymbol } from "./finnhub";
 import { summarizeRatings, type Candidate, type RatingCounts } from "./recommendation-signals";
 import { optionalRows } from "./stock-overview";
-import { priceTrend, type PricePoint } from "./technicals";
+import { priceTrend } from "./technicals";
 
 // The Recommendations screen's data: the largest US companies FMP's plan covers (the bundled snapshot, see
 // docs/stock-overview.md), each with the analysts' consensus price target (FMP), their ratings (Finnhub) and
@@ -12,8 +13,6 @@ import { priceTrend, type PricePoint } from "./technicals";
 // company once a day, plus one to check which companies the plan covers.
 
 const DAILY_REVALIDATE_SECONDS = 60 * 60 * 24;
-// A year of sessions with room for holidays: enough for the 200-day average and the 52-week range.
-const HISTORY_DAYS = 400;
 // Companies loaded at once. Each needs one Finnhub request, and Finnhub's free plan allows 30 a second.
 const CONCURRENCY = 4;
 
@@ -36,15 +35,6 @@ async function coveredCompanies(symbols: string[], apiKey: string): Promise<Map<
   const payload = await fetchFmp(fmpUrl("market-capitalization-batch", { symbols: symbols.join(",") }, apiKey), 60 * 60 * 6);
   const rows = Array.isArray(payload) ? (payload as Row[]) : [];
   return new Map(rows.flatMap((row) => (typeof row.symbol === "string" ? [[row.symbol, num(row.marketCap)] as const] : [])));
-}
-
-async function dailyCloses(symbol: string, apiKey: string, today: Date): Promise<PricePoint[]> {
-  const from = new Date(today.getTime() - HISTORY_DAYS * 86_400_000).toISOString().slice(0, 10);
-  const payload = await fetchFmp(fmpUrl("historical-price-eod/light", { symbol, from }, apiKey), DAILY_REVALIDATE_SECONDS);
-  return (Array.isArray(payload) ? (payload as Row[]) : []).flatMap((row): PricePoint[] => {
-    const close = num(row.price) ?? num(row.close);
-    return typeof row.date === "string" && close !== null ? [{ date: row.date, close }] : [];
-  });
 }
 
 async function analystRatings(symbol: string) {
@@ -83,7 +73,7 @@ export async function getRecommendationScreen(now = new Date()): Promise<Recomme
   const failures: FmpFailureReason[] = [];
   const results = await mapLimit(companies.filter((company) => covered.has(company.symbol)), CONCURRENCY, async (company): Promise<Candidate | null> => {
     const [closes, targets, ratings] = await Promise.all([
-      dailyCloses(company.symbol, apiKey, now).catch((error: unknown) => {
+      getDailyCloses(company.symbol, now).catch((error: unknown) => {
         failures.push(failureReason(error));
         return [];
       }),

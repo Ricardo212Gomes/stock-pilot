@@ -6490,28 +6490,66 @@ a.earnings-round:focus-visible {
   }
 }
 
-/* Recommendations: a criteria card, then the matches. Ratings use the fear gauge's diverging scale, blue
-   (Buy) through grey (Hold) to red (Sell), with one legend above the table and the figures beside each bar. */
-.reco-rating-strongBuy {
+/* Analyst ratings, shared by Recommendations and the Forecast tab: the fear gauge's diverging scale, blue
+   (Buy) through grey (Hold) to red (Sell), with one legend per table and the figures beside each bar. */
+.rating-strongBuy {
   --zone: var(--chart-1);
 }
 
-.reco-rating-buy {
+.rating-buy {
   --zone: color-mix(in oklab, var(--chart-1) 55%, var(--card));
 }
 
-.reco-rating-hold {
+.rating-hold {
   --zone: var(--border);
 }
 
-.reco-rating-sell {
+.rating-sell {
   --zone: color-mix(in oklab, var(--negative) 55%, var(--card));
 }
 
-.reco-rating-strongSell {
+.rating-strongSell {
   --zone: var(--negative);
 }
 
+.rating-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 14px 0 10px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.rating-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--zone);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 15%, transparent);
+}
+
+/* The ratings split: one segment per rating, 2px apart, as wide as its count. */
+.rating-bar {
+  display: flex;
+  gap: 2px;
+  width: 96px;
+  height: 6px;
+}
+
+.rating-bar > span {
+  min-width: 2px;
+  border-radius: 1px;
+  background: var(--zone);
+}
+
+/* Recommendations: a criteria card, then the matches. */
 .reco-card {
   margin-bottom: 16px;
   padding: 16px;
@@ -6610,29 +6648,6 @@ a.earnings-round:focus-visible {
   font-weight: 600;
 }
 
-.reco-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  margin: 14px 0 10px;
-  color: var(--muted-foreground);
-  font-size: 13px;
-}
-
-.reco-legend > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.reco-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: var(--zone);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 15%, transparent);
-}
-
 .reco-table {
   min-width: 0;
 }
@@ -6665,20 +6680,6 @@ a.earnings-round:focus-visible {
 
 .reco-target small {
   font-weight: 600;
-}
-
-/* The ratings split: one segment per rating, 2px apart, as wide as its count. */
-.reco-rating-bar {
-  display: flex;
-  gap: 2px;
-  width: 96px;
-  height: 6px;
-}
-
-.reco-rating-bar > span {
-  min-width: 2px;
-  border-radius: 1px;
-  background: var(--zone);
 }
 
 .reco-signals {
@@ -6736,7 +6737,7 @@ a.earnings-round:focus-visible {
     display: none;
   }
 
-  .reco-rating-bar {
+  .reco-table .rating-bar {
     width: 72px;
   }
 }
@@ -6950,4 +6951,350 @@ a.earnings-round:focus-visible {
   margin: 10px 0 0;
   color: var(--muted-foreground);
   font-size: 14px;
+}
+
+/* Forecast: analysts' price targets, ratings, estimates, earnings and rating changes, each in a card. */
+.forecast-section {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--title-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.forecast-section h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.forecast-subheading {
+  margin: 20px 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.forecast-figure {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 32px;
+}
+
+.forecast-figure-detail,
+.forecast-lede {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.forecast-lede strong {
+  color: var(--foreground);
+}
+
+.forecast-target {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.forecast-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 14px 0 0;
+}
+
+.forecast-stats div {
+  display: grid;
+  gap: 2px;
+}
+
+.forecast-stats dt {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.forecast-stats dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* The target range: a track from the lowest target to the highest, the average and today's price marked. */
+.forecast-range {
+  position: relative;
+  height: 44px;
+  margin: 18px 4px 0;
+}
+
+.forecast-range::before {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  left: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--muted);
+  content: "";
+}
+
+.forecast-range-track {
+  position: absolute;
+  top: 8px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--chart-1) 55%, var(--card));
+}
+
+.forecast-range-marker {
+  position: absolute;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+}
+
+.forecast-range-average {
+  background: var(--chart-1);
+}
+
+.forecast-range-price {
+  background: var(--foreground);
+}
+
+.forecast-range-label {
+  position: absolute;
+  top: 24px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.forecast-range-label-end {
+  transform: translateX(-100%);
+}
+
+.forecast-range-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.forecast-range-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forecast-range-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.forecast-trend {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.forecast-trend caption {
+  margin-bottom: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-align: left;
+}
+
+.forecast-trend th,
+.forecast-trend td {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-strong);
+  text-align: left;
+}
+
+.forecast-trend th {
+  font-weight: 400;
+}
+
+.forecast-trend td {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.forecast-trend td:last-child {
+  padding-left: 16px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+/* Includes the x-axis band and room for the targets' labels on the right. */
+.forecast-chart-plot {
+  height: 300px;
+}
+
+.forecast-chart-label {
+  fill: var(--foreground);
+  font-size: 13px;
+}
+
+.forecast-chart-tooltip {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-subtle);
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.forecast-months {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.forecast-months th,
+.forecast-months td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.forecast-months th {
+  width: 90px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.forecast-months td:nth-child(2) {
+  width: 216px;
+}
+
+.forecast-months td:last-child {
+  color: var(--muted-foreground);
+}
+
+.forecast-months td:last-child strong {
+  color: var(--foreground);
+}
+
+.forecast-rating-bar {
+  width: 200px;
+  height: 8px;
+}
+
+.forecast-table {
+  min-width: 0;
+}
+
+.forecast-table thead th:first-child,
+.forecast-table tbody th {
+  text-align: left;
+}
+
+.forecast-table tbody th {
+  font-weight: 600;
+}
+
+.forecast-table small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.forecast-table small.positive-value,
+.forecast-table small.negative-value {
+  font-weight: 600;
+}
+
+.forecast-table .forecast-reported td,
+.forecast-table .forecast-reported th {
+  background: var(--muted);
+}
+
+.forecast-next {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.forecast-actions tbody th {
+  font-weight: 600;
+}
+
+.forecast-actions td:first-child,
+.forecast-actions thead th:nth-child(2) {
+  text-align: left;
+}
+
+.forecast-action {
+  padding: 0 7px;
+  border-radius: var(--radius);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.forecast-action-upgrade {
+  color: var(--positive);
+}
+
+.forecast-action-downgrade {
+  color: var(--negative);
+}
+
+.forecast-loading {
+  margin: 16px 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.forecast-footnote p {
+  margin: 0 0 6px;
+}
+
+@media (max-width: 900px) {
+  .forecast-target {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .forecast-optional {
+    display: none;
+  }
+
+  .forecast-chart-plot {
+    height: 240px;
+  }
+
+  .forecast-months td:nth-child(2) {
+    width: auto;
+  }
+
+  .forecast-rating-bar {
+    width: 96px;
+  }
+
+  .forecast-months td:last-child {
+    display: none;
+  }
 }
