@@ -8,7 +8,7 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 
 1. Copy `.env.example` to `.env.local` (or `.env`) in the project root.
 2. Set `FMP_API_KEY` to the key from your FMP account.
-3. Set `GEMINI_API_KEY` to your Gemini API key to enable AI analysis. `GOOGLE_GENERATIVE_AI_API_KEY` is also accepted if you already use that name. Optionally set `GEMINI_MODEL` to override the default model.
+3. Set `GEMINI_API_KEY` to your Gemini API key to enable AI analysis and the AI chat. `GOOGLE_GENERATIVE_AI_API_KEY` is also accepted if you already use that name. Optionally set `GEMINI_MODEL` to override the default model.
 4. Set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io) API key to enable the News page. The Finnhub secret is not needed.
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
 6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
@@ -54,6 +54,8 @@ The **Events** page at `/events` is a timeline of what can move US markets: Fed 
 
 The **News** page at `/news` shows global market, deal, forex and crypto headlines from Finnhub; `/news?symbol=AAPL` shows the company's headlines from the last 14 days.
 
+The **AI chat** is the round spark button at the bottom right of every page. Ask about any US stock, the market or your portfolio in plain language; Gemini looks the figures up in StockPilot's data (quotes, statements, forecasts, news, filings, insider trades, earnings calls, the calendars and, when you're signed in, your portfolio and favorites), and each answer links to the pages it read. On a company's pages, a question that names no company is about that one.
+
 ## Documentation
 
 | Doc | Covers |
@@ -67,6 +69,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/compare.md`](./docs/compare.md) | The Compare page: each metric's calculation and source, fiscal-year matching and free-plan gaps |
 | [`docs/valuation.md`](./docs/valuation.md) | The four valuation tools: intrinsic value models, stock types, default assumptions, scenarios, AI autofill, Jeremy's and the Plumas projections (their differences and which stocks each suits) and the DCF calculator |
 | [`docs/ai-analysis.md`](./docs/ai-analysis.md) | The AI review buttons on financial sections: configuration, what's sent, prompt rules and errors |
+| [`docs/chat.md`](./docs/chat.md) | The AI chat: the button and panel, how answers look data up, what's sent to Gemini, limits and errors |
 | [`docs/earnings.md`](./docs/earnings.md) | The earnings calendar: data, company names, filters and surprises |
 | [`docs/dividends.md`](./docs/dividends.md) | The dividend calendar: data, free-plan limits and the two date views |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
@@ -99,4 +102,4 @@ Tests live next to the code as `*.test.ts` and mock `fetch`, so they never call 
 
 See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Stocks, Compare, Recommendations, Portfolio, Favorites) and Markets, and can collapse to an icon rail; the valuation calculators are a company's Valuation tab. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
 
-On the Financials page, the spark button beside each section title asks Gemini to explain that section's figures in plain language. Intraday prices and a dedicated dividend history are not included yet.
+On the Financials page, the spark button beside each section title asks Gemini to explain that section's figures in plain language; the spark button at the bottom right of every page opens the AI chat. Intraday prices and a dedicated dividend history are not included yet.
