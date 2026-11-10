@@ -48,17 +48,24 @@ export function dataSourceStatuses(now = Date.now(), env: Record<string, string 
     {
       name: "Finnhub",
       configured: Boolean(env.FINNHUB_API_KEY),
-      usedFor: "Quotes on company headers and lists, analyst ratings, the earnings calendar, news, insider trades, earnings surprises, growth rates.",
+      usedFor: "Quotes on company headers, lists and the Portfolio, analyst ratings, the earnings calendar, news, insider trades, earnings surprises, growth rates.",
       limits: "Free: 60 requests a minute, every US stock.",
       events: "finnhub",
     },
     {
       name: "Tiingo",
       configured: Boolean(env.TIINGO_API_KEY),
-      usedFor: "Daily prices when FMP can't give them: charts, Recommendations' price signals.",
+      usedFor: "The Overview chart, the Portfolio's prices, splits and dividends, and daily prices when FMP can't give them.",
       limits: "Free: 50 requests an hour, 1,000 a day, 500 stocks a month.",
       events: "tiingo",
       note: tiingo.fallbacks > 0 ? `Stood in for FMP ${plural(tiingo.fallbacks, "time")} since the server started.` : undefined,
+    },
+    {
+      name: "Frankfurter",
+      configured: true,
+      usedFor: "Euro exchange rates (the ECB's) for portfolios kept in euros or with trades in euros.",
+      limits: "Free, no key.",
+      events: "frankfurter",
     },
     {
       name: "SEC EDGAR",
@@ -81,7 +88,7 @@ export function dataSourceStatuses(now = Date.now(), env: Record<string, string 
     {
       name: "Postgres",
       configured: Boolean(env.DATABASE_URL),
-      usedFor: "Favorites, saved transcripts and summaries, notification settings.",
+      usedFor: "Favorites, portfolio trades, saved transcripts and summaries, notification settings.",
       limits: "Your database's plan.",
     },
   ];

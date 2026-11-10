@@ -2,7 +2,7 @@
 // in Settings: when each last hit its rate limit or failed, and how often a fallback stood in. It restarts
 // empty with the server, so it describes recent behaviour, not a full history.
 
-export type ProviderId = "fmp" | "finnhub" | "tiingo" | "sec";
+export type ProviderId = "fmp" | "finnhub" | "tiingo" | "sec" | "frankfurter";
 
 export type ProviderEvents = {
   // When the provider last answered that its request limit was reached.

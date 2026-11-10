@@ -1,6 +1,6 @@
 # StockPilot
 
-StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with four calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Tiingo, Alpha Vantage and FINVIZ, on their free plans.
+StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with four calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites and a portfolio. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Tiingo, Alpha Vantage and FINVIZ, on their free plans, with the ECB's euro rates from Frankfurter.
 
 ## Configure FMP
 
@@ -12,8 +12,8 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 4. Set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io) API key to enable the News page. The Finnhub secret is not needed.
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
 6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
-7. Optionally set `TIINGO_API_KEY` to a free [Tiingo](https://www.tiingo.com) key, so price charts and the price signals work for companies FMP's free plan doesn't cover, and when it hits its daily limit; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
-8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**; see [`docs/favorites.md`](./docs/favorites.md).
+7. Optionally set `TIINGO_API_KEY` to a free [Tiingo](https://www.tiingo.com) key, so price charts and the price signals work for companies FMP's free plan doesn't cover, and when it hits its daily limit, and the Portfolio gets its chart, splits and dividends; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
+8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites** and the **Portfolio**; see [`docs/favorites.md`](./docs/favorites.md) and [`docs/portfolio.md`](./docs/portfolio.md).
 9. Optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send favorites' upcoming earnings, earnings call summaries, relevant news and SEC filing analyses to Telegram; see [`docs/notifications.md`](./docs/notifications.md).
 10. Restart the Next.js development server after changing the environment file.
 
@@ -43,6 +43,8 @@ The **Dividends** page at `/dividends` shows a month of dividends on their ex-di
 The **Recommendations** page at `/recommendations` screens the largest US companies for stocks well below the analysts' consensus target, rated Buy by at least 75% of analysts and below their 12-week average, with the 200-day average, RSI and the ratings trend beside them.
 
 The **Compare** page at `/compare?symbols=CELH,MNST,KO` puts up to five stocks side by side: P/E, expected EPS and revenue growth and margins, next to the range many established companies trade at.
+
+The **Portfolio** page at `/portfolio` tracks what you own and have made, from the buys and sales you record or from Trading 212 and Trade Republic statements (PDFs, previewed before anything is saved, with every trade, dividend and interest payment): value, today's change, the profit with its parts, dividends, weights by industry and a chart of your return against the S&P 500, with splits and dividends from Tiingo. It's shown in dollars or euros, converted at the ECB's rate for each day. It needs Google sign-in and a Postgres database.
 
 The **Favorites** page at `/favorites` lists the companies you've starred from their overview, with the latest price and links to each tool. It needs Google sign-in and a Postgres database.
 
@@ -77,6 +79,7 @@ The **News** page at `/news` shows global market, deal, forex and crypto headlin
 | [`docs/filings.md`](./docs/filings.md) | The Filings tab: SEC EDGAR filings, filters, 8-K descriptions and press releases |
 | [`docs/transcripts.md`](./docs/transcripts.md) | Earnings call transcripts: Alpha Vantage, fiscal quarters, saving them in Postgres and the free-key limits |
 | [`docs/notifications.md`](./docs/notifications.md) | Telegram notifications: the bot, linking a chat, the four commands and the GitHub Actions schedule |
+| [`docs/portfolio.md`](./docs/portfolio.md) | The Portfolio: recording trades and importing statements, the profit, dollars or euros, how splits, average cost, dividends and returns are worked out, its data and limits |
 | [`docs/favorites.md`](./docs/favorites.md) | Favorites: the Postgres database, schema setup, the star button and the list |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
 | [`DESIGN.md`](./DESIGN.md) | Design tokens and component rules |
@@ -94,6 +97,6 @@ Tests live next to the code as `*.test.ts` and mock `fetch`, so they never call 
 
 ## Design system
 
-See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Stocks, Compare, Recommendations, Favorites) and Markets, and can collapse to an icon rail; the valuation calculators are a company's Valuation tab. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
+See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Stocks, Compare, Recommendations, Portfolio, Favorites) and Markets, and can collapse to an icon rail; the valuation calculators are a company's Valuation tab. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
 
 On the Financials page, the spark button beside each section title asks Gemini to explain that section's figures in plain language. Intraday prices and a dedicated dividend history are not included yet.

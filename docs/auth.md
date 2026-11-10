@@ -1,6 +1,6 @@
 # Google sign-in
 
-StockPilot signs users in with Google through [Auth.js](https://authjs.dev) (`next-auth` v5). Any Google account can sign in. Signing in lets users save favorites (see [`favorites.md`](./favorites.md)).
+StockPilot signs users in with Google through [Auth.js](https://authjs.dev) (`next-auth` v5). Any Google account can sign in. Signing in lets users save favorites and keep a portfolio (see [`favorites.md`](./favorites.md) and [`portfolio.md`](./portfolio.md)).
 
 There is no database. After Google confirms the account, Auth.js stores the user's name, email and picture in an encrypted, HTTP-only cookie (`authjs.session-token`) that lasts 30 days.
 

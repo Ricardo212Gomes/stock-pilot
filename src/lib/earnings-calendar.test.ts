@@ -60,6 +60,10 @@ describe("dates", () => {
     expect(isIsoDate("2026-10-26")).toBe(true);
     expect(isIsoDate("26/10/2026")).toBe(false);
     expect(isIsoDate(undefined)).toBe(false);
+    // Days that don't exist, which Date would roll over.
+    expect(isIsoDate("2026-02-30")).toBe(false);
+    expect(isIsoDate("2026-13-01")).toBe(false);
+    expect(isIsoDate("2028-02-29")).toBe(true);
   });
 });
 

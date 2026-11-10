@@ -7,9 +7,10 @@ StockPilot runs on free plans, and each provider's free plan is tight in a diffe
 | Provider | Free plan | Key | Use it for | Not for |
 | --- | --- | --- | --- | --- |
 | [Financial Modeling Prep](https://site.financialmodelingprep.com) | 250 requests a day; statements, targets and estimates for a sample of popular large companies (36 of the 100 largest) | `FMP_API_KEY` | What only it gives free: price targets, annual estimates, rating changes, ratios, segments, dividends, the Overview's full quote (with volume), the VIX quote, statements for the companies it covers | Quotes on headers and lists, ratings, earnings dates, prices when Tiingo is set up: free elsewhere |
-| [Finnhub](https://finnhub.io) | 60 requests a minute (30 a second), every US stock | `FINNHUB_API_KEY` | Quotes (headers, lists, fallback), company profile and share count, TTM metrics and growth, analyst ratings (four months), the earnings calendar and surprises, insider trades, news | Price targets, estimates, upgrades and candles (paid) |
+| [Finnhub](https://finnhub.io) | 60 requests a minute (30 a second), every US stock | `FINNHUB_API_KEY` | Quotes (headers, lists, the Portfolio, fallback), company profile and share count, TTM metrics and growth, analyst ratings (four months), the earnings calendar and surprises, insider trades, news, a US ISIN's ticker (statement imports) | Price targets, estimates, upgrades and candles (paid); foreign ISINs (paid) |
 | [SEC EDGAR](https://www.sec.gov/edgar) | Free, no key, 10 requests a second, an identifying User-Agent | `SEC_USER_AGENT` (optional) | Filings, Form 4 insider filings, statements when FMP doesn't cover a company | Anything needing a price |
-| [Tiingo](https://www.tiingo.com) | 50 requests an hour, 1,000 a day, 500 stocks a month | `TIINGO_API_KEY` (optional) | Five years of adjusted daily closes: the Overview chart first, any price history FMP can't give | Bulk screening (the hourly cap) |
+| [Tiingo](https://www.tiingo.com) | 50 requests an hour, 1,000 a day, 500 stocks a month | `TIINGO_API_KEY` (optional) | Five years of daily closes with splits and dividends: the Overview chart first, the Portfolio's history, splits and dividends, any price history FMP can't give | Bulk screening (the hourly cap) |
+| [Frankfurter](https://frankfurter.dev) | Free, no key | — | The European Central Bank's daily euro rates, for portfolios in euros or with trades in euros | Anything else |
 | [Alpha Vantage](https://www.alphavantage.co) | 25 requests a day | `ALPHAVANTAGE_API_KEY` (optional) | Earnings call transcripts, each fetched once and saved | Anything else: its company overview with analyst targets is now paid |
 | Google Gemini | The free tier's per-minute and daily limits | `GEMINI_API_KEY` | AI reviews and summaries, valuation autofill, the events news scan, notification digests, always on request or once per item | Facts: it only reads data the app gives it |
 | Official calendars: Federal Reserve, FRED, BLS, BEA, Census Bureau, Wikipedia | Free, no key | — | The events timeline | — |
@@ -21,7 +22,7 @@ StockPilot runs on free plans, and each provider's free plan is tight in a diffe
 
 1. **Spend FMP only on what's FMP's alone.** Its 250 daily requests are the scarcest budget, so anything another source gives free comes from there: header and list quotes, ratings, earnings dates and the share count from Finnhub, the Overview chart's prices from Tiingo.
 2. **Quotes:** Finnhub first wherever only the price, name and market cap are shown (company headers, Favorites, Compare, the valuation tools). The Overview asks FMP first because its quote has the day's volume, and falls back to Finnhub. Without an FMP key, quotes still work from Finnhub.
-3. **Price history:** the Overview chart takes Tiingo's five years first, then FMP's. Recommendations and the Forecast chart take FMP's one year first (Recommendations needs 36 at once, which would use most of Tiingo's hourly allowance), then Tiingo's. All three share Tiingo's one request a company a day.
+3. **Price history:** the Overview chart takes Tiingo's five years first, then FMP's. Recommendations and the Forecast chart take FMP's one year first (Recommendations needs 36 at once, which would use most of Tiingo's hourly allowance), then Tiingo's. All three share Tiingo's one request a company a day, and so does the Portfolio, whose request also carries each split and dividend.
 4. **Statements:** FMP for the companies it covers, cached a day; SEC company facts otherwise (2–10 MB each, so converted in memory and kept 12 hours).
 5. **Analysts:** ratings from Finnhub for every company, one request shared by the Overview, the Forecast tab and Recommendations, so all three show the same consensus. Targets, estimates and rating changes only exist for FMP's covered companies on the free plans.
 6. **Calendars:** earnings from Finnhub (the week view, the Overview's next report and Transcripts' latest share requests), dividends from FMP's calendar, macro events from the official calendars.
@@ -39,9 +40,9 @@ Every request goes through Next's data cache with a window matched to how often 
 | 1 hour | FMP company profile, the earnings calendar week, Google News searches |
 | 6 hours | Price history (FMP), SEC filings lists, FRED's target range, Finnhub's insider trades and company calendar, the largest companies' market caps |
 | 24 hours | Statements, ratios, targets, estimates, ratings, rating changes, daily closes, Tiingo's prices, release calendars |
-| 30 days | Each Form 4 filing (they never change) |
+| 30 days | Each Form 4 filing (they never change), Tiingo's fund names |
 
-Identical requests share one cached answer across pages, so parameters are kept the same on purpose: the price target, annual income statement and estimates requests are shared by the Overview, Financials, Compare, Forecast and Recommendations; the one-year closes by Recommendations and Forecast; Finnhub's ratings by three pages and its company calendar by two.
+Identical requests share one cached answer across pages, so parameters are kept the same on purpose: the price target, annual income statement and estimates requests are shared by the Overview, Financials, Compare, Forecast and Recommendations; the one-year closes by Recommendations and Forecast; Tiingo's five years by the Overview chart and the Portfolio; Finnhub's ratings by three pages, its company calendar by two, and its quotes and company profiles by the company headers, Favorites and the Portfolio.
 
 Next only caches successful responses, so failures need their own handling:
 
@@ -66,6 +67,7 @@ FMP requests for a first, uncached view; repeat views within the cache windows c
 | Recommendations | FMP coverage check, then a price target and a year of closes per covered company; Finnhub ratings | about 73 a day |
 | Stocks | FMP leaderboard (the largest list from the snapshot and one market-cap batch on plans without the screener) | 1 per list |
 | Favorites | Finnhub quotes | 0 |
+| Portfolio | Finnhub quotes and company profiles; Tiingo prices, splits and dividends (and SPY's for the comparison); Tiingo names for funds; Frankfurter's euro rates when needed. A statement import looks up only the companies held (Finnhub profiles by ISIN, Tiingo prices for foreign ones), once each; companies sold off are kept without prices and cost nothing | 0 |
 | Events | Official calendars; Gemini, Google News and Finnhub for the news scan | 0 |
 | VIX | FMP's VIX quote, Cboe's history | 1 a minute at most |
 | Earnings, Dividends | Finnhub; FMP's dividend calendar | 0; 1 per month shown |
