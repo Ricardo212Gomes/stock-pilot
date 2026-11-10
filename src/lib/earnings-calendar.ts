@@ -61,8 +61,11 @@ export function addDays(iso: string, days: number): string {
   return toIso(date);
 }
 
+// A real day: "2026-02-30" would roll over to March 2, so the date has to read back the same.
 export function isIsoDate(value: unknown): value is string {
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(toDate(value).getTime());
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = toDate(value);
+  return !Number.isNaN(date.getTime()) && toIso(date) === value;
 }
 
 // The week to open by default: the current one, or the next one on weekends, when the

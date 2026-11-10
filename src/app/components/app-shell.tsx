@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "compare" | "recommendations" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -21,6 +21,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "home") return "Home";
   if (section === "compare") return "Compare stocks";
   if (section === "recommendations") return "Recommendations";
+  if (section === "portfolio") return "Portfolio";
   if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
   if (section === "vix") return "VIX fear gauge";
@@ -99,6 +100,17 @@ export function AppShell({
                 <path d="M3.5 15.5 8 11l3 3 5.5-6.5M12.5 8.5h4v4" />
               </svg>
               <span>Recommendations</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "portfolio" ? " sidebar-link-active" : ""}`}
+              href="/portfolio"
+              title="Portfolio"
+              aria-current={activeSection === "portfolio" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 7h13v9h-13zM7.5 7V5h5v2M3.5 11h13M9 11v1.5h2V11" />
+              </svg>
+              <span>Portfolio</span>
             </Link>
             <Link
               className={`sidebar-link${activeSection === "favorites" ? " sidebar-link-active" : ""}`}
