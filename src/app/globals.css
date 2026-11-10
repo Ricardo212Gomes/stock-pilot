@@ -7105,7 +7105,8 @@ a.earnings-round:focus-visible {
   font-size: 13px;
 }
 
-.forecast-chart-tooltip {
+.forecast-chart-tooltip,
+.portfolio-chart-tooltip {
   display: grid;
   gap: 2px;
   padding: 8px 10px;
@@ -7317,6 +7318,721 @@ a.earnings-round:focus-visible {
 
 @media (max-width: 640px) {
   .data-sources-optional {
+    display: none;
+  }
+}
+
+/* Portfolio: four summary cards, the performance chart, holdings, industries and the trades with the form to
+   add one. Gains and losses carry a sign as well as colour; the chart pairs chart-1 with chart-3. */
+.portfolio-loading {
+  margin: 16px 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.portfolio-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.portfolio-card,
+.portfolio-section {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--title-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.portfolio-section {
+  margin-bottom: 16px;
+}
+
+.portfolio-card p {
+  margin: 0;
+}
+
+.portfolio-card-label {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.portfolio-card .portfolio-card-value {
+  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-card .portfolio-card-detail {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* The profit card's parts: a muted label and the signed figure on each line. */
+.portfolio-card-breakdown {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.portfolio-card-breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.portfolio-card-breakdown dt {
+  color: var(--muted-foreground);
+}
+
+.portfolio-card-breakdown dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.portfolio-card-breakdown dd small {
+  margin-left: 4px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.portfolio-section h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+/* A section's title with an action on the right, like "Delete all trades". */
+.portfolio-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.portfolio-delete-all {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.portfolio-delete-all:hover {
+  background: var(--selected);
+  color: var(--destructive);
+}
+
+.portfolio-delete-all:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+/* The currency the page is shown in, above the cards. */
+.portfolio-currency {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.portfolio-currency > span:first-child {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.portfolio-currency .chart-view-switch button:disabled {
+  cursor: wait;
+}
+
+.portfolio-subheading {
+  margin: 20px 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.portfolio-empty,
+.portfolio-note {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.portfolio-note {
+  font-size: 13px;
+}
+
+/* The chart: the summary and its switches on one row, the legend, the plot and its table. */
+.portfolio-chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 10px;
+}
+
+.portfolio-chart-summary {
+  margin: 0;
+  font-size: 15px;
+}
+
+.portfolio-chart-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portfolio-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.portfolio-legend span,
+.portfolio-chart-tooltip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.portfolio-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* Includes the x-axis band and room for the end labels on the right. */
+.portfolio-chart-plot {
+  height: 300px;
+}
+
+.portfolio-chart-label {
+  fill: var(--foreground);
+  font-size: 13px;
+}
+
+.portfolio-chart-table {
+  margin-top: 8px;
+}
+
+.portfolio-chart-table summary {
+  width: fit-content;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.portfolio-chart-table .table-scroll {
+  max-height: 360px;
+  margin-top: 8px;
+  overflow-y: auto;
+}
+
+.portfolio-chart-table .financial-table {
+  min-width: 0;
+}
+
+/* Closed positions fold away behind their count and realized total once there are many. */
+.portfolio-closed-details {
+  margin-top: 20px;
+}
+
+.portfolio-closed-details summary {
+  width: fit-content;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.portfolio-closed-details .table-scroll {
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+/* An instrument without prices: no logo or link, just its code and name. */
+.portfolio-unpriced strong {
+  color: var(--foreground);
+}
+
+/* Tables: holdings, closed positions and trades. */
+.portfolio-section .table-scroll {
+  margin-top: 12px;
+}
+
+.portfolio-table {
+  min-width: 0;
+}
+
+.portfolio-table thead th:first-child,
+.portfolio-table tbody th,
+.portfolio-table tfoot th {
+  text-align: left;
+}
+
+.portfolio-table td small,
+.portfolio-table th small {
+  display: block;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.portfolio-table th small,
+.portfolio-table td small:not(.negative-value) {
+  color: var(--muted-foreground);
+}
+
+.portfolio-table td.positive-value small,
+.portfolio-table td.negative-value small {
+  color: inherit;
+}
+
+.portfolio-table tfoot th,
+.portfolio-table tfoot td {
+  padding: 7px 10px;
+  border-top: 1px solid var(--border-strong);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-weight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.portfolio-bar {
+  display: inline-block;
+  width: 64px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--muted);
+}
+
+.portfolio-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--chart-1);
+}
+
+.portfolio-industries {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portfolio-industries li {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(80px, 2fr) 56px 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+}
+
+.portfolio-industries li:last-child {
+  border-bottom: 0;
+}
+
+.portfolio-industries .portfolio-bar {
+  width: 100%;
+}
+
+.portfolio-industry-weight,
+.portfolio-industry-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-industry-weight {
+  font-weight: 600;
+}
+
+.portfolio-industry-value {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.portfolio-badge {
+  padding: 0 7px;
+  border-radius: var(--radius);
+  background: var(--secondary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.portfolio-badge-buy {
+  color: var(--positive);
+}
+
+.portfolio-badge-sell {
+  color: var(--negative);
+}
+
+/* Trades read from the left: the date, the trade and the company, then the figures. */
+.portfolio-trades th:nth-child(-n + 3),
+.portfolio-trades td:nth-child(-n + 3) {
+  text-align: left;
+}
+
+.portfolio-trades tbody th a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.portfolio-delete {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.portfolio-delete svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.portfolio-delete:hover {
+  background: var(--selected);
+  color: var(--destructive);
+}
+
+.portfolio-delete:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+/* The trade form: the fields on one row on wide screens, two a row on phones. */
+.portfolio-form {
+  display: grid;
+  grid-template-columns: auto minmax(110px, 1fr) minmax(150px, 1fr) minmax(90px, 1fr) minmax(200px, 1.4fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.portfolio-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.portfolio-field > span,
+.portfolio-field > label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.portfolio-field input,
+.portfolio-field select {
+  min-width: 0;
+  height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--input-background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-field select {
+  padding-right: 6px;
+  cursor: pointer;
+}
+
+.portfolio-field input:focus,
+.portfolio-field select:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.portfolio-field .chart-view-switch {
+  height: 36px;
+  align-items: stretch;
+}
+
+/* The price and its currency share the field. */
+.portfolio-price {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.portfolio-submit {
+  justify-content: center;
+  height: 36px;
+  white-space: nowrap;
+}
+
+.portfolio-form-status {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* Importing a statement: a button under the form, opening a panel with the file, then what would be added. */
+.portfolio-import-toggle {
+  margin-top: 12px;
+}
+
+.portfolio-import-toggle .settings-status {
+  margin-top: 8px;
+}
+
+.portfolio-import {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+.portfolio-import h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.portfolio-import > p,
+.portfolio-import-preview > p {
+  max-width: 72ch;
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.portfolio-import > p:first-of-type {
+  color: var(--muted-foreground);
+}
+
+.portfolio-import-file input {
+  max-width: 100%;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 15px;
+}
+
+.portfolio-import-file input::file-selector-button {
+  margin-right: 10px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.portfolio-import-file input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.portfolio-import-pending {
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.portfolio-import-preview {
+  margin-top: 16px;
+}
+
+.portfolio-import-preview .table-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.portfolio-import-table td:nth-child(2) {
+  color: var(--muted-foreground);
+}
+
+.portfolio-import-summary {
+  display: grid;
+  gap: 6px;
+  max-width: 72ch;
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 15px;
+  list-style: disc;
+}
+
+/* An amount kept on one line, sign and all. */
+.portfolio-amount {
+  white-space: nowrap;
+}
+
+.portfolio-import-notes {
+  display: grid;
+  gap: 6px;
+  max-width: 72ch;
+  margin: 12px 0;
+  padding-left: 18px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  list-style: disc;
+}
+
+.portfolio-import-notes:empty {
+  display: none;
+}
+
+.portfolio-import-notes .portfolio-import-warning {
+  color: var(--foreground);
+}
+
+.portfolio-import .settings-toggle {
+  margin-bottom: 12px;
+}
+
+.portfolio-import .settings-actions {
+  margin-top: 4px;
+}
+
+.portfolio-import-close {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.portfolio-footnote p {
+  margin: 0 0 6px;
+}
+
+@media (max-width: 1100px) {
+  .portfolio-form {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* As specific as the table's small text, which is shown as a block. */
+.portfolio-table .portfolio-phone-only,
+.portfolio-table .portfolio-phone-badge {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .portfolio-optional {
+    display: none;
+  }
+
+  .portfolio-table .portfolio-phone-only {
+    display: block;
+  }
+
+  .portfolio-table small.portfolio-optional {
+    display: none;
+  }
+
+  .portfolio-card,
+  .portfolio-section {
+    padding: 14px 12px;
+  }
+
+  .portfolio-table .portfolio-phone-badge {
+    display: inline;
+    margin-right: 6px;
+  }
+
+  /* A split's note wraps, so the shares and the delete button fit beside the company. */
+  .portfolio-trades td small {
+    max-width: 110px;
+    margin-left: auto;
+    white-space: normal;
+  }
+
+  .portfolio-table th,
+  .portfolio-table td {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .portfolio-table .favorites-company .earnings-logo-box {
+    display: none;
+  }
+
+  /* One field a row: a date or "That day's close" doesn't fit half a phone at 16px, and smaller text would
+     make iOS zoom in on focus. */
+  .portfolio-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .portfolio-field .chart-view-switch {
+    width: fit-content;
+  }
+
+  .portfolio-import {
+    padding: 14px 12px;
+  }
+
+  /* The notes under a holding wrap, so the three columns fit. */
+  .portfolio-import-table td small {
+    max-width: 120px;
+    margin-left: auto;
+    white-space: normal;
+  }
+
+  .portfolio-import-table th small {
+    max-width: 130px;
+    white-space: normal;
+  }
+
+  .portfolio-currency {
+    justify-content: flex-start;
+  }
+
+  .portfolio-industries li {
+    grid-template-columns: minmax(0, 1fr) 72px 52px;
+  }
+
+  .portfolio-industry-value {
     display: none;
   }
 }

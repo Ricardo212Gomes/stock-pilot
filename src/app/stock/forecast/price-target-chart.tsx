@@ -1,9 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { PriceTargets } from "@/lib/analyst-forecast";
 import type { PricePoint } from "@/lib/technicals";
+import { useNarrow } from "../../components/use-narrow";
 
 const DAY_MS = 86_400_000;
 // Analysts' targets are for twelve months out.
@@ -40,22 +40,6 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   );
 }
 
-const NARROW = "(max-width: 640px)";
-
-// Phones get short labels and a narrow margin, so the price keeps most of the width. The server renders the
-// wide layout, and the chart switches after hydration.
-function useNarrow(): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const query = window.matchMedia(NARROW);
-      query.addEventListener("change", onChange);
-      return () => query.removeEventListener("change", onChange);
-    },
-    () => window.matchMedia(NARROW).matches,
-    () => false,
-  );
-}
-
 // A label at the far end of each target line, naming it beside its value (the value alone on phones).
 function EndLabel({ x, y, index, value, name, count, short }: { x?: number; y?: number; index?: number; value?: number; name: string; count: number; short: boolean }) {
   if (index !== count - 1 || x === undefined || y === undefined || value === undefined) return null;
@@ -67,7 +51,7 @@ function EndLabel({ x, y, index, value, name, count, short }: { x?: number; y?: 
 }
 
 // The last year of closes, then a dashed line from the latest close to each of the analysts' high, average and
-// low targets a year ahead.
+// low targets a year ahead. Phones get short labels and a narrow margin, so the price keeps most of the width.
 export function PriceTargetChart({ closes, targets }: { closes: PricePoint[]; targets: PriceTargets }) {
   const narrow = useNarrow();
   const last = closes.at(-1)!;

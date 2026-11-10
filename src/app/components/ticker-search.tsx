@@ -6,11 +6,11 @@ import { indexStocks, searchStocks, type StockEntry, type StockMatch } from "@/l
 
 const TICKER_PATTERN = /^[A-Za-z0-9.-]{1,15}$/;
 
-type StockIndex = ReturnType<typeof indexStocks>;
+export type StockIndex = ReturnType<typeof indexStocks>;
 let indexRequest: Promise<StockIndex> | null = null;
 
 // The stock list is a separate ~70 KB chunk, loaded the first time the search box is used.
-function loadIndex(): Promise<StockIndex> {
+export function loadStockIndex(): Promise<StockIndex> {
   indexRequest ??= import("@/data/us-stocks.json").then((module) => indexStocks(module.default as StockEntry[]));
   return indexRequest;
 }
@@ -45,7 +45,7 @@ export function TickerSearch({
   const results: StockMatch[] = useMemo(() => (index ? searchStocks(index, query) : []), [index, query]);
 
   function prepare() {
-    if (!index) loadIndex().then(setIndex, () => setIndex([]));
+    if (!index) loadStockIndex().then(setIndex, () => setIndex([]));
   }
 
   function go(symbol: string) {
