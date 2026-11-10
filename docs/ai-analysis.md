@@ -19,7 +19,7 @@ Each statement has its own focus in the prompt:
 - `src/app/stock/financials/layout.tsx`: wraps Financials in `AiReviewProvider`. A Next.js layout stays mounted while only the URL's search parameters change, so reviews survive tab and period switches and are cleared when leaving Financials.
 - `src/app/stock/financials/actions.ts`: the `reviewFinancials` server action.
 - `src/lib/financial-review.ts`: which statements are reviewed, the per-statement instructions, the prompt, figure formatting and response cleanup.
-- `src/lib/gemini.ts`: the shared Gemini request helper, also used by the valuation tools' AI autofill (see [`valuation.md`](./valuation.md)).
+- `src/lib/gemini.ts`: the shared Gemini request helper, also used by the valuation tools' AI autofill (see [`valuation.md`](./valuation.md)), with the streaming request the AI chat uses (see [`chat.md`](./chat.md)).
 - `src/app/components/spark-icon.tsx`: the spark icon used on every AI action.
 
 ## Configuration
@@ -60,4 +60,5 @@ The system instruction asks Gemini to:
 | 401 or 403 | Gemini rejected the API key. |
 | 429 | Gemini's request limit was reached. |
 | Empty response | Gemini returned an empty review. |
+| 503 (overloaded) | Gemini is busy right now. |
 | Network failure or timeout | Gemini could not be reached. |
