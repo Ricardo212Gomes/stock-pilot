@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
+import { AiChat } from "./components/ai-chat";
+import { isGeminiConfigured } from "@/lib/gemini";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -28,7 +31,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* The AI chat's button, on every page. It reads the page's address (the company on screen), so it
+            waits behind a Suspense boundary instead of holding pages back; without a Gemini key there's none. */}
+        {isGeminiConfigured() && (
+          <Suspense fallback={null}>
+            <AiChat />
+          </Suspense>
+        )}
+      </body>
     </html>
   );
 }

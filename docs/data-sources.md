@@ -12,7 +12,7 @@ StockPilot runs on free plans, and each provider's free plan is tight in a diffe
 | [Tiingo](https://www.tiingo.com) | 50 requests an hour, 1,000 a day, 500 stocks a month | `TIINGO_API_KEY` (optional) | Five years of daily closes with splits and dividends: the Overview chart first, the Portfolio's history, splits and dividends, any price history FMP can't give | Bulk screening (the hourly cap) |
 | [Frankfurter](https://frankfurter.dev) | Free, no key | — | The European Central Bank's daily euro rates, for portfolios in euros or with trades in euros | Anything else |
 | [Alpha Vantage](https://www.alphavantage.co) | 25 requests a day | `ALPHAVANTAGE_API_KEY` (optional) | Earnings call transcripts, each fetched once and saved | Anything else: its company overview with analyst targets is now paid |
-| Google Gemini | The free tier's per-minute and daily limits | `GEMINI_API_KEY` | AI reviews and summaries, valuation autofill, the events news scan, notification digests, always on request or once per item | Facts: it only reads data the app gives it |
+| Google Gemini | The free tier's per-minute and daily limits | `GEMINI_API_KEY` | AI reviews and summaries, valuation autofill, the events news scan, notification digests and the AI chat, always on request or once per item | Facts: it only reads data the app gives it |
 | Official calendars: Federal Reserve, FRED, BLS, BEA, Census Bureau, Wikipedia | Free, no key | — | The events timeline | — |
 | Cboe | Free, no key | — | The VIX's daily history since 1990 | — |
 | Google News RSS | Free, for personal use | — | Headlines for the events news scan | — |
@@ -27,7 +27,7 @@ StockPilot runs on free plans, and each provider's free plan is tight in a diffe
 5. **Analysts:** ratings from Finnhub for every company, one request shared by the Overview, the Forecast tab and Recommendations, so all three show the same consensus. Targets, estimates and rating changes only exist for FMP's covered companies on the free plans.
 6. **Calendars:** earnings from Finnhub (the week view, the Overview's next report and Transcripts' latest share requests), dividends from FMP's calendar, macro events from the official calendars.
 7. **Insiders:** Finnhub's Form 4 trades, enriched with roles and 10b5-1 plans from the SEC filings, which never change and are cached for a month.
-8. **AI only on request,** never on a page load: reviews, summaries and the news scan run when asked, are cached or saved, and only see data the app fetched.
+8. **AI only on request,** never on a page load: reviews, summaries, the news scan and the chat run when asked, are cached or saved, and only see data the app fetched. The chat's look-ups go through the pages' own loaders and caches.
 
 ## Caching and failures
 
@@ -69,6 +69,7 @@ FMP requests for a first, uncached view; repeat views within the cache windows c
 | Favorites | Finnhub quotes | 0 |
 | Portfolio | Finnhub quotes and company profiles; Tiingo prices, splits and dividends (and SPY's for the comparison); Tiingo names for funds; Frankfurter's euro rates when needed. A statement import looks up only the companies held (Finnhub profiles by ISIN, Tiingo prices for foreign ones), once each; companies sold off are kept without prices and cost nothing | 0 |
 | Events | Official calendars; Gemini, Google News and Finnhub for the news scan | 0 |
+| AI chat (each question) | Gemini, plus the look-ups the answer asks for (see [`chat.md`](./chat.md)), through the same cached requests as the pages | Usually 0 for the company on screen; otherwise what that company's pages cost |
 | VIX | FMP's VIX quote, Cboe's history | 1 a minute at most |
 | Earnings, Dividends | Finnhub; FMP's dividend calendar | 0; 1 per month shown |
 | Notifications (GitHub Actions) | Finnhub, SEC, Alpha Vantage, Gemini | 0 |
