@@ -51,6 +51,35 @@ export type RecommendationScreen = {
 
 export type RecommendationResult = { ok: true; data: RecommendationScreen } | { ok: false; reason: FmpFailureReason };
 
+// One company's figures: its closes, the analysts' consensus target and their ratings. Null without closes.
+// The AI portfolio uses it for holdings outside the screen. `failures` collects why closes couldn't load.
+export async function loadCandidate(
+  company: { symbol: string; name: string; marketCap: number | null },
+  now = new Date(),
+  failures: FmpFailureReason[] = [],
+): Promise<Candidate | null> {
+  const [closes, targets, ratings] = await Promise.all([
+    getDailyCloses(company.symbol, now).catch((error: unknown) => {
+      failures.push(failureReason(error));
+      return [];
+    }),
+    // Same request as the overview's price target, so the two share one cached response.
+    optionalRows("price-target-consensus", { symbol: company.symbol }),
+    analystRatings(company.symbol),
+  ]);
+  const trend = priceTrend(closes);
+  if (!trend) return null;
+  const consensus = num(targets[0]?.targetConsensus);
+  return {
+    symbol: company.symbol,
+    name: company.name,
+    marketCap: company.marketCap,
+    trend,
+    target: consensus !== null && consensus > 0 ? { consensus, high: num(targets[0]?.targetHigh), low: num(targets[0]?.targetLow) } : null,
+    ratings,
+  };
+}
+
 export async function getRecommendationScreen(now = new Date()): Promise<RecommendationResult> {
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) return { ok: false, reason: "not-configured" };
@@ -64,28 +93,9 @@ export async function getRecommendationScreen(now = new Date()): Promise<Recomme
   }
 
   const failures: FmpFailureReason[] = [];
-  const results = await mapLimit(companies.filter((company) => covered.has(company.symbol)), CONCURRENCY, async (company): Promise<Candidate | null> => {
-    const [closes, targets, ratings] = await Promise.all([
-      getDailyCloses(company.symbol, now).catch((error: unknown) => {
-        failures.push(failureReason(error));
-        return [];
-      }),
-      // Same request as the overview's price target, so the two share one cached response.
-      optionalRows("price-target-consensus", { symbol: company.symbol }),
-      analystRatings(company.symbol),
-    ]);
-    const trend = priceTrend(closes);
-    if (!trend) return null;
-    const consensus = num(targets[0]?.targetConsensus);
-    return {
-      symbol: company.symbol,
-      name: company.name,
-      marketCap: covered.get(company.symbol) ?? company.marketCap,
-      trend,
-      target: consensus !== null && consensus > 0 ? { consensus, high: num(targets[0]?.targetHigh), low: num(targets[0]?.targetLow) } : null,
-      ratings,
-    };
-  });
+  const results = await mapLimit(companies.filter((company) => covered.has(company.symbol)), CONCURRENCY, (company) =>
+    loadCandidate({ ...company, marketCap: covered.get(company.symbol) ?? company.marketCap }, now, failures),
+  );
 
   const candidates = results.filter((candidate): candidate is Candidate => candidate !== null);
   if (candidates.length === 0) return { ok: false, reason: failures[0] ?? "no-data" };

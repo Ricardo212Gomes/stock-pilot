@@ -20,6 +20,7 @@ const COMPANY_CARDS: Card[] = [
   { title: "Filings", detail: "10-Ks, 10-Qs, earnings releases and other SEC filings, with the press release a click away.", href: `/stock/filings?symbol=${EXAMPLE}`, cta: "Apple filings" },
   { title: "News", detail: "Headlines that mention the company from the last two weeks.", href: `/news?symbol=${EXAMPLE}`, cta: "Apple news" },
   { title: "Recommendations", detail: "Large stocks rated Buy, well below analysts' targets and pulled back under their 12-week average.", href: "/recommendations", cta: "See today's matches" },
+  { title: "AI portfolio", detail: "A paper-money portfolio that Gemini rebalances every week, with the reason for every move.", href: "/ai-portfolio", cta: "See this week's moves" },
   { title: "Compare", detail: "Up to five stocks side by side: P/E, expected EPS and revenue growth and margins, next to a typical range.", href: "/compare?symbols=AAPL,MSFT,GOOGL", cta: "Compare Apple, Microsoft and Alphabet" },
 ];
 

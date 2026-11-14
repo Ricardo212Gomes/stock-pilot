@@ -8709,3 +8709,38 @@ a.earnings-round:focus-visible {
     display: none;
   }
 }
+
+/* AI portfolio: each move's reason reads as a sentence, from the left, beside the figures. */
+.ai-moves td.ai-move-reason {
+  min-width: 280px;
+  max-width: 520px;
+  white-space: normal;
+  text-align: left;
+  color: var(--muted-foreground);
+}
+
+.ai-moves th:nth-child(-n + 2),
+.ai-moves td:nth-child(-n + 2) {
+  text-align: left;
+}
+
+.ai-run-summary {
+  max-width: 760px;
+  margin: 8px 0 16px;
+  line-height: 1.55;
+}
+
+.ai-run-problems {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  color: var(--negative);
+}
+
+.ai-earlier-run {
+  margin-top: 24px;
+}
+
+.ai-earlier-run h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}

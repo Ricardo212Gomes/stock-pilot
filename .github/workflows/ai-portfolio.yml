@@ -1,0 +1,46 @@
+# The AI portfolio's weekly rebalance on its Alpaca paper account (see docs/ai-portfolio.md).
+# Scheduled workflows only run from the repository's default branch.
+name: AI portfolio
+
+on:
+  schedule:
+    # Mondays at 15:00 UTC, with the market open in winter and summer time (it closes at 20:00 or 21:00 UTC), so a
+    # start hours late still trades. Tuesday is the fallback for a Monday holiday; a week already done is skipped.
+    - cron: "0 15 * * 1,2"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Print the moves without storing or placing them
+        type: boolean
+        default: true
+      force:
+        description: Run again in a week that's already done
+        type: boolean
+        default: false
+
+concurrency:
+  group: ai-portfolio
+
+jobs:
+  rebalance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Rebalance
+        run: npm run ai-portfolio:rebalance -- ${{ inputs.dry-run && '--dry-run' || '' }} ${{ inputs.force && '--force' || '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
+          # A repository variable (Settings › Secrets and variables › Actions › Variables), off until set to true.
+          AI_PORTFOLIO_TRADING_ENABLED: ${{ vars.AI_PORTFOLIO_TRADING_ENABLED }}

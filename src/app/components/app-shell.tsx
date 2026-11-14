@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "ai-portfolio" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -22,6 +22,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "compare") return "Compare stocks";
   if (section === "recommendations") return "Recommendations";
   if (section === "portfolio") return "Portfolio";
+  if (section === "ai-portfolio") return "AI portfolio";
   if (section === "favorites") return "Favorites";
   if (section === "maps") return "Market maps";
   if (section === "vix") return "VIX fear gauge";
@@ -111,6 +112,17 @@ export function AppShell({
                 <path d="M3.5 7h13v9h-13zM7.5 7V5h5v2M3.5 11h13M9 11v1.5h2V11" />
               </svg>
               <span>Portfolio</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "ai-portfolio" ? " sidebar-link-active" : ""}`}
+              href="/ai-portfolio"
+              title="AI portfolio"
+              aria-current={activeSection === "ai-portfolio" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 8h10v8h-10zM6.5 8V6h4v2M3.5 11.5h10M15.5 2.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z" />
+              </svg>
+              <span>AI portfolio</span>
             </Link>
             <Link
               className={`sidebar-link${activeSection === "favorites" ? " sidebar-link-active" : ""}`}

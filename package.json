@@ -15,7 +15,8 @@
     "notify:earnings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts earnings",
     "notify:transcripts": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts transcripts",
     "notify:news": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts news",
-    "notify:filings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts filings"
+    "notify:filings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts filings",
+    "ai-portfolio:rebalance": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/ai-portfolio.ts"
   },
   "dependencies": {
     "lightweight-charts": "^5.2.1",
