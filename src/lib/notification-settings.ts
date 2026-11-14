@@ -14,11 +14,12 @@ export type NotificationSettings = {
   transcriptSummaries: boolean;
   newsAlerts: boolean;
   filingAlerts: boolean;
+  reviewSummaries: boolean;
   linkCode: string | null;
 };
 
-export type NotificationKind = "earnings" | "transcripts" | "news" | "filings";
-export type NotificationPreferences = Pick<NotificationSettings, "earningsAlerts" | "transcriptSummaries" | "newsAlerts" | "filingAlerts">;
+export type NotificationKind = "earnings" | "transcripts" | "news" | "filings" | "reviews";
+export type NotificationPreferences = Pick<NotificationSettings, "earningsAlerts" | "transcriptSummaries" | "newsAlerts" | "filingAlerts" | "reviewSummaries">;
 
 type SettingsRow = {
   user_id: string;
@@ -28,6 +29,7 @@ type SettingsRow = {
   transcript_summaries: boolean;
   news_alerts: boolean;
   filing_alerts: boolean;
+  review_summaries: boolean;
   link_code: string | null;
   link_code_expires_at: Date | null;
 };
@@ -39,6 +41,8 @@ const DEFAULTS: NotificationSettings = {
   transcriptSummaries: true,
   newsAlerts: true,
   filingAlerts: true,
+  // Off by default: it's about the Portfolio's AI reviews, which are off by default too.
+  reviewSummaries: false,
   linkCode: null,
 };
 
@@ -52,6 +56,7 @@ function toSettings(row: SettingsRow | undefined, now = Date.now()): Notificatio
     transcriptSummaries: row.transcript_summaries,
     newsAlerts: row.news_alerts,
     filingAlerts: row.filing_alerts,
+    reviewSummaries: row.review_summaries,
     linkCode: codeValid ? row.link_code : null,
   };
 }
@@ -108,13 +113,14 @@ export async function disconnectTelegram(userId: string): Promise<void> {
 
 export async function setNotificationPreferences(userId: string, preferences: NotificationPreferences): Promise<void> {
   await getSql()`
-    insert into notification_settings (user_id, earnings_alerts, transcript_summaries, news_alerts, filing_alerts)
-    values (${userId}, ${preferences.earningsAlerts}, ${preferences.transcriptSummaries}, ${preferences.newsAlerts}, ${preferences.filingAlerts})
+    insert into notification_settings (user_id, earnings_alerts, transcript_summaries, news_alerts, filing_alerts, review_summaries)
+    values (${userId}, ${preferences.earningsAlerts}, ${preferences.transcriptSummaries}, ${preferences.newsAlerts}, ${preferences.filingAlerts}, ${preferences.reviewSummaries})
     on conflict (user_id) do update
       set earnings_alerts = excluded.earnings_alerts,
           transcript_summaries = excluded.transcript_summaries,
           news_alerts = excluded.news_alerts,
           filing_alerts = excluded.filing_alerts,
+          review_summaries = excluded.review_summaries,
           updated_at = now()
   `;
 }
@@ -126,6 +132,7 @@ const PREFERENCE_COLUMN: Record<NotificationKind, string> = {
   transcripts: "transcript_summaries",
   news: "news_alerts",
   filings: "filing_alerts",
+  reviews: "review_summaries",
 };
 
 // Users with a linked chat who want this kind of notification.

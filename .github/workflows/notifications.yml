@@ -12,12 +12,14 @@ on:
     - cron: "30 21 * * 1-5"
     # Every day at 22:30 UTC, after the evening's 8-Ks: analyses of favorites' new SEC filings.
     - cron: "30 22 * * *"
+    # Sundays at 18:00 UTC: the week's AI reviews of each portfolio (the reviews themselves run nightly).
+    - cron: "0 18 * * 0"
   workflow_dispatch:
     inputs:
       kind:
         description: Which notification to send
         type: choice
-        options: [earnings, transcripts, news, filings]
+        options: [earnings, transcripts, news, filings, reviews]
         default: transcripts
 
 concurrency:
@@ -35,7 +37,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Send notifications
-        run: npm run notify:${{ github.event.inputs.kind || (github.event.schedule == '0 7 * * 1' && 'earnings') || (github.event.schedule == '30 21 * * 1-5' && 'news') || (github.event.schedule == '30 22 * * *' && 'filings') || 'transcripts' }}
+        run: npm run notify:${{ github.event.inputs.kind || (github.event.schedule == '0 7 * * 1' && 'earnings') || (github.event.schedule == '30 21 * * 1-5' && 'news') || (github.event.schedule == '30 22 * * *' && 'filings') || (github.event.schedule == '0 18 * * 0' && 'reviews') || 'transcripts' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

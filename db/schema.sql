@@ -152,6 +152,9 @@ create index if not exists ai_portfolio_moves_run_idx on ai_portfolio_moves (run
 -- TradingAgents' reviews of each user's holdings (see docs/portfolio-reviews.md), off until the user turns them on.
 alter table portfolio_settings add column if not exists ai_reviews boolean not null default false;
 
+-- The Sunday summary of those reviews on Telegram: off until the user turns it on, unlike the first four kinds.
+alter table notification_settings add column if not exists review_summaries boolean not null default false;
+
 -- One review per holding and day: the rating, the plan and the report, with the position as it was reviewed.
 create table if not exists portfolio_reviews (
   id bigint generated always as identity primary key,

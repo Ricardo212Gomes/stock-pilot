@@ -8798,3 +8798,23 @@ a.earnings-round:focus-visible {
 .portfolio-review-report .ai-chat-markdown {
   max-width: 820px;
 }
+
+/* A $$ formula from the model, read into plain text (latexToText): set apart like an equation, figures aligned. */
+.ai-chat-markdown .ai-chat-math {
+  overflow-x: auto;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* The whole row opens the review. */
+.portfolio-review-row {
+  cursor: pointer;
+}
+
+.portfolio-review-row:hover > * {
+  background: var(--highlight);
+}

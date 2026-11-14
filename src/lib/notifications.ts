@@ -6,13 +6,15 @@ import { listedName } from "./listed-companies";
 import { CANDIDATES_PER_SYMBOL, selectNews, type NewsCandidate, type NewsPick } from "./news-digest";
 import { getFilings, isEarningsRelease, pressReleaseUrl, type Filing } from "./sec-filings";
 import { markSent, notificationRecipients, wasSent, type Recipient } from "./notification-settings";
+import { getReviewsEnabled, listRecentReviews, summarizeReviews, type Rating, type ReviewSummary } from "./portfolio-reviews";
 import { escapeHtml, sendTelegramMessage } from "./telegram";
 import { ensureTranscriptSummary, type TranscriptSummary } from "./transcript-summary";
 import { latestReport, quarterLabel, type FiscalQuarter } from "./transcripts";
 
 // Telegram notifications for each user's favorites: upcoming earnings, summaries of new earnings
-// calls, a digest of the news that matters, and analyses of new SEC filings. Run by
-// `npm run notify:earnings`, `notify:transcripts`, `notify:news` and `notify:filings`.
+// calls, a digest of the news that matters, and analyses of new SEC filings; and a weekly summary of the
+// Portfolio's AI reviews. Run by `npm run notify:earnings`, `notify:transcripts`, `notify:news`,
+// `notify:filings` and `notify:reviews`.
 
 export const EARNINGS_DAYS = 7;
 // Only calls this recent count as new; older ones were missed, not news.
@@ -323,6 +325,88 @@ export async function runFilingAlerts(today = new Date().toISOString().slice(0, 
         report.lines.push(`${symbol} ${filing.form} ${filing.filed} → ${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
       }
     }
+  }
+  return report;
+}
+
+// --- Weekly summary of the Portfolio's AI reviews --------------------------------------------------------
+
+// A rating counts as changed this week when its latest review is this recent and differs from the one before.
+export const REVIEW_WEEK_DAYS = 7;
+
+const REVIEW_GROUPS: { title: string; ratings: Rating[] }[] = [
+  { title: "Underweight or Sell", ratings: ["Sell", "Underweight"] },
+  { title: "Hold", ratings: ["Hold", "Review"] },
+  { title: "Overweight or Buy", ratings: ["Overweight", "Buy"] },
+];
+
+// The plan's first sentence, for the holdings worth a closer look.
+function firstSentence(text: string, limit = 180): string {
+  const sentence = text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? text;
+  return sentence.length > limit ? `${sentence.slice(0, limit - 1).trimEnd()}…` : sentence;
+}
+
+function ratingLabel(rating: Rating): string {
+  return rating === "Review" ? "No rating" : rating;
+}
+
+// One message: what changed this week, then every reviewed holding, Underweight and Sell first, each linking to
+// its report when the app has a public address. Null with no reviews. Plain code over the stored ratings: the
+// AI's work is the reviews themselves.
+export function reviewsMessage(summaries: ReviewSummary[], today: string): string | null {
+  if (summaries.length === 0) return null;
+  const since = addDays(today, -REVIEW_WEEK_DAYS);
+  const changed = summaries.filter((review) => review.previousRating && review.previousRating !== review.rating && review.analysisDate > since);
+  const lines = [`<b>AI reviews of your portfolio</b> · ${dayLabel(today)}`];
+  if (changed.length > 0) {
+    lines.push("", "<b>Changed this week</b>");
+    for (const review of changed) {
+      lines.push(`• ${tickerLink(review.symbol, "/portfolio/review")}: ${ratingLabel(review.previousRating!)} → <b>${ratingLabel(review.rating)}</b>`);
+    }
+  }
+  for (const group of REVIEW_GROUPS) {
+    const reviews = summaries.filter((review) => group.ratings.includes(review.rating));
+    if (reviews.length === 0) continue;
+    lines.push("", `<b>${group.title}</b>`);
+    for (const review of reviews) {
+      const target = review.priceTarget === null ? "" : ` · target $${review.priceTarget.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+      const stale = review.stale ? " (old)" : "";
+      lines.push(`• ${tickerLink(review.symbol, "/portfolio/review")} ${ratingLabel(review.rating)}${target} · ${dayLabel(review.analysisDate)}${stale}`);
+      // The plan for the ones to look at; the rest keep to one line.
+      if (group.ratings.includes("Sell")) lines.push(`  ${escapeHtml(firstSentence(review.summary))}`);
+    }
+  }
+  lines.push("", `<i>${summaries.length} holding${summaries.length === 1 ? "" : "s"} reviewed by TradingAgents' AI agents. Not investment advice.</i>`);
+  return lines.join("\n");
+}
+
+// Each user with the reviews on and the summary turned on gets one message a week, on Sundays.
+export async function runReviewSummaries(today = new Date().toISOString().slice(0, 10)): Promise<RunReport> {
+  const report: RunReport = { sent: 0, lines: [] };
+  const recipients = await notificationRecipients("reviews");
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has the weekly AI reviews on with Telegram connected."] };
+
+  const week = weekStart(today);
+  for (const recipient of recipients) {
+    if (await wasSent(recipient.userId, "reviews", week)) {
+      report.lines.push(`${recipient.userId}: already sent for the week of ${week}.`);
+      continue;
+    }
+    if (!(await getReviewsEnabled(recipient.userId))) {
+      report.lines.push(`${recipient.userId}: the Portfolio's AI reviews are off.`);
+      continue;
+    }
+    const message = reviewsMessage(summarizeReviews(await listRecentReviews(recipient.userId), today), today);
+    if (!message) {
+      report.lines.push(`${recipient.userId}: no reviews yet.`);
+      continue;
+    }
+    const sent = await deliver(recipient.chatId, message);
+    if (sent.ok) {
+      await record(recipient.userId, "reviews", week);
+      report.sent += 1;
+    }
+    report.lines.push(`${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
   }
   return report;
 }
