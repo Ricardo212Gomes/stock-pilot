@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buildPortfolioPrompt, parseProposal } from "./prompt";
-import { scored } from "./test-helpers";
+import { buildPortfolioPrompt, parseProposal, targetMayBeStale } from "./prompt";
+import { candidate, scored } from "./test-helpers";
+import { scoreCandidates } from "../recommendation-signals";
 
 describe("parseProposal", () => {
   it("reads percentages as fractions, tidies tickers and keeps the first entry for each", () => {
@@ -49,5 +50,16 @@ describe("buildPortfolioPrompt", () => {
     expect(prompt).toContain('"upsideToConsensusTargetPct":25');
     expect(prompt).toContain('"held":{"weightPct":6,"gainPct":12.3}');
     expect(prompt).toContain('"headlines":["Nvidia beats"]');
+  });
+});
+
+describe("targetMayBeStale", () => {
+  it("flags a large upside on a stock well under its 200-day average", () => {
+    // NVDA in November 2026: $162.85, a $320 consensus, a $204 200-day average.
+    const fallen = candidate("NVDA", 162.85);
+    const [nvda] = scoreCandidates([{ ...fallen, trend: { ...fallen.trend, sma200: 204.19 }, target: { consensus: 320, high: 515, low: 200 } }]);
+    expect(targetMayBeStale(nvda)).toBe(true);
+    // The test helper's stock: 25% upside and above its 200-day average.
+    expect(targetMayBeStale(scored(["MSFT"])[0])).toBe(false);
   });
 });

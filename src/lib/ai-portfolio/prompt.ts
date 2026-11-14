@@ -14,12 +14,23 @@ export type PortfolioCandidate = ScoredCandidate & {
 
 const pct = (value: number) => Math.round(value * 1000) / 10;
 
+// A stock this far under its 200-day average with this much upside to the analysts' target: after a fall, targets
+// lag the price, so the gap says more about stale targets than about value (NVDA in November 2026: $163 against a
+// $320 consensus, 20% under its 200-day average).
+export const STALE_TARGET = { below200Day: -0.1, upside: 0.4 };
+
+export function targetMayBeStale(candidate: ScoredCandidate): boolean {
+  const { sma200, close } = candidate.trend;
+  return sma200 !== null && close / sma200 - 1 < STALE_TARGET.below200Day && (candidate.upside ?? 0) > STALE_TARGET.upside;
+}
+
 export const PORTFOLIO_INSTRUCTIONS = [
   "You manage a long-only model portfolio of large US stocks, held for weeks to months and reviewed once a week.",
   `Hold ${RULES.minPositions} to ${RULES.maxPositions} positions, each between 1% and ${pct(RULES.maxWeight)}% of the portfolio, and keep at least ${pct(RULES.minCash)}% in cash.`,
   `Choose only tickers from the candidates. Sell or trim at most ${pct(RULES.maxSold)}% of the portfolio this week: keep a holding unless its case has clearly changed, since trading costs and noise hurt returns.`,
   "Spread the positions across different industries rather than one theme.",
   "Base every decision only on the figures and headlines given. Never invent numbers, events or news.",
+  "Analysts' targets lag a falling price. When targetMayBeStale is true, don't treat the upside as a reason to buy: weigh the price trend, whether the Buy share is rising or falling, and the headlines instead, and size such a position smaller.",
   "For each position give its weight as a percentage (7.5 for 7.5%) and one or two plain sentences on why, citing the figures that matter. For each holding you drop, an exit with its reason.",
   "The summary is two or three sentences on what changes this week and why. No Markdown.",
 ].join(" ");
@@ -63,6 +74,7 @@ function candidateRow(candidate: PortfolioCandidate) {
     marketCapBillions: candidate.marketCap === null ? null : round(candidate.marketCap / 1e9, 0),
     price: round(trend.close, 2),
     upsideToConsensusTargetPct: asPercent(candidate.upside),
+    targetMayBeStale: targetMayBeStale(candidate),
     analysts: ratings
       ? {
           count: ratings.total,
