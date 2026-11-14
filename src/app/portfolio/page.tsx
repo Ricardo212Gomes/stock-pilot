@@ -5,7 +5,9 @@ import { currentUserId, isAuthConfigured, signIn } from "@/auth";
 import { isDatabaseConfigured } from "@/lib/db";
 import type { Currency } from "@/lib/fx";
 import { ExchangeRatesUnavailable, getPortfolio, portfolioToday, type Income, type PortfolioView, type Trade } from "@/lib/portfolio";
+import { getReviewsEnabled, listRecentReviews, summarizeReviews } from "@/lib/portfolio-reviews";
 import { getPortfolioCurrency, listIncome, listTrades } from "@/lib/portfolio-trades";
+import type { PortfolioReviews } from "./ai-reviews";
 import { CurrencySwitch } from "./currency-switch";
 import { PortfolioDashboard } from "./dashboard";
 import { ImportStatement } from "./import-statement";
@@ -26,6 +28,16 @@ function Notice({ title, children }: { title: string; children: React.ReactNode 
       </div>
     </section>
   );
+}
+
+// TradingAgents' reviews of the holdings; null when their table is missing (npm run db:setup hasn't run since).
+async function loadReviews(userId: string): Promise<PortfolioReviews | null> {
+  try {
+    const [enabled, recent] = await Promise.all([getReviewsEnabled(userId), listRecentReviews(userId)]);
+    return { enabled, summaries: summarizeReviews(recent, portfolioToday()) };
+  } catch {
+    return null;
+  }
 }
 
 type PortfolioPageProps = {
@@ -84,6 +96,7 @@ async function PortfolioBody({ showAllTrades }: { showAllTrades: boolean }) {
   }
 
   let view: PortfolioView;
+  const reviews = loadReviews(userId);
   try {
     view = await getPortfolio(trades, undefined, currency, income);
   } catch (error) {
@@ -100,7 +113,7 @@ async function PortfolioBody({ showAllTrades }: { showAllTrades: boolean }) {
       </>
     );
   }
-  return <PortfolioDashboard view={view} showAllTrades={showAllTrades} />;
+  return <PortfolioDashboard view={view} showAllTrades={showAllTrades} reviews={await reviews} />;
 }
 
 export default async function PortfolioPage({ searchParams }: PortfolioPageProps) {

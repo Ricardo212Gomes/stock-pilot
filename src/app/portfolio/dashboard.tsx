@@ -11,7 +11,9 @@ import {
   type Split,
   type Trade,
 } from "@/lib/portfolio";
+import type { ReviewSummary } from "@/lib/portfolio-reviews";
 import { formatMoney, formatPercent, formatSignedPercent } from "@/lib/valuation/format";
+import { AiReviews, ReviewCell, type PortfolioReviews } from "./ai-reviews";
 import { CurrencySwitch } from "./currency-switch";
 import { DeleteAllTrades } from "./delete-all-trades";
 import { DeleteTradeButton } from "./delete-trade-button";
@@ -149,7 +151,7 @@ function SummaryCards({ view }: { view: PortfolioView }) {
   );
 }
 
-function Holdings({ view }: { view: PortfolioView }) {
+function Holdings({ view, reviews }: { view: PortfolioView; reviews: Map<string, ReviewSummary> | null }) {
   const { holdings, closed, totals, currency } = view;
   const closedRealized = closed.reduce((total, position) => total + position.realized, 0);
   return (
@@ -170,6 +172,7 @@ function Holdings({ view }: { view: PortfolioView }) {
                 <th scope="col">Value</th>
                 <th scope="col" className="portfolio-optional">Gain</th>
                 <th scope="col" className="portfolio-optional">Weight</th>
+                {reviews && <th scope="col" className="portfolio-optional">AI review</th>}
               </tr>
             </thead>
             <tbody>
@@ -197,6 +200,7 @@ function Holdings({ view }: { view: PortfolioView }) {
                       {formatPercent(holding.weight)}
                     </span>
                   </td>
+                  {reviews && <td className="portfolio-optional">{holding.priced ? <ReviewCell review={reviews.get(holding.symbol)} /> : "—"}</td>}
                 </tr>
               ))}
             </tbody>
@@ -214,6 +218,7 @@ function Holdings({ view }: { view: PortfolioView }) {
                   <small>{formatSignedPercent(totals.gainPercent)}</small>
                 </td>
                 <td className="portfolio-optional" />
+                {reviews && <td className="portfolio-optional" />}
               </tr>
             </tfoot>
           </table>
@@ -382,7 +387,9 @@ function Trades({ view, showAll }: { view: PortfolioView; showAll: boolean }) {
   );
 }
 
-export function PortfolioDashboard({ view, showAllTrades = false }: { view: PortfolioView; showAllTrades?: boolean }) {
+// `reviews` is null when the reviews' table isn't there (npm run db:setup hasn't run since they were added).
+export function PortfolioDashboard({ view, showAllTrades = false, reviews = null }: { view: PortfolioView; showAllTrades?: boolean; reviews?: PortfolioReviews | null }) {
+  const reviewed = reviews && (reviews.enabled || reviews.summaries.length > 0) ? new Map(reviews.summaries.map((review) => [review.symbol, review])) : null;
   return (
     <>
       <CurrencySwitch current={view.currency} />
@@ -401,7 +408,8 @@ export function PortfolioDashboard({ view, showAllTrades = false }: { view: Port
           </p>
         )}
       </section>
-      <Holdings view={view} />
+      <Holdings view={view} reviews={reviewed} />
+      {reviews && <AiReviews reviews={reviews} holdings={view.holdings.filter((holding) => holding.priced).length} />}
       <Industries view={view} />
       <Income view={view} />
       <Trades view={view} showAll={showAllTrades} />

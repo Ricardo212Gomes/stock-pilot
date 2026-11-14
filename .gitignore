@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python for agents/ (TradingAgents)
+/agents/.venv/
+__pycache__/

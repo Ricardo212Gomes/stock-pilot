@@ -1,0 +1,65 @@
+# TradingAgents' daily reviews of users' holdings (see docs/portfolio-reviews.md).
+# Scheduled workflows only run from the repository's default branch.
+name: Portfolio reviews
+
+on:
+  schedule:
+    # Every day at 23:00 UTC, after the US close: two holdings per user who turned the reviews on.
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+    inputs:
+      user:
+        description: One user's id (empty for everyone who turned the reviews on)
+        type: string
+        default: ""
+      ticker:
+        description: One holding to review (needs a user)
+        type: string
+        default: ""
+
+concurrency:
+  group: portfolio-review
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    # About 8 minutes an analysis, two per user.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: agents/requirements.txt
+      - run: python -m venv agents/.venv && agents/.venv/bin/pip install -r agents/requirements.txt
+      # TradingAgents' decision log (it settles its past calls and learns from them), checkpoints and data cache.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.tradingagents
+          key: tradingagents-${{ github.run_id }}
+          restore-keys: tradingagents-
+      - name: Review
+        # The inputs go through the environment, never into the script's text.
+        run: |
+          if [ -n "$REVIEW_USER" ] && [ -n "$REVIEW_TICKER" ]; then
+            npm run portfolio:review -- --user "$REVIEW_USER" --ticker "$REVIEW_TICKER"
+          elif [ -n "$REVIEW_USER" ]; then
+            npm run portfolio:review -- --user "$REVIEW_USER"
+          else
+            npm run portfolio:review -- --opted-in
+          fi
+        env:
+          REVIEW_USER: ${{ inputs.user }}
+          REVIEW_TICKER: ${{ inputs.ticker }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
+          AGENTS_GOOGLE_API_KEY: ${{ secrets.AGENTS_GOOGLE_API_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}

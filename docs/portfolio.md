@@ -8,6 +8,8 @@
 
 The profit is the gain on what's held, plus the realized gains on everything sold, the dividends and the interest on cash. The card breaks it down into those four parts.
 
+Once turned on, **AI reviews** have TradingAgents rate each holding against the user's shares and average cost; see [`portfolio-reviews.md`](./portfolio-reviews.md).
+
 Trades belong to the Google account (see [`auth.md`](./auth.md)) and are stored in Postgres. Prices come from Finnhub and Tiingo, so a portfolio costs no FMP requests. The page is shown in dollars or euros (see [Dollars or euros](#dollars-or-euros)).
 
 ## Adding a trade

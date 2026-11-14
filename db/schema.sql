@@ -148,3 +148,26 @@ create table if not exists ai_portfolio_moves (
 );
 
 create index if not exists ai_portfolio_moves_run_idx on ai_portfolio_moves (run_id);
+
+-- TradingAgents' reviews of each user's holdings (see docs/portfolio-reviews.md), off until the user turns them on.
+alter table portfolio_settings add column if not exists ai_reviews boolean not null default false;
+
+-- One review per holding and day: the rating, the plan and the report, with the position as it was reviewed.
+create table if not exists portfolio_reviews (
+  id bigint generated always as identity primary key,
+  user_id text not null,
+  symbol text not null,
+  analysis_date date not null,
+  rating text not null check (rating in ('Buy', 'Overweight', 'Hold', 'Underweight', 'Sell', 'Review')),
+  summary text not null,
+  price_target numeric,
+  horizon text,
+  report jsonb not null default '{}',
+  shares numeric not null,
+  average_cost numeric not null,
+  model text,
+  created_at timestamptz not null default now(),
+  unique (user_id, symbol, analysis_date)
+);
+
+create index if not exists portfolio_reviews_user_idx on portfolio_reviews (user_id, symbol, analysis_date desc);
