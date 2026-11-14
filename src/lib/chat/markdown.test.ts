@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseInline, parseMarkdown, plainText, type Block } from "./markdown";
+import { latexToText, parseInline, parseMarkdown, plainText, type Block } from "./markdown";
 
 describe("parseInline", () => {
   it("reads bold, italics, code and line breaks", () => {
@@ -82,5 +82,28 @@ describe("plainText", () => {
   it("drops the markers for copying, with tables as tab-separated rows", () => {
     const blocks = parseMarkdown("Apple's **revenue**:\n\n| Year | Revenue |\n| --- | --- |\n| 2025 | $416B |\n\n1. First\n   - inner");
     expect(plainText(blocks)).toBe("Apple's revenue:\n\nYear\tRevenue\n2025\t$416B\n\n1. First\n  • inner");
+  });
+});
+
+describe("formulas", () => {
+  it("reads a $$ formula as plain text, on one line or several", () => {
+    // From a TradingAgents report on NVDA.
+    expect(parseMarkdown("Trend:\n\n$$\\text{Price } (\\$162.85) < \\text{10 EMA } (\\$180.56) < \\text{200 SMA } (\\$203.92)$$\n\nMore.")).toEqual([
+      { type: "paragraph", content: [{ type: "text", text: "Trend:" }] },
+      { type: "math", text: "Price ($162.85) < 10 EMA ($180.56) < 200 SMA ($203.92)" },
+      { type: "paragraph", content: [{ type: "text", text: "More." }] },
+    ]);
+    expect(parseMarkdown("$$\n\\text{Upside} = \\frac{\\text{Target} - \\text{Price}}{\\text{Price}} \\times 100\\%\n$$")).toEqual([
+      { type: "math", text: "Upside = (Target - Price)/Price × 100%" },
+    ]);
+  });
+
+  it("turns LaTeX's commands into readable symbols", () => {
+    expect(latexToText("\\Delta P \\approx \\beta \\cdot \\sigma \\leq 2\\,\\text{ATR} \\rightarrow \\text{stop}")).toBe("Δ P ≈ β · σ ≤ 2 ATR → stop");
+    expect(latexToText("\\frac{1}{2} + x^{2} + \\sqrt{\\text{var}}")).toBe("1/2 + x^2 + √(var)");
+  });
+
+  it("copies a formula as its text", () => {
+    expect(plainText(parseMarkdown("$$a \\geq b$$"))).toBe("a ≥ b");
   });
 });

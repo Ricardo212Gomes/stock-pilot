@@ -3,9 +3,10 @@
 //   npm run notify:transcripts  — summaries of favorites' new earnings calls
 //   npm run notify:news         — the day's relevant news about favorites
 //   npm run notify:filings      — AI analyses of favorites' new SEC filings
+//   npm run notify:reviews      — the weekly summary of the Portfolio's AI reviews
 // Add -- --dry-run to print the messages instead of sending them.
 import { closeDb, isDatabaseConfigured } from "@/lib/db";
-import { runEarningsAlerts, runFilingAlerts, runNewsDigest, runTranscriptSummaries, type RunReport } from "@/lib/notifications";
+import { runEarningsAlerts, runFilingAlerts, runNewsDigest, runReviewSummaries, runTranscriptSummaries, type RunReport } from "@/lib/notifications";
 import { isTelegramConfigured } from "@/lib/telegram";
 
 async function main(kind: string | undefined): Promise<number> {
@@ -15,6 +16,7 @@ async function main(kind: string | undefined): Promise<number> {
     transcripts: () => runTranscriptSummaries(),
     news: () => runNewsDigest(),
     filings: () => runFilingAlerts(),
+    reviews: () => runReviewSummaries(),
   };
   const run = kind ? runs[kind] : undefined;
   if (!run) {

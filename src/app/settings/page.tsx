@@ -63,6 +63,7 @@ async function SettingsBody() {
         transcriptSummaries: settings.transcriptSummaries,
         newsAlerts: settings.newsAlerts,
         filingAlerts: settings.filingAlerts,
+        reviewSummaries: settings.reviewSummaries,
       }}
     />
   );
