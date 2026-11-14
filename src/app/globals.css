@@ -8771,6 +8771,7 @@ a.earnings-round:focus-visible {
 
 .portfolio-reviews th:nth-child(-n + 2),
 .portfolio-reviews td:nth-child(-n + 2),
+.portfolio-reviews th:last-child,
 .portfolio-reviews td.portfolio-review-plan {
   text-align: left;
 }

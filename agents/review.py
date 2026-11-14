@@ -14,7 +14,6 @@ Add --dry-run to print the reviews without saving them.
 from __future__ import annotations
 
 import argparse
-import contextlib
 import datetime as dt
 import json
 import os
@@ -140,14 +139,22 @@ def report_sections(graph, state, ticker: str) -> dict:
         return sections
 
 
-def last_reviewed(connection, user_id: str) -> dict[str, str]:
-    with connection.cursor() as cursor:
+def connect():
+    """A short connection for one step. An analysis takes minutes, and a connection left idle in a transaction that
+    long is closed by poolers such as Neon's, so none is held across one."""
+    import psycopg
+
+    return psycopg.connect(os.environ["DATABASE_URL"], autocommit=True)
+
+
+def last_reviewed(user_id: str) -> dict[str, str]:
+    with connect() as connection, connection.cursor() as cursor:
         cursor.execute("select symbol, max(analysis_date) from portfolio_reviews where user_id = %s group by symbol", (user_id,))
         return {symbol: date.isoformat() for symbol, date in cursor.fetchall()}
 
 
-def save_review(connection, user_id: str, symbol: str, date: str, decision: dict, report: dict, position: dict, model: str) -> None:
-    with connection.cursor() as cursor:
+def save_review(user_id: str, symbol: str, date: str, decision: dict, report: dict, position: dict, model: str) -> None:
+    with connect() as connection, connection.cursor() as cursor:
         cursor.execute(
             """
             insert into portfolio_reviews
@@ -161,7 +168,6 @@ def save_review(connection, user_id: str, symbol: str, date: str, decision: dict
             (user_id, symbol, date, decision["rating"], decision["summary"], decision["price_target"], decision["horizon"],
              json.dumps(report), position["quantity"], position["average_price"], model),
         )
-    connection.commit()
 
 
 def main(argv: list[str]) -> int:
@@ -183,7 +189,6 @@ def main(argv: list[str]) -> int:
         print(f"Set {' and '.join(missing)} first (see docs/portfolio-reviews.md).", file=sys.stderr)
         return 1
 
-    import psycopg
     from tradingagents.default_config import DEFAULT_CONFIG
     from tradingagents.graph.trading_graph import TradingAgentsGraph
     from tradingagents.portfolio import PortfolioContext
@@ -199,33 +204,37 @@ def main(argv: list[str]) -> int:
     graph = TradingAgentsGraph(selected_analysts=ANALYSTS, config=config)
     reviewed = failed = 0
     # A dry run reads and writes nothing in the database, so it works before npm run db:setup.
-    with contextlib.nullcontext() if args.dry_run else psycopg.connect(os.environ["DATABASE_URL"]) as connection:
-        for book in books:
-            user_id, positions = book["userId"], book["positions"]
-            limit = len(positions) if args.all else args.limit
-            last = {} if args.dry_run else last_reviewed(connection, user_id)
-            symbols = pick_symbols(positions, last, date, limit, args.ticker)
-            if args.ticker and not symbols:
-                print(f"{args.ticker} isn't one of {user_id}'s priced holdings.", file=sys.stderr)
+    for book in books:
+        user_id, positions = book["userId"], book["positions"]
+        limit = len(positions) if args.all else args.limit
+        last = {} if args.dry_run else last_reviewed(user_id)
+        symbols = pick_symbols(positions, last, date, limit, args.ticker)
+        if args.ticker and not symbols:
+            print(f"{args.ticker} isn't one of {user_id}'s priced holdings.", file=sys.stderr)
+            failed += 1
+            continue
+        portfolio = PortfolioContext.model_validate({"currency": book["currency"], "positions": positions})
+        for symbol in symbols:
+            position = next(item for item in positions if item["ticker"] == symbol)
+            print(f"Reviewing {symbol} for {user_id} ({position['quantity']:g} shares at ${position['average_price']:,.2f})…", flush=True)
+            try:
+                state, _ = graph.propagate(symbol, date, portfolio=portfolio)
+                decision = parse_decision(state.get("final_trade_decision") or "")
+                report = report_sections(graph, state, symbol)
+            except Exception as error:  # one holding failing (the day's Gemini limit, a data gap) shouldn't stop the rest
+                print(f"  {symbol} failed: {error}", file=sys.stderr)
                 failed += 1
                 continue
-            portfolio = PortfolioContext.model_validate({"currency": book["currency"], "positions": positions})
-            for symbol in symbols:
-                position = next(item for item in positions if item["ticker"] == symbol)
-                print(f"Reviewing {symbol} for {user_id} ({position['quantity']:g} shares at ${position['average_price']:,.2f})…", flush=True)
+            target = f", target ${decision['price_target']:,.2f}" if decision["price_target"] else ""
+            print(f"  {decision['rating']}{target}: {decision['summary'][:300]}")
+            if not args.dry_run:
                 try:
-                    state, _ = graph.propagate(symbol, date, portfolio=portfolio)
-                    decision = parse_decision(state.get("final_trade_decision") or "")
-                    report = report_sections(graph, state, symbol)
-                except Exception as error:  # one holding failing (the day's Gemini limit, a data gap) shouldn't stop the rest
-                    print(f"  {symbol} failed: {error}", file=sys.stderr)
+                    save_review(user_id, symbol, date, decision, report, position, model)
+                except Exception as error:
+                    print(f"  {symbol} couldn't be saved: {error}", file=sys.stderr)
                     failed += 1
                     continue
-                target = f", target ${decision['price_target']:,.2f}" if decision["price_target"] else ""
-                print(f"  {decision['rating']}{target}: {decision['summary'][:300]}")
-                if not args.dry_run:
-                    save_review(connection, user_id, symbol, date, decision, report, position, model)
-                reviewed += 1
+            reviewed += 1
     print(f"Done: {reviewed} reviewed{' (dry run, nothing saved)' if args.dry_run else ''}, {failed} failed.")
     return 1 if failed and not reviewed else 0
 
