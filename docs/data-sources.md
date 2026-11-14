@@ -12,7 +12,8 @@ StockPilot runs on free plans, and each provider's free plan is tight in a diffe
 | [Tiingo](https://www.tiingo.com) | 50 requests an hour, 1,000 a day, 500 stocks a month | `TIINGO_API_KEY` (optional) | Five years of daily closes with splits and dividends: the Overview chart first, the Portfolio's history, splits and dividends, any price history FMP can't give | Bulk screening (the hourly cap) |
 | [Frankfurter](https://frankfurter.dev) | Free, no key | — | The European Central Bank's daily euro rates, for portfolios in euros or with trades in euros | Anything else |
 | [Alpha Vantage](https://www.alphavantage.co) | 25 requests a day | `ALPHAVANTAGE_API_KEY` (optional) | Earnings call transcripts, each fetched once and saved | Anything else: its company overview with analyst targets is now paid |
-| Google Gemini | The free tier's per-minute and daily limits | `GEMINI_API_KEY` | AI reviews and summaries, valuation autofill, the events news scan, notification digests and the AI chat, always on request or once per item | Facts: it only reads data the app gives it |
+| [Alpaca](https://alpaca.markets) | Free paper trading account; rate limits per account | `ALPACA_API_KEY`, `ALPACA_SECRET_KEY` (optional) | The AI portfolio's paper account: its balance, positions, history and orders | Prices or data for the other pages |
+| Google Gemini | The free tier's per-minute and daily limits | `GEMINI_API_KEY` | AI reviews and summaries, valuation autofill, the events news scan, notification digests, the AI chat and the AI portfolio's weekly review, always on request or once per item | Facts: it only reads data the app gives it |
 | Official calendars: Federal Reserve, FRED, BLS, BEA, Census Bureau, Wikipedia | Free, no key | — | The events timeline | — |
 | Cboe | Free, no key | — | The VIX's daily history since 1990 | — |
 | Google News RSS | Free, for personal use | — | Headlines for the events news scan | — |
@@ -68,6 +69,7 @@ FMP requests for a first, uncached view; repeat views within the cache windows c
 | Stocks | FMP leaderboard (the largest list from the snapshot and one market-cap batch on plans without the screener) | 1 per list |
 | Favorites | Finnhub quotes | 0 |
 | Portfolio | Finnhub quotes and company profiles; Tiingo prices, splits and dividends (and SPY's for the comparison); Tiingo names for funds; Frankfurter's euro rates when needed. A statement import looks up only the companies held (Finnhub profiles by ISIN, Tiingo prices for foreign ones), once each; companies sold off are kept without prices and cost nothing | 0 |
+| AI portfolio | Alpaca's account, positions and history; Tiingo's SPY prices, shared with the Portfolio. Its weekly job runs the Recommendations screen uncached, with Finnhub headlines and one Gemini request (see [`ai-portfolio.md`](./ai-portfolio.md)) | 0; about 73 for the weekly job |
 | Events | Official calendars; Gemini, Google News and Finnhub for the news scan | 0 |
 | AI chat (each question) | Gemini, plus the look-ups the answer asks for (see [`chat.md`](./chat.md)), through the same cached requests as the pages | Usually 0 for the company on screen; otherwise what that company's pages cost |
 | VIX | FMP's VIX quote, Cboe's history | 1 a minute at most |
