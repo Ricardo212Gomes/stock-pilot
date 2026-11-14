@@ -11,7 +11,10 @@ export type Rating = (typeof RATINGS)[number] | "Review";
 // A review older than this is shown as stale: the daily job should have reached the holding again by then.
 export const STALE_DAYS = 21;
 
-export type ReviewSection = { id: string; title: string; text: string };
+// One agent's report. `tone` names its colour on the page; `group` is where it sits in the debate; `open` sections
+// start unfolded; `preview` is its first sentence, shown while it's folded.
+export type SectionGroup = "Decision" | "Research" | "Risk" | "Analysts";
+export type ReviewSection = { id: string; title: string; group: SectionGroup; tone: string; open: boolean; preview: string; text: string };
 
 export type Review = {
   symbol: string;
@@ -30,19 +33,43 @@ export type ReviewWithReport = Review & { sections: ReviewSection[] };
 // A holding's latest review, the rating before it, and whether it's old.
 export type ReviewSummary = Review & { previousRating: Rating | null; stale: boolean };
 
-// The report's sections in reading order, as TradingAgents saves them (agents/review.py stores them by these ids).
-export const REPORT_SECTIONS: { id: string; title: string }[] = [
-  { id: "decision", title: "Final decision" },
-  { id: "trader", title: "Trader's plan" },
-  { id: "bull", title: "Bull case" },
-  { id: "bear", title: "Bear case" },
-  { id: "manager", title: "Research manager" },
-  { id: "aggressive", title: "Aggressive risk view" },
-  { id: "conservative", title: "Conservative risk view" },
-  { id: "neutral", title: "Neutral risk view" },
-  { id: "market", title: "Market analyst" },
-  { id: "news", title: "News analyst" },
+// The report's sections in reading order, as TradingAgents saves them (agents/review.py stores them by these ids):
+// the decision and how it was reached first, then the debates and the analysts' reports they started from.
+export const REPORT_SECTIONS: Omit<ReviewSection, "preview" | "text">[] = [
+  { id: "decision", title: "Portfolio manager's decision", group: "Decision", tone: "decision", open: true },
+  { id: "trader", title: "Trader's plan", group: "Decision", tone: "trader", open: true },
+  { id: "manager", title: "Research manager", group: "Research", tone: "manager", open: true },
+  { id: "bull", title: "Bull case", group: "Research", tone: "bull", open: false },
+  { id: "bear", title: "Bear case", group: "Research", tone: "bear", open: false },
+  { id: "aggressive", title: "Aggressive risk view", group: "Risk", tone: "aggressive", open: false },
+  { id: "conservative", title: "Conservative risk view", group: "Risk", tone: "conservative", open: false },
+  { id: "neutral", title: "Neutral risk view", group: "Risk", tone: "neutral", open: false },
+  { id: "market", title: "Market analyst", group: "Analysts", tone: "market", open: false },
+  { id: "news", title: "News analyst", group: "Analysts", tone: "news", open: false },
 ];
+
+// A short "**Analysis Date:** November 14, 2026" line: a report's header fields, not its first sentence.
+const FIELD_LINE = /^(?:[-*+]\s+)?(?:\*\*|__)[^*_]{1,40}(?::(?:\*\*|__)|(?:\*\*|__):)/;
+
+// A report's first sentence as plain text: Markdown's markers, a speaker's "Bull Analyst:", headings and header
+// fields left out.
+export function previewOf(text: string, limit = 200): string {
+  const plain = text
+    .split("\n")
+    .map((line) => line.trim())
+    // A field line has no sentence in it ("$162.85" isn't one); "**Rationale**: The debate …." is prose.
+    .filter((line) => line && !(FIELD_LINE.test(line) && !/[a-z)"'][.!?](?:\s|$)/.test(line)) && !/^#{1,6}\s/.test(line) && !/^\$\$/.test(line) && !/^[-*_]{3,}$/.test(line) && !/^\|/.test(line))
+    .join(" ")
+    .replace(/\*\*|__|`/g, "")
+    .replace(/(^|\s)[*_](\S)/g, "$1$2")
+    .replace(/(\S)[*_](?=\s|[.,;:!?]|$)/g, "$1")
+    .replace(/^(?:[-*+]\s+)/, "")
+    .replace(/^[A-Z][A-Za-z ]{2,30} Analyst:\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const sentence = plain.match(/^.{20,}?[.!?](?=\s|$)/)?.[0] ?? plain;
+  return sentence.length > limit ? `${sentence.slice(0, limit - 1).trimEnd()}…` : sentence;
+}
 
 function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000);
@@ -149,9 +176,9 @@ export async function getLatestReview(userId: string, symbol: string): Promise<R
   `;
   if (!row) return null;
   const report = row.report ?? {};
-  const sections = REPORT_SECTIONS.flatMap(({ id, title }) => {
-    const text = report[id];
-    return typeof text === "string" && text.trim() ? [{ id, title, text }] : [];
+  const sections = REPORT_SECTIONS.flatMap((section) => {
+    const text = report[section.id];
+    return typeof text === "string" && text.trim() ? [{ ...section, preview: previewOf(text), text }] : [];
   });
   return { ...fromRow(row), sections };
 }

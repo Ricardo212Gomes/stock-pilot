@@ -15,10 +15,15 @@ export function reviewHref(symbol: string): string {
   return `/portfolio/review?symbol=${encodeURIComponent(symbol)}`;
 }
 
+// A rating's colour: green to add, red to cut, amber to hold, grey without one. Shared with the report page.
+export function ratingTone(rating: Rating): "up" | "down" | "hold" | "none" {
+  if (rating === "Buy" || rating === "Overweight") return "up";
+  if (rating === "Sell" || rating === "Underweight") return "down";
+  return rating === "Hold" ? "hold" : "none";
+}
+
 function badgeClass(rating: Rating): string {
-  if (rating === "Buy" || rating === "Overweight") return "portfolio-badge portfolio-badge-buy";
-  if (rating === "Sell" || rating === "Underweight") return "portfolio-badge portfolio-badge-sell";
-  return "portfolio-badge";
+  return `portfolio-badge review-badge-${ratingTone(rating)}`;
 }
 
 export function RatingBadge({ rating }: { rating: Rating }) {
