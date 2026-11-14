@@ -20,6 +20,7 @@ import {
   setPortfolioCurrency,
   type ImportState,
 } from "@/lib/portfolio-trades";
+import { setReviewsEnabled } from "@/lib/portfolio-reviews";
 import { parseStatement } from "@/lib/parse-statement";
 import { readPdfItems } from "@/lib/statement-pdf";
 import type { Statement } from "@/lib/statements";
@@ -214,4 +215,17 @@ export async function importStatementAction(formData: FormData): Promise<TradeAc
     // Anything saved stays, and importing again adds only the rest.
     return { ok: false, error: "The import couldn't be saved. Check the database connection and that npm run db:setup has run, then import again: nothing is added twice." };
   }
+}
+
+export async function setAiReviewsAction(enabled: unknown): Promise<TradeActionResult> {
+  const userId = await signedIn();
+  if (typeof userId !== "string") return userId;
+  if (typeof enabled !== "boolean") return { ok: false, error: "Choose on or off." };
+  try {
+    await setReviewsEnabled(userId, enabled);
+  } catch {
+    return { ok: false, error: "The setting couldn't be saved. Check that npm run db:setup has run." };
+  }
+  refresh();
+  return { ok: true, message: enabled ? "AI reviews are on." : "AI reviews are off." };
 }

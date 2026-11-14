@@ -69,6 +69,7 @@ FMP requests for a first, uncached view; repeat views within the cache windows c
 | Stocks | FMP leaderboard (the largest list from the snapshot and one market-cap batch on plans without the screener) | 1 per list |
 | Favorites | Finnhub quotes | 0 |
 | Portfolio | Finnhub quotes and company profiles; Tiingo prices, splits and dividends (and SPY's for the comparison); Tiingo names for funds; Frankfurter's euro rates when needed. A statement import looks up only the companies held (Finnhub profiles by ISIN, Tiingo prices for foreign ones), once each; companies sold off are kept without prices and cost nothing | 0 |
+| Portfolio reviews | The reviews from Postgres. The daily job (see [`portfolio-reviews.md`](./portfolio-reviews.md)) prices the holdings as the Portfolio does, then TradingAgents reads Yahoo Finance, SEC EDGAR, FRED and Polymarket on its own, with its own Gemini key (`AGENTS_GOOGLE_API_KEY`) | 0 |
 | AI portfolio | Alpaca's account, positions and history; Tiingo's SPY prices, shared with the Portfolio. Its weekly job runs the Recommendations screen uncached, with Finnhub headlines and one Gemini request (see [`ai-portfolio.md`](./ai-portfolio.md)) | 0; about 73 for the weekly job |
 | Events | Official calendars; Gemini, Google News and Finnhub for the news scan | 0 |
 | AI chat (each question) | Gemini, plus the look-ups the answer asks for (see [`chat.md`](./chat.md)), through the same cached requests as the pages | Usually 0 for the company on screen; otherwise what that company's pages cost |
