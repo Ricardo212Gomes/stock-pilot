@@ -154,7 +154,7 @@ function Swatch({ color }: { color: string }) {
   return <i className="portfolio-swatch" style={{ background: color }} aria-hidden="true" />;
 }
 
-function ChartTooltip({ active, payload, view, currency }: { active?: boolean; payload?: { payload: Row }[]; view: View; currency: Currency }) {
+function ChartTooltip({ active, payload, view, currency, short }: { active?: boolean; payload?: { payload: Row }[]; view: View; currency: Currency; short: string }) {
   const row = active ? payload?.[0]?.payload : undefined;
   if (!row) return null;
   return (
@@ -162,7 +162,7 @@ function ChartTooltip({ active, payload, view, currency }: { active?: boolean; p
       <strong>{formatDate(row.t, { month: "short", day: "numeric", year: "numeric" })}</strong>
       {view === "return" ? (
         <>
-          <span><Swatch color={SERIES.return[0].color} />You {signedPercent(row.you)}</span>
+          <span><Swatch color={SERIES.return[0].color} />{short} {signedPercent(row.you)}</span>
           {row.benchmark !== undefined && <span><Swatch color={SERIES.return[1].color} />S&amp;P 500 {signedPercent(row.benchmark)}</span>}
         </>
       ) : (
@@ -176,9 +176,13 @@ function ChartTooltip({ active, payload, view, currency }: { active?: boolean; p
   );
 }
 
+// What the first line is called: the user's portfolio by default, or another one (the AI portfolio).
+export type ChartSubject = { label: string; short: string };
+const YOUR_PORTFOLIO: ChartSubject = { label: "Your portfolio", short: "You" };
+
 // The portfolio's return against the S&P 500 (both with dividends, and not counting money put in or taken out
 // as gains), or its value against what it cost, over a chosen period, with a month-by-month table under it.
-export function PerformanceChart({ history, currency = "USD" }: { history: HistoryPoint[]; currency?: Currency }) {
+export function PerformanceChart({ history, currency = "USD", subject = YOUR_PORTFOLIO }: { history: HistoryPoint[]; currency?: Currency; subject?: ChartSubject }) {
   const narrow = useNarrow();
   const [view, setView] = useState<View>("return");
   const [range, setRange] = useState<RangeId>("ALL");
@@ -210,7 +214,9 @@ export function PerformanceChart({ history, currency = "USD" }: { history: Histo
 
   const first = rows[0];
   const end = rows[rows.length - 1];
-  const series = SERIES[view].filter((item) => item.key !== "benchmark" || end.benchmark !== undefined);
+  const series = SERIES[view]
+    .filter((item) => item.key !== "benchmark" || end.benchmark !== undefined)
+    .map((item) => (item.key === "you" ? { ...item, ...subject } : item));
   const values = view === "return"
     ? [0, ...rows.flatMap((row) => (row.benchmark === undefined ? [row.you] : [row.you, row.benchmark]))]
     : rows.flatMap((row) => [row.value, row.cost]);
@@ -221,7 +227,7 @@ export function PerformanceChart({ history, currency = "USD" }: { history: Histo
   const format = (value: number) => (view === "return" ? signedPercent(value) : money(value, currency, true));
   const since = formatDate(first.t, { month: "short", day: "numeric", year: "numeric" });
   const description = view === "return"
-    ? `Your portfolio's return since ${since}: ${signedPercent(end.you)}${end.benchmark !== undefined ? `, against ${signedPercent(end.benchmark)} for the S&P 500` : ""}.`
+    ? `${subject.label}'s return since ${since}: ${signedPercent(end.you)}${end.benchmark !== undefined ? `, against ${signedPercent(end.benchmark)} for the S&P 500` : ""}.`
     : `Your portfolio's value since ${since}, from ${money(first.value, currency)} to ${money(end.value, currency)}, against a cost of ${money(end.cost, currency)}.`;
 
   return (
@@ -290,7 +296,7 @@ export function PerformanceChart({ history, currency = "USD" }: { history: Histo
               tickFormatter={(value: number) => (view === "return" ? `${(value * 100).toFixed(step < 0.01 ? 1 : 0)}%` : money(value, currency, true))}
             />
             {view === "return" && <ReferenceLine y={0} stroke="var(--border-strong)" />}
-            <Tooltip content={<ChartTooltip view={view} currency={currency} />} cursor={{ stroke: "var(--border-strong)", strokeWidth: 1 }} />
+            <Tooltip content={<ChartTooltip view={view} currency={currency} short={subject.short} />} cursor={{ stroke: "var(--border-strong)", strokeWidth: 1 }} />
             {series.map((item, index) => (
               <Line
                 key={item.key}

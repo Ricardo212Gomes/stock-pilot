@@ -25,6 +25,11 @@ export function isGeminiConfigured(): boolean {
   return geminiSettings() !== null;
 }
 
+// The model requests go to, recorded with what it wrote (the AI portfolio's runs).
+export function geminiModel(): string {
+  return process.env.GEMINI_MODEL || DEFAULT_MODEL;
+}
+
 // `subject` names the task, e.g. "analysis" → "could not complete the analysis".
 function statusError(status: number, subject: string): string {
   if (status === 401 || status === 403) {

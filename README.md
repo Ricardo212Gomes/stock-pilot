@@ -15,7 +15,8 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 7. Optionally set `TIINGO_API_KEY` to a free [Tiingo](https://www.tiingo.com) key, so price charts and the price signals work for companies FMP's free plan doesn't cover, and when it hits its daily limit, and the Portfolio gets its chart, splits and dividends; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
 8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites** and the **Portfolio**; see [`docs/favorites.md`](./docs/favorites.md) and [`docs/portfolio.md`](./docs/portfolio.md).
 9. Optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send favorites' upcoming earnings, earnings call summaries, relevant news and SEC filing analyses to Telegram; see [`docs/notifications.md`](./docs/notifications.md).
-10. Restart the Next.js development server after changing the environment file.
+10. Optionally set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to a free [Alpaca](https://alpaca.markets) paper trading account's keys for the **AI portfolio**; see [`docs/ai-portfolio.md`](./docs/ai-portfolio.md).
+11. Restart the Next.js development server after changing the environment file.
 
 All keys are read only by server code and are not exposed to the browser. Do not commit your environment file.
 
@@ -45,6 +46,8 @@ The **Recommendations** page at `/recommendations` screens the largest US compan
 The **Compare** page at `/compare?symbols=CELH,MNST,KO` puts up to five stocks side by side: P/E, expected EPS and revenue growth and margins, next to the range many established companies trade at.
 
 The **Portfolio** page at `/portfolio` tracks what you own and have made, from the buys and sales you record or from Trading 212 and Trade Republic statements (PDFs, previewed before anything is saved, with every trade, dividend and interest payment): value, today's change, the profit with its parts, dividends, weights by industry and a chart of your return against the S&P 500, with splits and dividends from Tiingo. It's shown in dollars or euros, converted at the ECB's rate for each day. It needs Google sign-in and a Postgres database.
+
+The **AI portfolio** page at `/ai-portfolio` follows a paper-money portfolio that Gemini rebalances every week from StockPilot's data: on Mondays it reviews the holdings and the Recommendations screen's best candidates, with their analysts' targets and ratings, price trend and headlines, and proposes target weights with a reason for each move. StockPilot checks them against fixed rules (10 to 20 positions, at most 10% in one stock, at least 5% in cash, at most 30% sold in a week) and places the orders on an Alpaca paper trading account, sales first. The page shows the value, the return against the S&P 500, the positions and each week's moves with their reasons; the same account can be managed from Claude through Alpaca's MCP server. Orders go through only when `AI_PORTFOLIO_TRADING_ENABLED` is `true`; until then each week's moves are recorded, unplaced.
 
 The **Favorites** page at `/favorites` lists the companies you've starred from their overview, with the latest price and links to each tool. It needs Google sign-in and a Postgres database.
 
@@ -83,6 +86,7 @@ The **AI chat** is the round spark button at the bottom right of every page. Ask
 | [`docs/transcripts.md`](./docs/transcripts.md) | Earnings call transcripts: Alpha Vantage, fiscal quarters, saving them in Postgres and the free-key limits |
 | [`docs/notifications.md`](./docs/notifications.md) | Telegram notifications: the bot, linking a chat, the four commands and the GitHub Actions schedule |
 | [`docs/portfolio.md`](./docs/portfolio.md) | The Portfolio: recording trades and importing statements, the profit, dollars or euros, how splits, average cost, dividends and returns are worked out, its data and limits |
+| [`docs/ai-portfolio.md`](./docs/ai-portfolio.md) | The AI portfolio: the weekly run, its rules, the Alpaca paper account and MCP server, the page and its requests |
 | [`docs/favorites.md`](./docs/favorites.md) | Favorites: the Postgres database, schema setup, the star button and the list |
 | [`grapgs.md`](./grapgs.md) | Company charts and price history: data sources and FMP coverage |
 | [`DESIGN.md`](./DESIGN.md) | Design tokens and component rules |

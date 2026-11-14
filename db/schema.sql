@@ -111,3 +111,40 @@ create table if not exists filing_analyses (
   analysis jsonb not null,
   created_at timestamptz not null default now()
 );
+
+-- The AI portfolio's weekly rebalances (see docs/ai-portfolio.md), shared by everyone: one paper account. A
+-- week is done once a run is placed, or recorded with trading off; a rejected or failed run can be tried again.
+create table if not exists ai_portfolio_runs (
+  id bigint generated always as identity primary key,
+  week date not null,
+  status text not null check (status in ('placing', 'placed', 'recorded', 'rejected', 'failed')),
+  summary text,
+  model text,
+  problems jsonb not null default '[]',
+  equity numeric,
+  cash numeric,
+  candidates integer,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists ai_portfolio_runs_week_idx on ai_portfolio_runs (week);
+
+-- Each run's moves, with the Alpaca order behind each trade. A hold has no order.
+create table if not exists ai_portfolio_moves (
+  id bigint generated always as identity primary key,
+  run_id bigint not null references ai_portfolio_runs (id) on delete cascade,
+  symbol text not null,
+  action text not null check (action in ('buy', 'add', 'hold', 'trim', 'sell')),
+  weight_before numeric not null,
+  weight_after numeric not null,
+  amount numeric not null,
+  reason text not null,
+  order_id text,
+  order_status text,
+  filled_qty numeric,
+  filled_price numeric,
+  filled_at timestamptz,
+  error text
+);
+
+create index if not exists ai_portfolio_moves_run_idx on ai_portfolio_moves (run_id);
