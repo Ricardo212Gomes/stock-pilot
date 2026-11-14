@@ -16,7 +16,9 @@
     "notify:transcripts": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts transcripts",
     "notify:news": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts news",
     "notify:filings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/notify.ts filings",
-    "ai-portfolio:rebalance": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/ai-portfolio.ts"
+    "ai-portfolio:rebalance": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/ai-portfolio.ts",
+    "portfolio:holdings": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/portfolio-holdings.ts",
+    "portfolio:review": "agents/.venv/bin/python agents/review.py"
   },
   "dependencies": {
     "lightweight-charts": "^5.2.1",
