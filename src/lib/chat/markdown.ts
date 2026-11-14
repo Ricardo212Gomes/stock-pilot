@@ -1,5 +1,5 @@
 // A small Markdown reader for the chat's answers: paragraphs, bullet and numbered lists (nested), tables,
-// headings, code and rules, with bold, italics, code and links inline. It builds data, not HTML, so nothing the
+// headings, code, rules and $$ formulas, with bold, italics, code and links inline. It builds data, not HTML, so nothing the
 // model writes is ever inserted into the page as markup. Answers are read again as each piece streams in, so
 // a half-written table or **bold** shows as plain text until it's complete.
 
@@ -24,6 +24,8 @@ export type Block =
   // Other columns stay on one line, and a wide table scrolls.
   | { type: "table"; header: Inline[][]; align: Alignment[]; numeric: boolean[]; wrap: boolean[]; rows: Inline[][][] }
   | { type: "code"; text: string }
+  // A $$ … $$ formula, as readable text (latexToText): models write LaTeX for inequalities and ratios.
+  | { type: "math"; text: string }
   | { type: "rule" };
 
 // Backslash escapes become private-use characters while parsing, so "\*" is never read as emphasis.
@@ -101,6 +103,7 @@ export function parseInline(text: string): Inline[] {
 
 const LIST_ITEM = /^(\s*)([-*+]|\d{1,9}[.)])[ \t]+(.*)$/;
 const FENCE = /^\s{0,3}(```|~~~)/;
+const MATH = /^\s{0,3}\$\$/;
 const HEADING = /^\s{0,3}#{1,6}[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/;
 const RULE = /^\s{0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
 const SEPARATOR = /^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/;
@@ -127,7 +130,7 @@ function isTableStart(lines: string[], index: number): boolean {
 
 function startsBlock(lines: string[], index: number): boolean {
   const line = lines[index];
-  return FENCE.test(line) || HEADING.test(line) || RULE.test(line) || LIST_ITEM.test(line) || isTableStart(lines, index);
+  return FENCE.test(line) || MATH.test(line) || HEADING.test(line) || RULE.test(line) || LIST_ITEM.test(line) || isTableStart(lines, index);
 }
 
 function alignmentOf(cell: string): Alignment {
@@ -258,6 +261,18 @@ function parseBlocks(lines: string[]): Block[] {
       continue;
     }
 
+    if (MATH.test(line)) {
+      // "$$ x $$" on one line, or $$ on its own line down to the line that closes it.
+      const formula = [line.trim().slice(2)];
+      index++;
+      if (!formula[0].includes("$$")) {
+        while (index < lines.length && !lines[index].includes("$$")) formula.push(lines[index++]);
+        if (index < lines.length) formula.push(lines[index++]);
+      }
+      blocks.push({ type: "math", text: latexToText(restore(formula.join(" "), true).replace(/\$\$/g, "")) });
+      continue;
+    }
+
     const heading = line.match(HEADING);
     if (heading) {
       blocks.push({ type: "heading", content: parseInlineProtected(heading[1]) });
@@ -293,6 +308,47 @@ function parseBlocks(lines: string[]): Block[] {
   return blocks;
 }
 
+// LaTeX's symbols that have a character of their own.
+const LATEX_SYMBOLS: Record<string, string> = {
+  times: "×", cdot: "·", div: "÷", pm: "±", mp: "∓", le: "≤", leq: "≤", ge: "≥", geq: "≥", ne: "≠", neq: "≠",
+  approx: "≈", sim: "~", equiv: "≡", ll: "≪", gg: "≫", to: "→", rightarrow: "→", leftarrow: "←", Rightarrow: "⇒",
+  Leftarrow: "⇐", leftrightarrow: "↔", uparrow: "↑", downarrow: "↓", infty: "∞", sum: "Σ", prod: "Π", sqrt: "√",
+  Delta: "Δ", delta: "δ", alpha: "α", beta: "β", gamma: "γ", sigma: "σ", Sigma: "Σ", mu: "μ", pi: "π", theta: "θ",
+  lambda: "λ", rho: "ρ", epsilon: "ε", percent: "%", ldots: "…", cdots: "⋯", dots: "…", circ: "°", degree: "°",
+};
+
+// LaTeX as plain, readable text: "\text{Price } (\$162.85) < \text{10 EMA}" becomes "Price ($162.85) < 10 EMA",
+// "\frac{a}{b}" becomes "a/b" and symbols become their characters. Exported for tests.
+export function latexToText(latex: string): string {
+  let text = latex;
+  // Innermost first, so nested fractions and text read out whole.
+  for (let pass = 0; pass < 5; pass++) {
+    const before = text;
+    text = text
+      .replace(/\\(?:text|mathrm|textbf|mathbf|textit|mathit|operatorname|mbox|textrm)\s*\{([^{}]*)\}/g, "$1")
+      .replace(/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, (_, top: string, bottom: string) => {
+        const wrap = (part: string) => (/^[\w.$%]+$/.test(part.trim()) ? part.trim() : `(${part.trim()})`);
+        return `${wrap(top)}/${wrap(bottom)}`;
+      })
+      .replace(/\\sqrt\s*\{([^{}]*)\}/g, "√($1)")
+      .replace(/\^\{([^{}]*)\}/g, "^$1")
+      .replace(/_\{([^{}]*)\}/g, "_$1");
+    if (text === before) break;
+  }
+  return text
+    // Sizing commands, but not the arrows that start the same way (\\rightarrow).
+    .replace(/\\(?:left|right|big|Big|bigg|Bigg|displaystyle)(?![a-zA-Z])/g, "")
+    .replace(/\\[$%&#_{}]/g, (match) => match.slice(1))
+    .replace(/\\[,;:! ]|~|\\quad|\\qquad/g, " ")
+    .replace(/\\\\/g, " ")
+    .replace(/\\([a-zA-Z]+)/g, (match, name: string) => LATEX_SYMBOLS[name] ?? name)
+    .replace(/[{}]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\(\s+/g, "(")
+    .replace(/\s+\)/g, ")")
+    .trim();
+}
+
 export function parseMarkdown(source: string): Block[] {
   return parseBlocks(protect(source.replace(/\r\n?/g, "\n")).split("\n"));
 }
@@ -316,6 +372,7 @@ export function plainText(blocks: Block[]): string {
       case "heading":
         return inline(item.content);
       case "code":
+      case "math":
         return item.text;
       case "rule":
         return "—";

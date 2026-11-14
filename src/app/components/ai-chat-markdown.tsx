@@ -74,6 +74,8 @@ function BlockNode({ block }: { block: Block }) {
       );
     case "code":
       return <pre><code>{block.text}</code></pre>;
+    case "math":
+      return <p className="ai-chat-math" role="math">{block.text}</p>;
     case "rule":
       return <hr />;
   }

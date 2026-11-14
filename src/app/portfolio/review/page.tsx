@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
 import { ChatMarkdown } from "../../components/ai-chat-markdown";
+import { CompanyLogo } from "../../components/company-logo";
 import { currentUserId, isAuthConfigured, signIn } from "@/auth";
 import { parseMarkdown } from "@/lib/chat/markdown";
 import { isDatabaseConfigured } from "@/lib/db";
+import { listedName } from "@/lib/listed-companies";
 import { formatDay } from "@/lib/portfolio";
-import { getLatestReview, type ReviewWithReport } from "@/lib/portfolio-reviews";
-import { formatMoney } from "@/lib/valuation/format";
-import { RatingBadge } from "../ai-reviews";
+import { getLatestReview, type ReviewSection, type ReviewWithReport, type SectionGroup } from "@/lib/portfolio-reviews";
+import { formatMoney, formatSignedPercent } from "@/lib/valuation/format";
+import { ratingTone } from "../ai-reviews";
 
 export const metadata: Metadata = {
   title: "AI review — StockPilot",
@@ -16,6 +18,13 @@ export const metadata: Metadata = {
 };
 
 type ReviewPageProps = { searchParams: Promise<{ symbol?: string | string[] }> };
+
+const GROUP_LABELS: Record<SectionGroup, string> = {
+  Decision: "The decision",
+  Research: "Research debate",
+  Risk: "Risk debate",
+  Analysts: "Analysts' reports",
+};
 
 function readSymbol(value: string | string[] | undefined): string | null {
   const symbol = (Array.isArray(value) ? value[0] : value)?.trim().toUpperCase() ?? "";
@@ -34,15 +43,26 @@ function Notice({ title, children }: { title: string; children: React.ReactNode 
   );
 }
 
-function Report({ review }: { review: ReviewWithReport }) {
+function Masthead({ review }: { review: ReviewWithReport }) {
+  const name = listedName(review.symbol);
+  const rating = review.rating === "Review" ? "No rating" : review.rating;
+  // The target against what the position cost: what the plan would make or lose on it.
+  const versusCost = review.priceTarget !== null && review.averageCost > 0 ? review.priceTarget / review.averageCost - 1 : null;
   return (
     <>
+      <section className="review-masthead">
+        <span className="earnings-logo-box review-masthead-logo"><CompanyLogo symbol={review.symbol} /></span>
+        <div>
+          <p className="section-label"><Link href="/portfolio">PORTFOLIO</Link> · AI REVIEW</p>
+          <h1>
+            {review.symbol} <span className={`review-rating review-rating-${ratingTone(review.rating)}`}>{rating}</span>
+          </h1>
+          <p className="company-subtitle">
+            {name ? `${name} · ` : ""}Reviewed {formatDay(review.analysisDate)} by TradingAgents, against your position
+          </p>
+        </div>
+      </section>
       <div className="portfolio-cards">
-        <section className="portfolio-card" aria-label="Rating">
-          <p className="portfolio-card-label">Rating</p>
-          <p className="portfolio-card-value"><RatingBadge rating={review.rating} /></p>
-          <p className="portfolio-card-detail">Reviewed {formatDay(review.analysisDate)}</p>
-        </section>
         <section className="portfolio-card" aria-label="Price target">
           <p className="portfolio-card-label">Price target</p>
           <p className="portfolio-card-value">{review.priceTarget === null ? "—" : formatMoney(review.priceTarget, "USD")}</p>
@@ -53,17 +73,74 @@ function Report({ review }: { review: ReviewWithReport }) {
           <p className="portfolio-card-value">{review.shares.toLocaleString("en-US", { maximumFractionDigits: 4 })} shares</p>
           <p className="portfolio-card-detail">At {formatMoney(review.averageCost, "USD")} average cost</p>
         </section>
-      </div>
-      <section className="portfolio-section" aria-labelledby="review-plan-heading">
-        <h2 id="review-plan-heading">The plan</h2>
-        <p className="ai-run-summary">{review.summary}</p>
-      </section>
-      {review.sections.map((section) => (
-        <section key={section.id} className="portfolio-section portfolio-review-report" aria-labelledby={`review-${section.id}`}>
-          <h2 id={`review-${section.id}`}>{section.title}</h2>
-          <ChatMarkdown blocks={parseMarkdown(section.text)} />
+        <section className="portfolio-card" aria-label="Target against your cost">
+          <p className="portfolio-card-label">Target against your cost</p>
+          <p className={`portfolio-card-value ${versusCost === null ? "" : versusCost >= 0 ? "positive-value" : "negative-value"}`}>
+            {versusCost === null ? "—" : formatSignedPercent(versusCost)}
+          </p>
+          <p className="portfolio-card-detail">The target over your average cost</p>
         </section>
+      </div>
+      <section className={`review-plan review-tone-${ratingTone(review.rating)}`} aria-labelledby="review-plan-heading">
+        <h2 id="review-plan-heading">The plan</h2>
+        <p>{review.summary}</p>
+      </section>
+    </>
+  );
+}
+
+function Contents({ sections }: { sections: ReviewSection[] }) {
+  const groups = [...new Set(sections.map((section) => section.group))];
+  return (
+    <nav className="review-contents" aria-label="The agents' reports">
+      <p className="section-label">THE AGENTS</p>
+      {groups.map((group) => (
+        <div key={group}>
+          <p className="review-contents-group">{GROUP_LABELS[group]}</p>
+          <ul>
+            {sections.filter((section) => section.group === group).map((section) => (
+              <li key={section.id}>
+                <a className={`review-tone-${section.tone}`} href={`#review-${section.id}`}>
+                  <span className="review-dot" aria-hidden="true" />
+                  {section.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       ))}
+    </nav>
+  );
+}
+
+function SectionCard({ section }: { section: ReviewSection }) {
+  return (
+    <details id={`review-${section.id}`} className={`review-section review-tone-${section.tone}`} open={section.open}>
+      <summary>
+        <span className="review-section-group">{GROUP_LABELS[section.group]}</span>
+        <span className="review-section-title">
+          <span className="review-dot" aria-hidden="true" />
+          {section.title}
+        </span>
+        <span className="review-section-preview">{section.preview}</span>
+      </summary>
+      <div className="review-section-body">
+        <ChatMarkdown blocks={parseMarkdown(section.text)} />
+      </div>
+    </details>
+  );
+}
+
+function Report({ review }: { review: ReviewWithReport }) {
+  return (
+    <>
+      <Masthead review={review} />
+      <div className="review-layout">
+        <div className="review-sections">
+          {review.sections.map((section) => <SectionCard key={section.id} section={section} />)}
+        </div>
+        <Contents sections={review.sections} />
+      </div>
       <div className="news-footnote portfolio-footnote">
         <p>
           By TradingAgents{review.model ? ` on ${review.model}` : ""}: market and news analysts, a bull and a bear researcher,
@@ -106,15 +183,6 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const symbol = readSymbol((await searchParams).symbol);
   return (
     <AppShell contentClassName="dashboard-content" activeSection="portfolio" headerLabel={symbol ? `${symbol} · AI review` : "AI review"} dataSource="Reviews by TradingAgents on Google Gemini">
-      <section className="company-heading">
-        <div>
-          <p className="section-label"><Link href="/portfolio">PORTFOLIO</Link></p>
-          <div className="company-title-row">
-            <h1>{symbol ? `${symbol}: AI review` : "AI review"}</h1>
-          </div>
-          <p className="company-subtitle">TradingAgents&apos; latest review of this holding, against your position.</p>
-        </div>
-      </section>
       <ReviewBody symbol={symbol} />
     </AppShell>
   );

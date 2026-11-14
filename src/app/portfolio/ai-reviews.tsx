@@ -4,6 +4,7 @@ import { formatDay } from "@/lib/portfolio";
 import { STALE_DAYS, type Rating, type ReviewSummary } from "@/lib/portfolio-reviews";
 import { formatMoney } from "@/lib/valuation/format";
 import { AiReviewsSwitch } from "./ai-reviews-switch";
+import { ReviewRow } from "./review-row";
 
 // TradingAgents' reviews of the user's holdings on the Portfolio page (see docs/portfolio-reviews.md): a badge per
 // holding in Holdings, and a section with every holding's latest rating, what changed, and the switch.
@@ -14,10 +15,15 @@ export function reviewHref(symbol: string): string {
   return `/portfolio/review?symbol=${encodeURIComponent(symbol)}`;
 }
 
+// A rating's colour: green to add, red to cut, amber to hold, grey without one. Shared with the report page.
+export function ratingTone(rating: Rating): "up" | "down" | "hold" | "none" {
+  if (rating === "Buy" || rating === "Overweight") return "up";
+  if (rating === "Sell" || rating === "Underweight") return "down";
+  return rating === "Hold" ? "hold" : "none";
+}
+
 function badgeClass(rating: Rating): string {
-  if (rating === "Buy" || rating === "Overweight") return "portfolio-badge portfolio-badge-buy";
-  if (rating === "Sell" || rating === "Underweight") return "portfolio-badge portfolio-badge-sell";
-  return "portfolio-badge";
+  return `portfolio-badge review-badge-${ratingTone(rating)}`;
 }
 
 export function RatingBadge({ rating }: { rating: Rating }) {
@@ -77,7 +83,7 @@ export function AiReviews({ reviews, holdings }: { reviews: PortfolioReviews; ho
               </thead>
               <tbody>
                 {summaries.map((review) => (
-                  <tr key={review.symbol} className={review.stale ? "portfolio-review-stale" : undefined}>
+                  <ReviewRow key={review.symbol} href={reviewHref(review.symbol)} className={review.stale ? "portfolio-review-stale" : undefined}>
                     <th scope="row">
                       <Link className="favorites-company" href={reviewHref(review.symbol)}>
                         <span className="earnings-logo-box"><CompanyLogo symbol={review.symbol} /></span>
@@ -93,9 +99,8 @@ export function AiReviews({ reviews, holdings }: { reviews: PortfolioReviews; ho
                     <td className="portfolio-optional">{formatDay(review.analysisDate)}</td>
                     <td className="portfolio-review-plan">
                       {review.summary}
-                      <Link href={reviewHref(review.symbol)}> Full report</Link>
                     </td>
-                  </tr>
+                  </ReviewRow>
                 ))}
               </tbody>
             </table>

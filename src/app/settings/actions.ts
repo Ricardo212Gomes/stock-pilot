@@ -67,6 +67,7 @@ export async function savePreferencesAction(raw: unknown): Promise<SettingsActio
     transcriptSummaries: value.transcriptSummaries === true,
     newsAlerts: value.newsAlerts === true,
     filingAlerts: value.filingAlerts === true,
+    reviewSummaries: value.reviewSummaries === true,
   };
   await setNotificationPreferences(userId, preferences);
   refresh();

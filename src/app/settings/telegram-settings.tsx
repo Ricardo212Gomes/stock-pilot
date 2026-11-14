@@ -23,6 +23,7 @@ const ALERTS: { key: keyof NotificationPreferences; title: string; detail: strin
   { key: "transcriptSummaries", title: "Earnings call summaries", detail: "An AI summary of each favorite's new earnings call, once its transcript is out." },
   { key: "newsAlerts", title: "Relevant news", detail: "Each weekday evening: the headlines about your favorites that matter, picked by AI with a line on why." },
   { key: "filingAlerts", title: "SEC filing analysis", detail: "When a favorite files a 10-K, 10-Q or significant 8-K: an AI analysis of what it says and what to watch." },
+  { key: "reviewSummaries", title: "Weekly AI reviews of your portfolio", detail: "Every Sunday: your holdings' latest AI ratings from the Portfolio's AI reviews, what changed this week, Underweight and Sell first. Needs the reviews turned on in the Portfolio." },
 ];
 
 export function TelegramSettings({ botUsername, telegramName, pendingLink, initialPreferences }: Props) {
