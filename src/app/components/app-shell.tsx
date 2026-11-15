@@ -10,7 +10,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "ai-portfolio" | "favorites" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "ai-portfolio" | "favorites" | "saved-projections" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -24,6 +24,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "portfolio") return "Portfolio";
   if (section === "ai-portfolio") return "AI portfolio";
   if (section === "favorites") return "Favorites";
+  if (section === "saved-projections") return "Saved projections";
   if (section === "maps") return "Market maps";
   if (section === "vix") return "VIX fear gauge";
   if (section === "events") return "Market events";
@@ -134,6 +135,17 @@ export function AppShell({
                 <path d="m10 2.8 2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7L10 2.8Z" />
               </svg>
               <span>Favorites</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "saved-projections" ? " sidebar-link-active" : ""}`}
+              href="/valuation/saved"
+              title="Saved projections"
+              aria-current={activeSection === "saved-projections" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M5.5 3h9a.5.5 0 0 1 .5.5V17l-5-3.2L5 17V3.5a.5.5 0 0 1 .5-.5Z" />
+              </svg>
+              <span>Saved projections</span>
             </Link>
           </nav>
 

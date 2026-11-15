@@ -7,8 +7,9 @@ A company's **Valuation** tab, the last of its tabs, holds three separate calcul
 | Intrinsic Value | `/valuation/intrinsic-value?symbol=AAPL` |
 | Jeremy's Projection | `/valuation/jeremy-projection?symbol=AAPL` |
 | Plumas Projection | `/valuation/plumas-projection?symbol=AAPL` |
+| Saved projections (every company and tool) | `/valuation/saved` |
 
-Each page has the company header and tabs with Valuation open, then the tools as sub-tabs for the same ticker (`ValuationHeader`); the Valuation tab opens Intrinsic Value. The sidebar has no valuation section: Stocks stays highlighted on these pages, and the top bar's search keeps you on the same tool for the new ticker. Without a ticker, each page shows a short start screen. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (the header with the sub-tabs, start screen and load error); `tools.ts` lists the tools for the sub-tabs. The old `/projections` page redirects to these (`?view=3y` to Jeremy's Projection and `?view=dcf` to the Detailed DCF), as do the old `/valuation/three-year-projection` (to Jeremy's Projection, whose template it followed), `/valuation/financial-projections` (to the Plumas Projection) and `/valuation/dcf-calculator` (to the Detailed DCF on Intrinsic Value, `?model=dcf#detailed-dcf`, which opens it).
+Each page has the company header and tabs with Valuation open, then the tools as sub-tabs for the same ticker (`ValuationHeader`); the Valuation tab opens Intrinsic Value. The sidebar has no valuation section: Stocks stays highlighted on these pages, and the top bar's search keeps you on the same tool for the new ticker. Without a ticker, each page shows a short start screen. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (the header with the sub-tabs, start screen and load error); `tools.ts` lists the tools for the sub-tabs. Signed-in users can **save** a projection from any of the three tools under a name and open it again later, on any device (see [Saved projections](#saved-projections)). The old `/projections` page redirects to these (`?view=3y` to Jeremy's Projection and `?view=dcf` to the Detailed DCF), as do the old `/valuation/three-year-projection` (to Jeremy's Projection, whose template it followed), `/valuation/financial-projections` (to the Plumas Projection) and `/valuation/dcf-calculator` (to the Detailed DCF on Intrinsic Value, `?model=dcf#detailed-dcf`, which opens it).
 
 ## Intrinsic Value
 
@@ -213,7 +214,7 @@ Each year's revenue and net income are rounded to whole units before the next ye
 | P/E low and high | Today's price ÷ the starting year's consensus EPS (a forward P/E), minus and plus 20%; without one, the Plumas Projection's historical range. A range centred above 25× fades to 20× and 30× by the last year, as on Jeremy's own sheets: a fast grower's P/E usually shrinks as its growth slows |
 | Bull / bear | Revenue and net income growth 5 points higher or lower, and the P/E range × 1.2 or × 0.8 |
 
-Edits are saved in the browser per company and starting year (`localStorage`, key `stockpilot-jeremy:SYMBOL:YEAR`), including the starting revenue, net income and share count; **Reset** in the starting-point bar clears them. The entry price lasts only for the visit. There's no AI autofill, as on his sheet.
+Edits are saved in the browser per company and starting year (`localStorage`, key `stockpilot-jeremy:SYMBOL:YEAR`), including the starting revenue, net income and share count; **Reset** in the starting-point bar clears them. The entry price lasts only for the visit. This browser draft is the work in progress; **Save** keeps a named copy in your account (see [Saved projections](#saved-projections)). There's no AI autofill, as on his sheet.
 
 Files: `src/lib/jeremy-projection.ts` (math and defaults), `src/lib/projection-fit.ts` (which projection fits), `src/app/valuation/jeremy-projection.tsx` (the page's state), `src/app/valuation/jeremy-projection-parts.tsx` (case tables and chart), and the shared `projection-cells.tsx`, `saved-projection.ts` and `data.ts` (`loadPriceProjectionData`, which builds both projections and the fit from the same cached requests).
 
@@ -289,7 +290,35 @@ The "Where the starting values come from" list under the table gives each one fo
 
 ### Saving, view and AI
 
-- Edits are saved in the browser per company and fiscal year (`localStorage`, key `stockpilot-projection:SYMBOL:YEAR`), so they survive a reload; a new fiscal year starts fresh. **Reset** clears them. The Simple/Advanced and 3/5 choices are kept for every company (`stockpilot-projection-view`). Today's price and share count edits last only for the visit.
+- Edits are saved in the browser per company and fiscal year (`localStorage`, key `stockpilot-projection:SYMBOL:YEAR`), so they survive a reload; a new fiscal year starts fresh. **Reset** clears them. The Simple/Advanced and 3/5 choices are kept for every company (`stockpilot-projection-view`). Today's price and share count edits last only for the visit. This browser draft is the work in progress; **Save** keeps a named copy in your account (see [Saved projections](#saved-projections)).
 - **Autofill with AI** (`autofillPlumasProjection`) sends Gemini the reported history (growth, margins, interest & other, shares, buyback yield, EPS and P/E), today's price and share count, and how much of the first fiscal year is still ahead. The data defaults are left out, so it forms its own view instead of copying them. It returns all five scenarios, one value per year for every input, with a reason for each scenario and a summary. `parseProjectionResponse` clamps each value, rescales whole-number percentages, pads short lists and keeps each year's P/E in order.
 
 Files: `src/lib/plumas-projection.ts` (math, history and defaults, also used by Jeremy's Projection), `src/lib/plumas-projection-autofill.ts` (prompt and parsing), `src/app/valuation/plumas-projection.tsx` (the page's state), `src/app/valuation/plumas-projection-parts.tsx` (table, cards, chart and comparison), `src/app/valuation/projection-cells.tsx` (cell formats and inputs shared with Jeremy's Projection) and `src/app/valuation/saved-projection.ts` (browser storage).
+
+## Saved projections
+
+Each tool has a **Save** button (next to **Reset**: in the starting-point bar on the two projections, at the top of the assumptions on Intrinsic Value). It needs Google sign-in and the database: signed out, the button reads **Sign in to save** and goes to Google and back; without sign-in keys or `DATABASE_URL` it's hidden.
+
+- **Save** opens a dialog with a name (by default `NVDA · Plumas · 14 Nov 2026`) and an optional note, and Cancel and Save at the bottom right. A new save opens straight away at `?saved=ID`.
+- **Saved** above each tool, folded until opened, lists that company's saves in that tool: the name and note, the fiscal year it starts from, when it was saved, the **value then**, the price at save, the **price now** and the **gap** (value then ÷ price now − 1). The value then is Intrinsic Value's blended value, or the base scenario's mid price target for the last projected year (with the other scenarios' under it).
+- **Opening** a save (`/valuation/<tool>?symbol=NVDA&saved=ID`) restores every input and choice and shows a banner with the way back to the draft. Edits stay on the page and leave the browser draft alone. **Save…** then offers **Update** (the same save, with today's price and values) or **Save as a copy** under a new name.
+- **Rename** and **Delete** sit on each row; delete asks once more in the row. Deleting the open save goes back to the draft.
+- **All saved projections** (`/valuation/saved`, in the sidebar) lists every company and tool, sorted newest or oldest first, or by the largest or smallest gap. Today's prices are one cached quote per company.
+- A save keeps **its own fiscal year**: the Plumas Projection keeps the base year's figures, Jeremy's the starting year with its revenue, net income and shares, and Intrinsic Value every starting value. After a new annual report it still opens as saved, with a note that a newer report exists; the history columns and analysts' estimates show only the years that still line up. Today's price stays live unless one was typed over the quote.
+- The browser draft (`localStorage`, above) is unchanged: it's the unsaved work in progress.
+
+### Storage and versions
+
+`saved_projections` in `db/schema.sql` (run `npm run db:setup`): `id`, `user_id` (the Google account id from the session, never from the browser), `tool`, `symbol`, `name`, `note`, `inputs` (jsonb), `schema_version`, `base_year`, `price_at_save`, `value_at_save` (jsonb: `[{ id, label, value }]`, the blended value and each recommended model's, or each scenario's), `currency`, `created_at` and `updated_at`. A user keeps up to 300 saves; names are up to 80 characters and notes up to 1,000.
+
+What `inputs` holds for each tool, at version 1:
+
+| Tool | Inputs |
+| --- | --- |
+| Intrinsic Value | `assumptions` (every assumption; `currentPrice` only when typed over, else null for today's), `sources`, `dcfOptions` (year 1 cash flow and terminal method), `fcfBasis`, `aiNotes`, `aiSummary` |
+| Jeremy's Projection | `cases` (bull, base, bear: each input for each year), `start` (`year`, `revenue`, `netIncome`, `shares`), `entryPrice` |
+| Plumas Projection | `scenarios` (all five), `ai`, `view` (`mode` Simple/Advanced, `count` 3/5), `base` (the base fiscal year and its figures), `start` (`price`, `shares`, each null unless typed over) |
+
+When a tool's inputs change shape, raise its number in `SCHEMA_VERSIONS` and add a step in `MIGRATIONS` (`src/lib/saved-projection-inputs.ts`) that turns the old version into the new one and names anything it drops. Opening a save runs every step from its version up (`migrateInputs`); a save from a newer version, or one with no step, shows a notice instead. Then each tool's reader (`restoreIntrinsicValue`, `restoreJeremy`, `restorePlumas`) keeps what it knows: an input that no longer exists is left out, and one that can't be read goes back to the starting value; both are named in the banner. The Detailed DCF's inputs after #2 (the year 1 forecast and the terminal method, in `dcfOptions`) are version 1, the first saved shape.
+
+Files: `src/lib/saved-projections.ts` (database), `src/lib/saved-projection-inputs.ts` (inputs, versions, migrations, value and gap), `src/lib/saved-projection-limits.ts`, `src/app/valuation/saved-actions.ts` (save, rename and delete server actions), `saved-data.ts` (what a tool page loads), `save-projection.tsx` (the button and dialog), `saved-section.tsx`, `saved-table.tsx` and `saved-row-actions.tsx` (the lists), `saved-banner.tsx`, and `src/app/valuation/saved/page.tsx`.

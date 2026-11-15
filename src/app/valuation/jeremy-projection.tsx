@@ -5,6 +5,11 @@ import { NumberInput } from "./calculator-input";
 import { CaseTable, JeremyChart, type CaseSummary } from "./jeremy-projection-parts";
 import { formatCell, toneOf, type ScenarioTone } from "./projection-cells";
 import { jeremyKey, parseSavedJeremy, readSaved, subscribeSaved, writeSaved, type SavedJeremy } from "./saved-projection";
+import { SaveProjection, type ProjectionSnapshot } from "./save-projection";
+import { OpenedBanner } from "./saved-banner";
+import type { OpenedProjection, SaveStatus } from "./saved-data";
+import { valuationTool } from "./tools";
+import { restoreJeremy, type JeremyInputs } from "@/lib/saved-projection-inputs";
 import {
   CASES,
   JEREMY_YEARS,
@@ -17,22 +22,39 @@ import {
 
 const TONES: Record<CaseId, ScenarioTone> = { bull: "positive", base: "chart-1", bear: "negative" };
 
-export function JeremyProjection({ symbol, defaults }: { symbol: string; defaults: JeremyDefaults }) {
+export function JeremyProjection({
+  symbol,
+  defaults,
+  saving,
+}: {
+  symbol: string;
+  defaults: JeremyDefaults;
+  saving: { status: SaveStatus; opened: OpenedProjection | null };
+}) {
   const { currency, notes } = defaults;
   const key = jeremyKey(symbol, defaults.start.year);
+  const { opened } = saving;
+  const startingFigures = { year: defaults.start.year, revenue: defaults.start.revenue, netIncome: defaults.start.netIncome, shares: defaults.start.shares };
+  // A saved projection that's open (?saved=ID) is edited here, apart from the browser draft, until it's saved again.
+  const [restored] = useState(() => opened ? restoreJeremy(opened.inputs, { cases: defaults.cases, start: startingFigures }) : null);
+  const [openState, setOpenState] = useState<Omit<JeremyInputs, "entryPrice"> | null>(restored?.inputs ?? null);
   // The server renders the starting values; a projection saved in this browser replaces them.
   const savedText = useSyncExternalStore(subscribeSaved, () => readSaved(key), () => null);
-  const saved = useMemo(() => parseSavedJeremy(savedText), [savedText]);
-  const cases = saved?.cases ?? defaults.cases;
-  const edits = saved?.start ?? { revenue: null, netIncome: null, shares: null };
-  const start: JeremyStart = {
-    ...defaults.start,
-    revenue: edits.revenue ?? defaults.start.revenue,
-    netIncome: edits.netIncome ?? defaults.start.netIncome,
-    shares: edits.shares ?? defaults.start.shares,
-  };
+  const draft = useMemo(() => parseSavedJeremy(savedText), [savedText]);
+  const saved = openState ? null : draft;
+  const cases = openState?.cases ?? draft?.cases ?? defaults.cases;
+  const edits = draft?.start ?? { revenue: null, netIncome: null, shares: null };
+  // A saved projection keeps the fiscal year it started from, and its figures; today's price stays live.
+  const start: JeremyStart = openState
+    ? { ...defaults.start, ...openState.start }
+    : {
+      ...defaults.start,
+      revenue: edits.revenue ?? defaults.start.revenue,
+      netIncome: edits.netIncome ?? defaults.start.netIncome,
+      shares: edits.shares ?? defaults.start.shares,
+    };
 
-  const [entryPrice, setEntryPrice] = useState<number | null>(null);
+  const [entryPrice, setEntryPrice] = useState<number | null>(restored?.inputs.entryPrice ?? null);
   const [version, setVersion] = useState(0);
   // Three cases of five years: cheap enough to work out on every render.
   const projections = Object.fromEntries(CASES.map(({ id }) => [id, projectCase(start, cases[id], entryPrice)])) as
@@ -46,7 +68,29 @@ export function JeremyProjection({ symbol, defaults }: { symbol: string; default
   const marketCap = start.price !== null && start.shares !== null ? start.price * start.shares : null;
 
   function save(next: Partial<SavedJeremy>) {
-    writeSaved(key, JSON.stringify({ cases, start: edits, ...next } satisfies SavedJeremy));
+    if (openState) setOpenState({ ...openState, cases: next.cases ?? openState.cases });
+    else writeSaved(key, JSON.stringify({ cases, start: edits, ...next } satisfies SavedJeremy));
+  }
+
+  // What Save keeps: the three cases, the first year with its figures, and the entry price.
+  function snapshot(): ProjectionSnapshot {
+    const inputs: JeremyInputs = {
+      cases,
+      start: { year: start.year, revenue: start.revenue, netIncome: start.netIncome, shares: start.shares },
+      entryPrice,
+    };
+    return {
+      inputs,
+      baseYear: start.year,
+      priceAtSave: start.price,
+      currency,
+      valueAtSave: CASES.map(({ id, label }) => {
+        const result = projections[id];
+        const last = result.ok ? result.years[result.years.length - 1] : null;
+        const value = last && last.priceLow !== null && last.priceHigh !== null ? (last.priceLow + last.priceHigh) / 2 : null;
+        return { id, label, value };
+      }),
+    };
   }
 
   function setValue(id: CaseId, field: CaseField, index: number, value: number) {
@@ -62,17 +106,34 @@ export function JeremyProjection({ symbol, defaults }: { symbol: string; default
   }
 
   function setStart(field: keyof SavedJeremy["start"], value: number | null) {
-    save({ start: { ...edits, [field]: value } });
+    if (openState) {
+      // Clearing a box goes back to the report's figure when the save starts from the same year.
+      const fallback = openState.start.year === defaults.start.year ? defaults.start[field] : null;
+      setOpenState({ ...openState, start: { ...openState.start, [field]: value ?? fallback } });
+    } else {
+      save({ start: { ...edits, [field]: value } });
+    }
   }
 
   function reset() {
-    writeSaved(key, null);
+    if (openState) setOpenState({ cases: defaults.cases, start: startingFigures });
+    else writeSaved(key, null);
     setEntryPrice(null);
     setVersion((current) => current + 1);
   }
 
   return (
     <div className="jeremy-projection">
+      {opened && (
+        <OpenedBanner
+          name={opened.name}
+          updatedAt={opened.updatedAt}
+          draftHref={`${valuationTool("jeremy-projection").path}?symbol=${encodeURIComponent(symbol)}`}
+          baseYear={start.year}
+          latestYear={defaults.start.year}
+          dropped={[...opened.dropped, ...(restored?.dropped ?? [])]}
+        />
+      )}
       <section className="projection-toolbar" aria-label="Starting point">
         <dl className="projection-stats">
           <div>
@@ -128,10 +189,13 @@ export function JeremyProjection({ symbol, defaults }: { symbol: string; default
         </dl>
         <div className="projection-controls">
           <button className="assumptions-reset" type="button" onClick={reset}>Reset</button>
+          <SaveProjection tool="jeremy-projection" symbol={symbol} status={saving.status} opened={opened} snapshot={snapshot} />
         </div>
         <p className="projection-status" role="status">
           {notes.start}
-          {saved ? " Your projection is saved in this browser; Reset goes back to the starting values." : " Boxed cells are inputs, and everything updates as you type."}
+          {openState
+            ? " Editing a saved projection: Save updates it or saves a copy; Reset goes back to the starting values."
+            : saved ? " Your projection is saved in this browser; Reset goes back to the starting values." : " Boxed cells are inputs, and everything updates as you type."}
         </p>
       </section>
 

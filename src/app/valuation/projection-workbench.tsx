@@ -25,6 +25,11 @@ import {
 import { SparkIcon } from "../components/spark-icon";
 import { autofillAssumptions } from "./actions";
 import { DcfPanel } from "./dcf-panel";
+import { SaveProjection, type ProjectionSnapshot } from "./save-projection";
+import { OpenedBanner } from "./saved-banner";
+import type { OpenedProjection, SaveStatus } from "./saved-data";
+import { valuationTool } from "./tools";
+import { restoreIntrinsicValue, type IntrinsicValueInputs } from "@/lib/saved-projection-inputs";
 import {
   AssumptionField,
   FootballField,
@@ -60,6 +65,8 @@ export function ProjectionWorkbench({
   defaults,
   priceNotice,
   openDcf = false,
+  baseYear,
+  saving,
 }: {
   symbol: string;
   currency: string;
@@ -68,14 +75,23 @@ export function ProjectionWorkbench({
   priceNotice: string | null;
   // Opens the Detailed DCF (?model=dcf, where the old DCF Calculator's links lead).
   openDcf?: boolean;
+  // The latest fiscal year the starting values come from.
+  baseYear: number | null;
+  saving: { status: SaveStatus; opened: OpenedProjection | null };
 }) {
-  const [assumptions, setAssumptions] = useState<Assumptions>(defaults.assumptions);
-  const [sources, setSources] = useState<Sources>(() => initialSources(defaults));
-  const [dcfOptions, setDcfOptions] = useState<DcfOptions>(DEFAULT_DCF_OPTIONS);
+  const { opened } = saving;
+  // A saved projection that's open (?saved=ID) starts from its inputs. Its price is today's unless one was typed in.
+  const [restored] = useState(() => (opened ? restoreIntrinsicValue(opened.inputs) : null));
+  const saved = restored?.inputs;
+  const [assumptions, setAssumptions] = useState<Assumptions>(() => saved
+    ? { ...defaults.assumptions, ...saved.assumptions, currentPrice: saved.assumptions.currentPrice ?? defaults.assumptions.currentPrice }
+    : defaults.assumptions);
+  const [sources, setSources] = useState<Sources>(() => ({ ...initialSources(defaults), ...saved?.sources }));
+  const [dcfOptions, setDcfOptions] = useState<DcfOptions>(saved?.dcfOptions ?? DEFAULT_DCF_OPTIONS);
   // The starting free cash flow's basis; stock-based pay counts as a cost by default (see defaults.ts).
-  const [fcfBasis, setFcfBasis] = useState<{ basis: FcfBasis; stockCompAsCost: boolean } | null>(null);
-  const [aiNotes, setAiNotes] = useState<Partial<Record<AssumptionKey, string>>>({});
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [fcfBasis, setFcfBasis] = useState<{ basis: FcfBasis; stockCompAsCost: boolean } | null>(saved?.fcfBasis ?? null);
+  const [aiNotes, setAiNotes] = useState<Partial<Record<AssumptionKey, string>>>(saved?.aiNotes ?? {});
+  const [aiSummary, setAiSummary] = useState<string | null>(saved?.aiSummary ?? null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [fieldVersion, setFieldVersion] = useState(0);
   const [isAutofilling, startAutofill] = useTransition();
@@ -159,12 +175,47 @@ export function ProjectionWorkbench({
     });
   }
 
+  // What Save keeps: every assumption and choice, with the blended value and each recommended model's.
+  function snapshot(): ProjectionSnapshot {
+    const inputs: IntrinsicValueInputs = {
+      assumptions: { ...assumptions, currentPrice: sources.currentPrice === "edited" ? assumptions.currentPrice : null },
+      sources,
+      dcfOptions,
+      fcfBasis,
+      aiNotes,
+      aiSummary,
+    };
+    return {
+      inputs,
+      baseYear,
+      priceAtSave: assumptions.currentPrice,
+      currency,
+      valueAtSave: [
+        { id: "blended", label: "Blended", value: blended?.value ?? null },
+        ...orderedModels.filter((id) => roleOf(id) !== "other").map((id) => {
+          const result = results[id];
+          return { id, label: MODEL_INFO[id].name, value: result.ok ? result.value : null };
+        }),
+      ],
+    };
+  }
+
   const footballRows = orderedModels
     .filter((id) => results[id].ok && roleOf(id) !== "other")
     .map((id) => ({ id, name: MODEL_INFO[id].name, role: roleOf(id), range: ranges[id] }));
 
   return (
     <>
+      {opened && (
+        <OpenedBanner
+          name={opened.name}
+          updatedAt={opened.updatedAt}
+          draftHref={`${valuationTool("intrinsic-value").path}?symbol=${encodeURIComponent(symbol)}`}
+          baseYear={opened.baseYear}
+          latestYear={baseYear}
+          dropped={[...opened.dropped, ...(restored?.dropped ?? [])]}
+        />
+      )}
       <ol className="projection-guide" aria-label="How to use this page">
         <li>
           <strong>Check the stock type.</strong>
@@ -242,7 +293,10 @@ export function ProjectionWorkbench({
               <p className="section-label">ASSUMPTIONS</p>
               <h2 id="assumptions-heading">Your inputs</h2>
             </div>
-            <button className="assumptions-reset" type="button" onClick={resetToData}>Reset</button>
+            <div className="assumptions-heading-actions">
+              <button className="assumptions-reset" type="button" onClick={resetToData}>Reset</button>
+              <SaveProjection tool="intrinsic-value" symbol={symbol} status={saving.status} opened={opened} snapshot={snapshot} />
+            </div>
           </div>
 
           <div className="autofill-box">

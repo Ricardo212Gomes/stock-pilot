@@ -13,7 +13,7 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
 6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
 7. Optionally set `TIINGO_API_KEY` to a free [Tiingo](https://www.tiingo.com) key, so price charts and the price signals work for companies FMP's free plan doesn't cover, and when it hits its daily limit, and the Portfolio gets its chart, splits and dividends; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
-8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites** and the **Portfolio**; see [`docs/favorites.md`](./docs/favorites.md) and [`docs/portfolio.md`](./docs/portfolio.md).
+8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**, **Saved projections** and the **Portfolio**; see [`docs/favorites.md`](./docs/favorites.md) and [`docs/portfolio.md`](./docs/portfolio.md).
 9. Optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send favorites' upcoming earnings, earnings call summaries, relevant news and SEC filing analyses to Telegram; see [`docs/notifications.md`](./docs/notifications.md).
 10. Optionally set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to a free [Alpaca](https://alpaca.markets) paper trading account's keys for the **AI portfolio**; see [`docs/ai-portfolio.md`](./docs/ai-portfolio.md).
 11. Restart the Next.js development server after changing the environment file.
@@ -52,6 +52,8 @@ The Portfolio's **AI reviews**, once turned on, have TradingAgents (a team of AI
 The **AI portfolio** page at `/ai-portfolio` follows a paper-money portfolio that Gemini rebalances every week from StockPilot's data: on Mondays it reviews the holdings and the Recommendations screen's best candidates, with their analysts' targets and ratings, price trend and headlines, and proposes target weights with a reason for each move. StockPilot checks them against fixed rules (10 to 20 positions, at most 10% in one stock, at least 5% in cash, at most 30% sold in a week) and places the orders on an Alpaca paper trading account, sales first. The page shows the value, the return against the S&P 500, the positions and each week's moves with their reasons; the same account can be managed from Claude through Alpaca's MCP server. Orders go through only when `AI_PORTFOLIO_TRADING_ENABLED` is `true`; until then each week's moves are recorded, unplaced.
 
 The **Favorites** page at `/favorites` lists the companies you've starred from their overview, with the latest price and links to each tool. It needs Google sign-in and a Postgres database.
+
+Each valuation tool can **save** a projection under a name and a note, to open later on any device; **Saved projections** at `/valuation/saved` lists them all with the value then, the price now and the gap, sortable by date or gap. It needs Google sign-in and a Postgres database; see [`docs/valuation.md`](./docs/valuation.md#saved-projections).
 
 The **Fear gauge** page at `/vix` shows the VIX as a fear and greed gauge, compares it with a week, month and year ago, and charts its history, from FMP and Cboe's free daily history.
 
@@ -107,6 +109,6 @@ Tests live next to the code as `*.test.ts` and mock `fetch`, so they never call 
 
 ## Design system
 
-See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Stocks, Compare, Recommendations, Portfolio, Favorites) and Markets, and can collapse to an icon rail; the valuation calculators are a company's Valuation tab. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
+See [`DESIGN.md`](./DESIGN.md) for the project tokens and component rules. The sidebar groups the pages into Workspace (Home, Stocks, Compare, Recommendations, Portfolio, AI portfolio, Favorites, Saved projections) and Markets, and can collapse to an icon rail; the valuation calculators are a company's Valuation tab. The light/dark theme switch is in the top bar; it follows the system preference until a choice is saved.
 
 On the Financials page, the spark button beside each section title asks Gemini to explain that section's figures in plain language; the spark button at the bottom right of every page opens the AI chat. Intraday prices and a dedicated dividend history are not included yet.
