@@ -4983,10 +4983,11 @@ a.earnings-round:focus-visible {
   }
 }
 
+/* The primary button, sized like .settings-button. */
 .favorites-sign-in {
   margin-top: 12px;
-  padding: 6px 12px;
-  border: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--primary);
   border-radius: var(--radius);
   background: var(--primary);
   color: var(--primary-foreground);
@@ -8791,6 +8792,7 @@ a.earnings-round:focus-visible {
 }
 
 .portfolio-reviews-off {
+  border-color: var(--border-strong);
   background: var(--secondary);
   color: var(--foreground);
 }
@@ -9257,28 +9259,6 @@ a.earnings-round:focus-visible {
   resize: vertical;
 }
 
-.saved-dialog-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.saved-primary {
-  padding: 6px 14px;
-  border: 0;
-  border-radius: var(--radius);
-  background: var(--primary);
-  color: var(--primary-foreground);
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.saved-primary:disabled,
-.saved-dialog-actions .assumptions-reset:disabled {
-  cursor: progress;
-  opacity: 0.7;
-}
 
 .saved-banner {
   margin: 0 0 16px;
@@ -9423,8 +9403,7 @@ a.earnings-round:focus-visible {
   white-space: nowrap;
 }
 
-.saved-rename,
-.saved-confirm {
+.saved-rename {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -9437,29 +9416,9 @@ a.earnings-round:focus-visible {
   font-size: 15px;
 }
 
-.saved-link-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.saved-link-danger {
-  color: var(--negative);
-}
-
-.saved-danger {
+.saved-rename .settings-button {
   padding: 3px 10px;
-  border: 0;
-  border-radius: var(--radius);
-  background: var(--destructive);
-  /* White on the light red, charcoal on the dark mode's pale red. */
-  color: var(--background);
-  cursor: pointer;
   font-size: 14px;
-  font-weight: 600;
 }
 
 .saved-toolbar {
@@ -9489,17 +9448,76 @@ a.earnings-round:focus-visible {
   font-weight: 600;
 }
 
+/* Buttons, dialogs and confirmations (DESIGN.md): dialog actions, the inline delete confirmation, and text buttons. */
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.inline-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 10px;
+  font-size: 14px;
+  white-space: normal;
+}
+
+.inline-confirm-danger {
+  padding: 3px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--destructive);
+  /* White on the light red, charcoal on the dark mode's pale red. */
+  color: var(--background);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inline-confirm-danger:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.text-button-danger {
+  color: var(--negative);
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .saved-link-button:hover {
+  .text-button:hover {
     text-decoration: underline;
   }
 
-  .saved-primary:hover {
-    background: color-mix(in srgb, var(--primary) 86%, #000000);
+  .inline-confirm-danger:not(:disabled):hover {
+    background: color-mix(in srgb, var(--destructive) 86%, #000000);
+  }
+}
+
+/* On phones, dialog actions stack full width with the main one at the bottom, under the thumb. */
+@media (max-width: 640px) {
+  .dialog-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .saved-danger:hover {
-    background: color-mix(in srgb, var(--destructive) 86%, #000000);
+  .dialog-actions .settings-button {
+    justify-content: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 }
 

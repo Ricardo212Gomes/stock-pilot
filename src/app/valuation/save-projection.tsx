@@ -147,15 +147,13 @@ export function SaveProjection({
               />
             </label>
             {error && <p className="ai-analysis-error" role="alert">{error}</p>}
-            <div className="saved-dialog-actions">
-              {opened ? (
-                <>
-                  <button className="saved-primary" type="submit" disabled={pending}>{pending ? "Saving…" : "Update"}</button>
-                  <button className="assumptions-reset" type="button" disabled={pending} onClick={() => save(true)}>Save as a copy</button>
-                </>
-              ) : (
-                <button className="saved-primary" type="submit" disabled={pending}>{pending ? "Saving…" : "Save"}</button>
+            {/* Dialog actions: right-aligned, the main one last (DESIGN.md, "Buttons, dialogs and confirmations"). */}
+            <div className="dialog-actions">
+              <button className="settings-button settings-button-quiet" type="button" disabled={pending} onClick={() => setDraft(null)}>Cancel</button>
+              {opened && (
+                <button className="settings-button settings-button-quiet" type="button" disabled={pending} onClick={() => save(true)}>Save as a copy</button>
               )}
+              <button className="settings-button" type="submit" disabled={pending}>{pending ? "Saving…" : opened ? "Update" : "Save"}</button>
             </div>
           </form>
         )}

@@ -59,7 +59,7 @@ Known contrast exceptions, kept from the source: in dark mode, the search placeh
 
 ## Components and behavior
 
-- Persistent sidebar (Workspace › Home, Stocks, Compare, Recommendations, Portfolio, AI portfolio, Favorites; Markets › Maps, Fear gauge, Events, News, Earnings, Dividends; Stocks stays active on the valuation pages), collapsing to an icon rail on narrow screens. The active item gets a `muted` fill and a 2px `primary` left rule.
+- Persistent sidebar (Workspace › Home, Stocks, Compare, Recommendations, Portfolio, AI portfolio, Favorites, Saved projections; Markets › Maps, Fear gauge, Events, News, Earnings, Dividends; Stocks stays active on the valuation pages), collapsing to an icon rail on narrow screens. The active item gets a `muted` fill and a 2px `primary` left rule.
 - Earnings calendar: a toolbar card (round previous/today/next buttons, the week range, a Large/All switch and a search field), then a bordered week grid with one column per weekday; today's date sits in a filled `primary` circle. Report-time sections have `muted` headers with an `accent` icon. Companies are 44px white logo tiles with the ticker beneath, a `positive` or `negative` dot when they've beaten or missed, and a dashed "+N" tile. Selecting a tile opens a centred dialog.
 - Dividend calendar: the same toolbar with an Ex-dividend date / Payment date switch, then a bordered Monday-to-Friday month grid; days outside the month take a `muted` fill. Tiles show the logo, ticker and the amount in `positive`, and open the same dialog. Under 900px it becomes a list of the days with dividends.
 - Financials: the first sub-tab, Financials, is charts only, in a grid with the first chart (and a lone last chart) spanning both columns, stacking under 1000px. Statement sub-tabs and the Annual/Quarterly switch use `selected` blocks. The statement title is 26px bold. The chart sits in a bordered card with a centred legend; clicking a legend item toggles its series, and hidden series turn `muted-foreground`. The statement table has a sticky label column, right-aligned tabular numbers, bold totals, smaller indented growth rows coloured `positive` or `negative`, and uppercase section rows on a `muted` fill.
@@ -96,6 +96,25 @@ Known contrast exceptions, kept from the source: in dark mode, the search placeh
 - Keep copy concise and headings factual. Avoid decorative gradients, illustrations and oversized rounded cards.
 - Do not fabricate company logos or details from a ticker; link only to sections backed by fetched data.
 - Ship both themes. The top bar toggle stores the choice and adds or removes `.dark` on `<html>`.
+
+## Buttons, dialogs and confirmations
+
+One style per role, everywhere:
+
+| Role | Class | Look |
+| --- | --- | --- |
+| Primary | `.settings-button` | `primary` fill and border, 7px 14px, 15px semibold |
+| Secondary | `.settings-button .settings-button-quiet` | `secondary` fill, `border-strong` border, same size |
+| Compact secondary in toolbars (Reset, Save, Copy Base inputs) | `.assumptions-reset` | `secondary` fill, `border-strong` border, 4px 10px |
+| Text action (Rename, Delete in a row, Keep, Cancel in a row) | `.text-button` (`.text-button-danger` for Delete) | `accent` (or `negative`) text, no box, underlined on hover |
+| Confirm a delete | `.inline-confirm-danger` | `destructive` fill, `background` text, 3px 10px |
+
+The Sign in buttons (`.favorites-sign-in`) are primary buttons at the same size. Don't add another primary or secondary class; reuse these.
+
+- **Dialogs** (`<dialog>` through `useModalDialog`) put their actions in `.dialog-actions` at the bottom, **right-aligned**: Cancel (secondary) first and the main action **last**, furthest right; with two actions the other comes before it (Cancel · Save as a copy · Update). The × in the corner closes too, as do Escape and a click on the backdrop. On phones the actions stack full width with the main one at the bottom. When a dialog opens to type into, its first field takes the focus. Dialogs that only show information (the calendar dialogs) close with the × alone.
+- **Inline panels and cards** (the statement import, Telegram settings, the trade form) read top to bottom, so their actions sit **left-aligned** under the content with the main action **first** and the secondary after it.
+- **Deleting** asks once more in place with `InlineConfirm` (`src/app/components/inline-confirm.tsx`): the control turns into "Delete it? **Delete** · Keep", Keep takes the focus and Escape keeps. Bulk deletes say what they remove ("Delete all 12 trades? This can't be undone."). Never use the browser's `confirm`, `alert` or `prompt`: they ignore the theme and block the page.
+- A button that is working stays where it is, disabled, with its label in the present tense ("Saving…", "Deleting…").
 
 ## Motion and feel
 

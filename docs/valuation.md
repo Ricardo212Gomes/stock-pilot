@@ -299,7 +299,7 @@ Files: `src/lib/plumas-projection.ts` (math, history and defaults, also used by 
 
 Each tool has a **Save** button (next to **Reset**: in the starting-point bar on the two projections, at the top of the assumptions on Intrinsic Value). It needs Google sign-in and the database: signed out, the button reads **Sign in to save** and goes to Google and back; without sign-in keys or `DATABASE_URL` it's hidden.
 
-- **Save** opens a dialog with a name (by default `NVDA · Plumas · 14 Nov 2026`) and an optional note. A new save opens straight away at `?saved=ID`.
+- **Save** opens a dialog with a name (by default `NVDA · Plumas · 14 Nov 2026`) and an optional note, and Cancel and Save at the bottom right. A new save opens straight away at `?saved=ID`.
 - **Saved** above each tool, folded until opened, lists that company's saves in that tool: the name and note, the fiscal year it starts from, when it was saved, the **value then**, the price at save, the **price now** and the **gap** (value then ÷ price now − 1). The value then is Intrinsic Value's blended value, or the base scenario's mid price target for the last projected year (with the other scenarios' under it).
 - **Opening** a save (`/valuation/<tool>?symbol=NVDA&saved=ID`) restores every input and choice and shows a banner with the way back to the draft. Edits stay on the page and leave the browser draft alone. **Save…** then offers **Update** (the same save, with today's price and values) or **Save as a copy** under a new name.
 - **Rename** and **Delete** sit on each row; delete asks once more in the row. Deleting the open save goes back to the draft.
