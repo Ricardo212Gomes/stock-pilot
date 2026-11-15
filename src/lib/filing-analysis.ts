@@ -121,7 +121,8 @@ async function documentText(filing: Filing): Promise<string | null> {
   }
 }
 
-async function savedAnalysis(accession: string): Promise<FilingAnalysis | null> {
+// The stored analysis of a filing, if the filing alerts have made one; never asks Gemini.
+export async function savedAnalysis(accession: string): Promise<FilingAnalysis | null> {
   if (!isDatabaseConfigured()) return null;
   try {
     const [row] = await getSql()<{ analysis: FilingAnalysis }[]>`select analysis from filing_analyses where accession = ${accession}`;

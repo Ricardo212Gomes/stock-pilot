@@ -42,5 +42,8 @@ jobs:
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
+          # Optional: the contact SEC asks for, and a FRED API key (else FRED's public CSV) (docs/ai-portfolio.md).
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           # A repository variable (Settings › Secrets and variables › Actions › Variables), off until set to true.
           AI_PORTFOLIO_TRADING_ENABLED: ${{ vars.AI_PORTFOLIO_TRADING_ENABLED }}

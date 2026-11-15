@@ -43,13 +43,31 @@ describe("buildPortfolioPrompt", () => {
       date: "2026-11-16",
       equity: 100_000,
       cash: 40_000,
-      candidates: [{ ...nvda, held: { weight: 0.06, gain: 0.123 }, headlines: ["Nvidia beats"] }, { ...msft, held: null, headlines: [] }],
+      candidates: [
+        { ...nvda, held: { weight: 0.06, gain: 0.123 }, headlines: ["Nvidia beats"], filings: [{ form: "10-Q", filed: "2026-11-12", description: "Quarterly report", analysis: "Data center sales up 60%." }] },
+        { ...msft, held: null, headlines: [], filings: null },
+      ],
     });
     expect(prompt).toContain("Week of 2026-11-16. The portfolio is worth $100,000, with 40% in cash and 1 holdings.");
     expect(prompt).toContain("Holdings: NVDA.");
     expect(prompt).toContain('"upsideToConsensusTargetPct":25');
     expect(prompt).toContain('"held":{"weightPct":6,"gainPct":12.3}');
     expect(prompt).toContain('"headlines":["Nvidia beats"]');
+    expect(prompt).toContain('"recentFilings":[{"form":"10-Q","filed":"2026-11-12","description":"Quarterly report","analysis":"Data center sales up 60%."}]');
+    // EDGAR failed for MSFT: shown as unknown, not as "nothing filed".
+    expect(prompt).toContain('"recentFilings":null');
+    expect(prompt).not.toContain("Market this week");
+  });
+
+  it("opens with the market block when there are macro figures", () => {
+    const prompt = buildPortfolioPrompt({
+      date: "2026-11-16",
+      equity: 100_000,
+      cash: 100_000,
+      candidates: [],
+      macro: { fedFunds: { lower: 3.75, upper: 4, since: "2026-10-29" }, tenYear: null, cpi: null, vix: null, missing: [] },
+    });
+    expect(prompt.startsWith("Market this week:\n- Fed funds target range: 3.75–4.00%, since 2026-10-29.")).toBe(true);
   });
 });
 

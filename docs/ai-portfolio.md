@@ -14,9 +14,11 @@ It's one account, not each user's: the page is read only and visible to everyone
 4. **The account.** Cash, equity and positions from Alpaca.
 5. **Candidates.** The Recommendations screen's companies (the largest US companies FMP's plan covers, see [`recommendations.md`](./recommendations.md)), ranked by the screen's six signals: the best 30, plus every holding. A holding outside the screen gets the same figures with `loadCandidate`; one whose figures can't load at all is kept as it is that week.
 6. **Headlines.** The three latest from Finnhub's company news (last 14 days) for each candidate.
-7. **Gemini's proposal.** One request with a JSON schema (`responseMimeType: "application/json"`, `src/lib/ai-portfolio/prompt.ts`), retried once. It gets the week, the portfolio's value and cash, and for each candidate: the price, the upside to the analysts' consensus target and its range, the analysts' count, rating and Buy share now and three months ago, the close against the 12-week and 200-day averages, RSI, the distance from the 52-week high, the 3-month return, how many screen signals it meets, its weight and gain when held, and the headlines. A stock more than 10% under its 200-day average with over 40% upside to the target is flagged `targetMayBeStale`: after a fall, analysts' targets lag the price, so the instructions say not to buy on that upside, to weigh the trend, the direction of the ratings and the headlines instead, and to size such a position smaller. It answers with a summary, target weights in percent with a reason each, and exits for the holdings it drops.
-8. **The checks** (`src/lib/ai-portfolio/rules.ts`). A proposal that fails any of them is recorded as rejected, with what failed, and nothing is traded.
-9. **The orders.** Sales first, then the buys.
+7. **SEC filings** (`src/lib/ai-portfolio/filings.ts`). What each candidate filed with the SEC in the last 30 days, from EDGAR's submissions list (`getFilings`, the Filings tab's): annual and quarterly reports, 8-Ks, proxies and other important forms, not insider forms; at most five, newest first, each with its form, date and one-line description (`describeFiling`, such as "Earnings results · Executive or director change"). For a holding, a recent 8-K, 10-Q or 10-K also carries the summary of its stored AI analysis (`filing_analyses`, written by the filing alerts) when there is one; no new Gemini request is made. A company EDGAR doesn't know has none; when EDGAR fails for a company, its row says `null` (unknown, not "nothing filed") and the run's output names it.
+8. **Macro figures** (`src/lib/ai-portfolio/macro.ts`). One block at the top of the prompt: the Fed funds target range and the day it took effect (FRED's public CSV, as on the Events page), the 10-year Treasury yield and its change over a month, CPI over the past year, and the VIX with its zone, its past year's average and where today's close ranks in that year (`src/lib/vix.ts`). The yield (`DGS10`) and CPI (`CPIAUCSL`) come from FRED's API with `FRED_API_KEY`, or from FRED's public CSV without it, so the key stays optional; when FRED fails, the yield falls back to FMP's treasury rates. A figure whose source fails is left out and named in the run's output.
+9. **Gemini's proposal.** One request with a JSON schema (`responseMimeType: "application/json"`, `src/lib/ai-portfolio/prompt.ts`), retried once. It gets the week, the portfolio's value and cash, and for each candidate: the price, the upside to the analysts' consensus target and its range, the analysts' count, rating and Buy share now and three months ago, the close against the 12-week and 200-day averages, RSI, the distance from the 52-week high, the 3-month return, how many screen signals it meets, its weight and gain when held, the headlines and `recentFilings`. A stock more than 10% under its 200-day average with over 40% upside to the target is flagged `targetMayBeStale`: after a fall, analysts' targets lag the price, so the instructions say not to buy on that upside, to weigh the trend, the direction of the ratings and the headlines instead, and to size such a position smaller. The instructions add that filings are the company's own words and outweigh a headline about the same event, and that the market block is for sizing (more cash, smaller new positions and steadier businesses when the VIX is high or rising), never a reason to buy or sell a stock on its own. It answers with a summary, target weights in percent with a reason each, and exits for the holdings it drops.
+10. **The checks** (`src/lib/ai-portfolio/rules.ts`). A proposal that fails any of them is recorded as rejected, with what failed, and nothing is traded.
+11. **The orders.** Sales first, then the buys.
 
 ### The rules
 
@@ -55,7 +57,7 @@ Weekly rather than daily: the moves are meant for weeks to months, a daily rebal
 1. **A paper account.** Sign up free at [alpaca.markets](https://app.alpaca.markets/paper/dashboard/overview) (an email is enough for paper trading), open the paper account and generate its API keys. It starts with $100,000 of virtual money; the amount can be changed by resetting it in the dashboard.
 2. **The keys.** Set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` in `.env` for the page, and as repository secrets for the job. StockPilot only talks to the paper endpoint (`https://paper-api.alpaca.markets`), so a live key can't place real orders from it.
 3. **The tables.** `npm run db:setup` adds `ai_portfolio_runs` and `ai_portfolio_moves`.
-4. **The job's secrets.** Besides the Alpaca keys: `DATABASE_URL`, `GEMINI_API_KEY`, `FMP_API_KEY` and `FINNHUB_API_KEY` (the screen), and `TIINGO_API_KEY` (prices when FMP's plan doesn't cover a company).
+4. **The job's secrets.** Besides the Alpaca keys: `DATABASE_URL`, `GEMINI_API_KEY`, `FMP_API_KEY` and `FINNHUB_API_KEY` (the screen), and `TIINGO_API_KEY` (prices when FMP's plan doesn't cover a company). Optional: `SEC_USER_AGENT`, the contact SEC asks automated clients for (a name and an email, such as `StockPilot you@example.com`; without it a generic one is sent, which SEC accepts today), and `FRED_API_KEY` ([free](https://fred.stlouisfed.org/docs/api/api_key.html)), to read the 10-year yield and CPI from FRED's API rather than its public CSV.
 5. **A first look.** `npm run ai-portfolio:rebalance -- --dry-run` prints what it would do. Then run it without `--dry-run` with trading still off: the page shows the moves, unplaced. Set the `AI_PORTFOLIO_TRADING_ENABLED` variable to `true` when they look right.
 
 ## Alpaca MCP: the account from Claude
@@ -88,9 +90,13 @@ Without the Alpaca keys the page says how to connect the account; without a data
 | Source | Each weekly run | The page |
 | --- | --- | --- |
 | Alpaca | The clock, account (twice), positions, an asset lookup per order, the orders and their status | Account, positions, portfolio history |
-| FMP | The Recommendations screen: about 73 (a coverage check, then a price target and a year of closes per covered company), plus 2 per holding outside the screen | 0 |
+| FMP | The Recommendations screen: about 73 (a coverage check, then a price target and a year of closes per covered company), plus 2 per holding outside the screen; the treasury rates only when FRED's yield fails | 0 |
 | Finnhub | Ratings per screened company, and company news per candidate (about 30) | 0 |
 | Tiingo | Closes when FMP's plan doesn't cover a company | SPY's daily prices, shared with the Portfolio page |
+| SEC EDGAR | The ticker list once, then one submissions request per candidate (about 32), spaced to about 7 a second, under SEC's 10 | 0 |
+| FRED | Three: the target range's CSV, then the 10-year yield and CPI (from the API with `FRED_API_KEY`, else the public CSV) | 0 |
+| Cboe | The VIX's history, once (FMP's VIX quote too, when the key works) | 0 |
+| Postgres | The stored analysis of each holding's recent reports and 8-Ks, if any | 0 |
 | Gemini | One request, two if the first fails | 0 |
 
 The job runs outside Next, so none of its requests are cached: the screen costs its full FMP requests once a week.
@@ -113,6 +119,8 @@ The job runs outside Next, so none of its requests are cached: the screen costs 
 - `src/lib/alpaca.ts`: the Trading API on the paper endpoint (account, positions, portfolio history, assets, clock, orders), with share classes converted (BRK-B ↔ BRK.B).
 - `src/lib/ai-portfolio/rules.ts`: the rules, the checks, moves from target weights, fitting the buys to the cash, and the weeks.
 - `src/lib/ai-portfolio/prompt.ts`: the instructions, schema, prompt and parsing (weights in percent or as fractions).
+- `src/lib/ai-portfolio/filings.ts`: each candidate's recent SEC filings, with stored analyses for holdings.
+- `src/lib/ai-portfolio/macro.ts`: the week's macro figures (FRED, FMP and the VIX) and the prompt's market block.
 - `src/lib/ai-portfolio/rebalance.ts`: the weekly run, with its dependencies passed in so the tests run it without Alpaca, Gemini or a database.
 - `src/lib/ai-portfolio/store.ts`: runs and moves in Postgres.
 - `src/lib/ai-portfolio/view.ts`: the page's data, and the account's history against SPY.
