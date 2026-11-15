@@ -174,3 +174,27 @@ create table if not exists portfolio_reviews (
 );
 
 create index if not exists portfolio_reviews_user_idx on portfolio_reviews (user_id, symbol, analysis_date desc);
+
+-- Projections a user saved under a name from a valuation tool (see docs/valuation.md, "Saved projections"). inputs
+-- holds every assumption, scenario and choice, in the shape of the tool's schema_version; base_year is the fiscal
+-- year the projection starts from, kept so it still opens after a new annual report. value_at_save is the value per
+-- share, or each scenario's: [{ "id": "base", "label": "Base", "value": 123.4 }, …].
+create table if not exists saved_projections (
+  id bigint generated always as identity primary key,
+  user_id text not null,
+  tool text not null check (tool in ('intrinsic-value', 'jeremy-projection', 'plumas-projection')),
+  symbol text not null,
+  name text not null,
+  note text,
+  inputs jsonb not null,
+  schema_version integer not null,
+  base_year integer,
+  price_at_save numeric,
+  value_at_save jsonb not null default '[]',
+  -- The currency of the price and the values.
+  currency text not null default 'USD',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists saved_projections_user_idx on saved_projections (user_id, symbol, tool, updated_at desc);

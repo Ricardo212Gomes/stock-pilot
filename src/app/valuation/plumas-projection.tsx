@@ -10,8 +10,13 @@ import {
   ScenarioCards,
   ScenarioChart,
   ScenarioComparison,
+  midPrice,
   type ScenarioSummary,
 } from "./plumas-projection-parts";
+import { SaveProjection, type ProjectionSnapshot } from "./save-projection";
+import { OpenedBanner } from "./saved-banner";
+import type { OpenedProjection, SaveStatus } from "./saved-data";
+import { valuationTool } from "./tools";
 import {
   VIEW_KEY,
   parseSavedProjection,
@@ -23,7 +28,9 @@ import {
   type ProjectionView,
   type SavedProjection,
 } from "./saved-projection";
+import { restorePlumas, type PlumasInputs } from "@/lib/saved-projection-inputs";
 import {
+  PROJECTION_YEARS,
   SCENARIOS,
   fitToEstimates,
   hasCostOfRevenue,
@@ -32,6 +39,7 @@ import {
   scenariosFor,
   type InputField,
   type ProjectionDefaults,
+  type ProjectionMode,
   type ScenarioCount,
   type ScenarioId,
   type StartingPoint,
@@ -46,19 +54,44 @@ function percent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-export function PlumasProjection({ symbol, defaults }: { symbol: string; defaults: ProjectionDefaults }) {
-  const { currency, base, history, notes } = defaults;
-  const key = projectionKey(symbol, base.year);
+export function PlumasProjection({
+  symbol,
+  defaults,
+  saving,
+}: {
+  symbol: string;
+  defaults: ProjectionDefaults;
+  saving: { status: SaveStatus; opened: OpenedProjection | null };
+}) {
+  const { currency, notes } = defaults;
+  const key = projectionKey(symbol, defaults.base.year);
+  const { opened } = saving;
+  // A saved projection that's open (?saved=ID) is edited here, apart from the browser draft, until it's saved again.
+  const [restored] = useState(() => opened
+    ? restorePlumas(opened.inputs, { scenarios: defaults.scenarios, base: defaults.base, mode: defaults.mode })
+    : null);
+  const [openState, setOpenState] = useState<PlumasInputs | null>(restored?.inputs ?? null);
   // The server renders the starting values; a projection saved in this browser replaces them.
   const savedText = useSyncExternalStore(subscribeSaved, () => readSaved(key), () => null);
   const viewText = useSyncExternalStore(subscribeSaved, () => readSaved(VIEW_KEY), () => null);
-  const saved = useMemo(() => parseSavedProjection(savedText), [savedText]);
-  const view = useMemo(() => parseView(viewText), [viewText]);
-  const scenarios = saved?.scenarios ?? defaults.scenarios;
-  const ai = saved?.ai ?? null;
+  const draft = useMemo(() => parseSavedProjection(savedText), [savedText]);
+  const draftView = useMemo(() => parseView(viewText), [viewText]);
+  const saved = openState ? null : draft;
+  const scenarios = openState?.scenarios ?? draft?.scenarios ?? defaults.scenarios;
+  const ai = openState ? openState.ai : draft?.ai ?? null;
+  const view: ProjectionView = openState?.view ?? draftView;
   const mode = view.mode ?? defaults.mode;
 
-  const [start, setStart] = useState<StartingPoint>(defaults.start);
+  // A saved projection keeps the fiscal year it started from, even after a newer annual report.
+  const base = openState?.base ?? defaults.base;
+  const sameBase = base.year === defaults.base.year;
+  const years = sameBase ? defaults.years : Array.from({ length: PROJECTION_YEARS }, (_, index) => base.year + 1 + index);
+  const history = sameBase ? defaults.history : defaults.history.filter((year) => year.year <= base.year);
+  const estimates = sameBase ? defaults.estimates : years.map((year) => defaults.estimates[defaults.years.indexOf(year)] ?? null);
+
+  const [start, setStart] = useState<StartingPoint>(() => restored
+    ? { price: restored.inputs.start.price ?? defaults.start.price, shares: restored.inputs.start.shares ?? defaults.start.shares }
+    : defaults.start);
   const [startVersion, setStartVersion] = useState(0);
   const [picked, setPicked] = useState<ScenarioId>("base");
   const [aiError, setAiError] = useState<string | null>(null);
@@ -78,13 +111,13 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
   const current = summaries.find(({ id }) => id === selected)!;
   const projection = projections[selected];
   const withCost = hasCostOfRevenue(base);
-  const lastYear = defaults.years[defaults.years.length - 1];
+  const lastYear = years[years.length - 1];
   const ttmPe = start.price !== null && defaults.ttmEps !== null && defaults.ttmEps > 0 ? start.price / defaults.ttmEps : null;
   const marketCap = start.price !== null && start.shares !== null ? start.price * start.shares : null;
   const ratio = netIncomeRatio(base);
   const canSimple = base.netIncome !== null && base.netIncome > 0;
-  const estimated = defaults.years.flatMap((year, index) => {
-    const estimate = defaults.estimates[index];
+  const estimated = years.flatMap((year, index) => {
+    const estimate = estimates[index];
     return estimate && (estimate.revenue.avg !== null || estimate.eps.avg !== null) ? [{ year, estimate }] : [];
   });
   // Price ÷ analysts' EPS for the first projected year they cover.
@@ -92,11 +125,38 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
   const forwardPe = forward && start.price !== null ? start.price / forward.estimate.eps.avg! : null;
 
   function save(next: Partial<SavedProjection>) {
-    writeSaved(key, JSON.stringify({ scenarios, ai, ...next }));
+    if (openState) setOpenState({ ...openState, ...next });
+    else writeSaved(key, JSON.stringify({ scenarios, ai, ...next }));
   }
 
-  function setView(next: Partial<ProjectionView>) {
-    writeSaved(VIEW_KEY, JSON.stringify({ ...view, ...next }));
+  function setView(next: Partial<{ mode: ProjectionMode; count: ScenarioCount }>) {
+    if (openState) setOpenState({ ...openState, view: { mode, count: view.count, ...next } });
+    else writeSaved(VIEW_KEY, JSON.stringify({ ...view, ...next }));
+  }
+
+  // What Save keeps: every scenario, the view and the starting year; the price only if it was typed over.
+  function snapshot(): ProjectionSnapshot {
+    const inputs: PlumasInputs = {
+      scenarios,
+      ai,
+      view: { mode, count: view.count },
+      base,
+      start: {
+        price: start.price !== defaults.start.price ? start.price : null,
+        shares: start.shares !== defaults.start.shares ? start.shares : null,
+      },
+    };
+    return {
+      inputs,
+      baseYear: base.year,
+      priceAtSave: start.price,
+      currency,
+      valueAtSave: visible.map(({ id, label }) => {
+        const result = projections[id];
+        const last = result.ok ? result.years[result.years.length - 1] : null;
+        return { id, label, value: last ? midPrice(last) : null };
+      }),
+    };
   }
 
   function setValue(field: InputField, index: number, value: number) {
@@ -114,11 +174,12 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
   }
 
   function applyEstimates() {
-    save({ scenarios: { ...scenarios, [selected]: fitToEstimates(base, start, scenarios[selected], defaults.estimates) } });
+    save({ scenarios: { ...scenarios, [selected]: fitToEstimates(base, start, scenarios[selected], estimates) } });
   }
 
   function reset() {
-    writeSaved(key, null);
+    if (openState) setOpenState({ ...openState, scenarios: defaults.scenarios, ai: null, base: defaults.base, start: { price: null, shares: null } });
+    else writeSaved(key, null);
     setStart(defaults.start);
     setStartVersion((version) => version + 1);
     setAiError(null);
@@ -133,17 +194,20 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
           setAiError(response.error);
           return;
         }
-        // Built on what's saved now, in case a box was edited while the AI was working.
-        const latest = parseSavedProjection(readSaved(key))?.scenarios ?? defaults.scenarios;
-        const next = { ...latest };
-        const rationale: Partial<Record<ScenarioId, string>> = {};
-        for (const { id } of SCENARIOS) {
-          const suggestion = response.scenarios[id];
-          if (!suggestion) continue;
-          next[id] = { ...next[id], ...suggestion.inputs };
-          if (suggestion.rationale) rationale[id] = suggestion.rationale;
-        }
-        writeSaved(key, JSON.stringify({ scenarios: next, ai: { summary: response.summary, rationale } } satisfies SavedProjection));
+        // Built on what's there now, in case a box was edited while the AI was working.
+        const merge = (latest: SavedProjection["scenarios"]): SavedProjection => {
+          const next = { ...latest };
+          const rationale: Partial<Record<ScenarioId, string>> = {};
+          for (const { id } of SCENARIOS) {
+            const suggestion = response.scenarios[id];
+            if (!suggestion) continue;
+            next[id] = { ...next[id], ...suggestion.inputs };
+            if (suggestion.rationale) rationale[id] = suggestion.rationale;
+          }
+          return { scenarios: next, ai: { summary: response.summary, rationale } };
+        };
+        if (opened) setOpenState((current) => current && { ...current, ...merge(current.scenarios) });
+        else writeSaved(key, JSON.stringify(merge(parseSavedProjection(readSaved(key))?.scenarios ?? defaults.scenarios)));
       } catch {
         setAiError("The autofill failed to run. Please try again.");
       }
@@ -152,6 +216,16 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
 
   return (
     <div className="plumas-projection">
+      {opened && (
+        <OpenedBanner
+          name={opened.name}
+          updatedAt={opened.updatedAt}
+          draftHref={`${valuationTool("plumas-projection").path}?symbol=${encodeURIComponent(symbol)}`}
+          baseYear={base.year}
+          latestYear={defaults.base.year}
+          dropped={[...opened.dropped, ...(restored?.dropped ?? [])]}
+        />
+      )}
       <section className="projection-toolbar" aria-label="Starting point and view">
         <dl className="projection-stats">
           <div>
@@ -230,12 +304,15 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
             <span>{isAutofilling ? "Thinking…" : "Autofill with AI"}</span>
           </button>
           <button className="assumptions-reset" type="button" onClick={reset}>Reset</button>
+          <SaveProjection tool="plumas-projection" symbol={symbol} status={saving.status} opened={opened} snapshot={snapshot} />
         </div>
 
         <p className="projection-status" role="status">
           {isAutofilling
             ? `AI is reviewing ${symbol}'s history and filling every scenario…`
-            : saved
+            : openState
+              ? "Editing a saved projection. Save updates it or saves a copy; Reset goes back to the starting values."
+              : saved
               ? "Your projection is saved in this browser. Reset goes back to the starting values."
               : "Boxed cells are inputs, one per year. They start from the filings, and everything updates as you type."}
         </p>
@@ -276,7 +353,7 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
               history={history}
               years={projection.years}
               inputs={scenarios[selected]}
-              estimates={defaults.estimates}
+              estimates={estimates}
               currency={currency}
               withCost={withCost}
               onChange={setValue}
@@ -284,7 +361,7 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
             />
             <p className="table-footnote">
               Reported years show what the company did; the boxes are this scenario&apos;s inputs for each projected
-              year, and the arrow beside a row copies {defaults.years[0]}&apos;s value to every year. CAGR is the yearly
+              year, and the arrow beside a row copies {years[0]}&apos;s value to every year. CAGR is the yearly
               return from today&apos;s price, before dividends.
               {estimated.length > 0 && " Analysts' rows are the consensus average; point at one for the range and the number of analysts."}
             </p>
@@ -328,7 +405,7 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
             <li><strong>Revenue</strong> and <strong>net income</strong> each grow from fiscal {base.year} at their own rate for each year; the <strong>net margin</strong> is one over the other.</li>
             <li><strong>EPS</strong> is net income ÷ today&apos;s shares outstanding, the same count in every year.</li>
             <li><strong>Price</strong> is EPS × the low and the high P/E.</li>
-            <li><strong>CAGR</strong> is (price ÷ today&apos;s price)<sup>1/years</sup> − 1, counting {defaults.years[0]} as one year away and {lastYear} as five.</li>
+            <li><strong>CAGR</strong> is (price ÷ today&apos;s price)<sup>1/years</sup> − 1, counting {years[0]} as one year away and {lastYear} as five.</li>
           </ol>
         ) : (
           <ol className="three-year-steps">
@@ -337,7 +414,7 @@ export function PlumasProjection({ symbol, defaults }: { symbol: string; default
             <li><strong>Net income</strong> is (operating income + interest &amp; other) × {percent(ratio.value)}, {ratio.fromFilings ? `fiscal ${base.year}'s ratio of net income to pretax income` : "a 21% tax rate"}.</li>
             <li><strong>Shares</strong> start from today&apos;s count and fall each year by the buyback yield (or rise, with dilution). <strong>EPS</strong> is net income ÷ shares.</li>
             <li><strong>Price</strong> is EPS × the low, mid and high P/E, and <strong>market cap (mid)</strong> is the mid price × shares.</li>
-            <li><strong>CAGR</strong> is (price ÷ today&apos;s price)<sup>1/years</sup> − 1, counting {defaults.years[0]} as one year away and {lastYear} as five.</li>
+            <li><strong>CAGR</strong> is (price ÷ today&apos;s price)<sup>1/years</sup> − 1, counting {years[0]} as one year away and {lastYear} as five.</li>
           </ol>
         )}
         <h3 className="projection-subheading">Where the starting values come from</h3>

@@ -2,16 +2,26 @@ import { AppShell } from "../../components/app-shell";
 import { companyMetadata } from "../../components/company-metadata";
 import { providerFailureMessage } from "@/lib/fmp-messages";
 import { loadProjectionData } from "../data";
+import { loadSaving } from "../saved-data";
+import { SavedSection } from "../saved-section";
 import { ProjectionWorkbench } from "../projection-workbench";
 import { LoadError, SecSourceNote, ToolStart, ValuationHeader, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
 export const generateMetadata = companyMetadata("Intrinsic Value", "Estimate a company's intrinsic value with a detailed DCF, and dividend, earnings and residual income models.");
 
+function fiscalYear(value: string | undefined): number | null {
+  const year = Number(value);
+  return Number.isInteger(year) && year > 1900 ? year : null;
+}
+
 export default async function IntrinsicValuePage({ searchParams }: { searchParams: ValuationSearchParams }) {
   const symbol = await readSymbol(searchParams);
   // ?model=dcf opens the Detailed DCF, where the DCF Calculator's links now lead.
-  const openDcf = (await searchParams).model === "dcf";
-  const loaded = symbol ? await loadProjectionData(symbol) : null;
+  const { model, saved } = await searchParams;
+  const openDcf = model === "dcf";
+  const [loaded, saving] = symbol
+    ? await Promise.all([loadProjectionData(symbol), loadSaving(symbol, "intrinsic-value", saved)])
+    : [null, null];
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""} activeSection="intrinsic-value">
@@ -29,18 +39,24 @@ export default async function IntrinsicValuePage({ searchParams }: { searchParam
       ) : !loaded.ok ? (
         <LoadError symbol={symbol} reason={loaded.reason} />
       ) : (
-        <ProjectionWorkbench
-          symbol={symbol}
-          currency={loaded.data.fundamentals.annualFinancials[0]?.currency ?? loaded.data.profile?.currency ?? "USD"}
-          classification={loaded.data.classification}
-          defaults={loaded.data.defaults}
-          openDcf={openDcf}
-          priceNotice={
-            loaded.data.profileFailure
-              ? providerFailureMessage(loaded.data.profileFailure, "the latest quote")
-              : null
-          }
-        />
+        <>
+          {saving && <SavedSection symbol={symbol} tool="intrinsic-value" saving={saving} />}
+          <ProjectionWorkbench
+            key={saving?.opened?.id ?? "draft"}
+            symbol={symbol}
+            currency={loaded.data.fundamentals.annualFinancials[0]?.currency ?? loaded.data.profile?.currency ?? "USD"}
+            classification={loaded.data.classification}
+            defaults={loaded.data.defaults}
+            openDcf={openDcf}
+            priceNotice={
+              loaded.data.profileFailure
+                ? providerFailureMessage(loaded.data.profileFailure, "the latest quote")
+                : null
+            }
+            baseYear={fiscalYear(loaded.data.fundamentals.annualFinancials[0]?.fiscalYear)}
+            saving={{ status: saving?.status ?? "unavailable", opened: saving?.opened ?? null }}
+          />
+        </>
       )}
       {loaded?.ok && <SecSourceNote source={loaded.data.fundamentals.source} />}
     </AppShell>

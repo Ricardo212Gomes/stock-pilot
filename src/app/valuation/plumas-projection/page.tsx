@@ -1,6 +1,8 @@
 import { AppShell } from "../../components/app-shell";
 import { companyMetadata } from "../../components/company-metadata";
 import { loadPriceProjectionData } from "../data";
+import { loadSaving } from "../saved-data";
+import { SavedSection } from "../saved-section";
 import { PlumasProjection } from "../plumas-projection";
 import { LoadError, ProjectionFitCard, SecSourceNote, ToolStart, ValuationHeader, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
@@ -8,7 +10,9 @@ export const generateMetadata = companyMetadata("Plumas Projection", "Project a 
 
 export default async function PlumasProjectionPage({ searchParams }: { searchParams: ValuationSearchParams }) {
   const symbol = await readSymbol(searchParams);
-  const loaded = symbol ? await loadPriceProjectionData(symbol) : null;
+  const [loaded, saving] = symbol
+    ? await Promise.all([loadPriceProjectionData(symbol), loadSaving(symbol, "plumas-projection", (await searchParams).saved)])
+    : [null, null];
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""} activeSection="plumas-projection">
@@ -28,7 +32,13 @@ export default async function PlumasProjectionPage({ searchParams }: { searchPar
           ) : (
             <>
               <ProjectionFitCard symbol={symbol} current="plumas-projection" fit={loaded.data.fit} classification={loaded.data.classification} />
-              <PlumasProjection symbol={symbol} defaults={loaded.data.plumas} />
+              {saving && <SavedSection symbol={symbol} tool="plumas-projection" saving={saving} />}
+              <PlumasProjection
+                key={saving?.opened?.id ?? "draft"}
+                symbol={symbol}
+                defaults={loaded.data.plumas}
+                saving={{ status: saving?.status ?? "unavailable", opened: saving?.opened ?? null }}
+              />
               <SecSourceNote source={loaded.data.income.source} />
             </>
           )}
