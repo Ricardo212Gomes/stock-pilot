@@ -1,6 +1,14 @@
 # StockPilot
 
-StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with four calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites and a portfolio. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Tiingo, Alpha Vantage and FINVIZ, on their free plans, with the ECB's euro rates from Frankfurter.
+StockPilot is a free US stock research app with AI built in. Look up any US company's financials, earnings calls, SEC filings and news, estimate what it's worth, and follow the wider market.
+
+- **Research a company:** quote, financial statements and ratios, earnings call transcripts, SEC filings, insider trades and news.
+- **Value it:** three valuation tools, with assumptions you can change and save.
+- **Follow the market:** market maps, market valuation (P/E and CAPE against history), the VIX, events, and earnings and dividend calendars.
+- **Track your own:** favorites, a portfolio and notifications.
+- **AI (Google Gemini):** a chat that looks up live data, summaries of earnings calls and filings, reviews of financial statements, suggested valuation assumptions, reviews of your holdings and a paper portfolio it manages itself.
+
+The AI only works from the data the app gives it, and nothing here is investment advice. Data comes from the free plans of Financial Modeling Prep, SEC EDGAR, Finnhub, Tiingo, Alpha Vantage, FRED, Cboe, FINVIZ, Robert Shiller's dataset and Siblis Research, with euro rates from Frankfurter.
 
 ## Configure FMP
 
