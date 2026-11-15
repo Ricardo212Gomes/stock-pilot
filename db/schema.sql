@@ -198,3 +198,28 @@ create table if not exists saved_projections (
 );
 
 create index if not exists saved_projections_user_idx on saved_projections (user_id, symbol, tool, updated_at desc);
+
+-- The notifications bell (see docs/notifications.md): every message StockPilot sends is kept here, read in the app,
+-- and also sent to Telegram when the user has it linked and on. Rows older than 90 days are removed daily
+-- (npm run notifications:prune).
+alter table notification_settings add column if not exists telegram_alerts boolean not null default true;
+
+create table if not exists notifications (
+  id bigint generated always as identity primary key,
+  user_id text not null,
+  kind text not null check (kind in ('earnings', 'transcripts', 'news', 'filings', 'reviews')),
+  -- One line for the bell's list.
+  title text not null,
+  -- The message in Telegram's HTML (b, i and a tags), read safely on the page.
+  body text not null,
+  -- The tickers it's about, for links and the company filter.
+  symbols text[] not null default '{}',
+  telegram_status text not null check (telegram_status in ('sent', 'failed', 'not-linked', 'off')),
+  created_at timestamptz not null default now(),
+  read_at timestamptz
+);
+
+create index if not exists notifications_user_idx on notifications (user_id, created_at desc);
+create index if not exists notifications_unread_idx on notifications (user_id) where read_at is null;
+create index if not exists notifications_created_idx on notifications (created_at);
+create index if not exists notification_log_sent_idx on notification_log (sent_at);

@@ -5,16 +5,19 @@ import { getCompanyNews } from "./finnhub-news";
 import { listedName } from "./listed-companies";
 import { CANDIDATES_PER_SYMBOL, selectNews, type NewsCandidate, type NewsPick } from "./news-digest";
 import { getFilings, isEarningsRelease, pressReleaseUrl, type Filing } from "./sec-filings";
+import { recordNotification } from "./notification-inbox";
+import type { NotificationKind, TelegramStatus } from "./notification-kinds";
 import { markSent, notificationRecipients, wasSent, type Recipient } from "./notification-settings";
 import { getReviewsEnabled, listRecentReviews, summarizeReviews, type Rating, type ReviewSummary } from "./portfolio-reviews";
-import { escapeHtml, sendTelegramMessage } from "./telegram";
+import { escapeHtml, isTelegramConfigured, sendTelegramMessage } from "./telegram";
 import { ensureTranscriptSummary, type TranscriptSummary } from "./transcript-summary";
 import { latestReport, quarterLabel, type FiscalQuarter } from "./transcripts";
 
-// Telegram notifications for each user's favorites: upcoming earnings, summaries of new earnings
-// calls, a digest of the news that matters, and analyses of new SEC filings; and a weekly summary of the
-// Portfolio's AI reviews. Run by `npm run notify:earnings`, `notify:transcripts`, `notify:news`,
-// `notify:filings` and `notify:reviews`.
+// Notifications for each user's favorites: upcoming earnings, summaries of new earnings calls, a digest of the news
+// that matters, and analyses of new SEC filings; and a weekly summary of the Portfolio's AI reviews. Each one is kept
+// in the app (the bell and the Notifications page) and also sent to Telegram when the user has a chat linked and
+// Telegram on. Run by `npm run notify:earnings`, `notify:transcripts`, `notify:news`, `notify:filings` and
+// `notify:reviews`.
 
 export const EARNINGS_DAYS = 7;
 // Only calls this recent count as new; older ones were missed, not news.
@@ -28,10 +31,42 @@ function isDryRun(): boolean {
   return process.env.NOTIFY_DRY_RUN === "1";
 }
 
-async function deliver(chatId: string, message: string): ReturnType<typeof sendTelegramMessage> {
-  if (!isDryRun()) return sendTelegramMessage(chatId, message);
-  console.log(`\n--- to chat ${chatId.slice(0, 3)}… ---\n${message}\n`);
-  return { ok: true, result: null };
+type Delivery = { kind: NotificationKind; title: string; symbols: string[] };
+export type Delivered = { ok: true; telegram: TelegramStatus; telegramError?: string } | { ok: false; error: string };
+
+// Keeps the message in the app and sends it to Telegram too when the user has that on. It counts as delivered once
+// it's kept, whatever Telegram did (the status says), so a Telegram failure doesn't send it twice in the app. A dry
+// run prints it and keeps nothing.
+async function deliver(recipient: Recipient, message: string, { kind, title, symbols }: Delivery): Promise<Delivered> {
+  if (isDryRun()) {
+    const to = recipient.chatId ? `chat ${recipient.chatId.slice(0, 3)}…` : "the app only";
+    console.log(`\n--- ${kind} for ${recipient.userId} (${to}): ${title} ---\n${message}\n`);
+    return { ok: true, telegram: recipient.chatId ? "sent" : recipient.telegramLinked ? "off" : "not-linked" };
+  }
+  let telegram: TelegramStatus = recipient.telegramLinked ? "off" : "not-linked";
+  let telegramError: string | undefined;
+  if (recipient.chatId && isTelegramConfigured()) {
+    const sent = await sendTelegramMessage(recipient.chatId, message);
+    telegram = sent.ok ? "sent" : "failed";
+    if (!sent.ok) telegramError = sent.error;
+  }
+  try {
+    await recordNotification({ userId: recipient.userId, kind, title, body: message, symbols, telegramStatus: telegram });
+  } catch {
+    return { ok: false, error: "the database didn't save it" };
+  }
+  return { ok: true, telegram, telegramError };
+}
+
+// One line for the run's output: kept in the app, and what Telegram did.
+function outcome(delivered: Delivered): string {
+  if (!delivered.ok) return `failed (${delivered.error})`;
+  return `saved; Telegram ${delivered.telegram}${delivered.telegramError ? ` (${delivered.telegramError})` : ""}`;
+}
+
+// "NVDA, AAPL and 3 more"
+function symbolList(symbols: string[], shown = 4): string {
+  return symbols.length <= shown ? symbols.join(", ") : `${symbols.slice(0, shown).join(", ")} and ${symbols.length - shown} more`;
 }
 
 async function record(userId: string, kind: string, item: string): Promise<void> {
@@ -118,7 +153,7 @@ async function favoritesOf(recipients: Recipient[]): Promise<Map<string, string[
 export async function runEarningsAlerts(today = new Date().toISOString().slice(0, 10)): Promise<RunReport> {
   const report: RunReport = { sent: 0, lines: [] };
   const recipients = await notificationRecipients("earnings");
-  if (recipients.length === 0) return { sent: 0, lines: ["No one has earnings alerts on with Telegram connected."] };
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has earnings alerts on."] };
 
   const to = addDays(today, EARNINGS_DAYS - 1);
   const weeks = [...new Set([weekStart(today), weekStart(to)])];
@@ -133,13 +168,15 @@ export async function runEarningsAlerts(today = new Date().toISOString().slice(0
   const favorites = await favoritesOf(recipients);
   for (const recipient of recipients) {
     const mine = new Set(favorites.get(recipient.userId));
-    const message = earningsMessage(upcoming.filter((event) => mine.has(event.symbol)), today, to);
+    const reporting = upcoming.filter((event) => mine.has(event.symbol));
+    const message = earningsMessage(reporting, today, to);
     if (!message) {
       report.lines.push(`${recipient.userId}: no favorites report by ${to}.`);
       continue;
     }
-    const sent = await deliver(recipient.chatId, message);
-    report.lines.push(`${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
+    const symbols = [...new Set(reporting.map((event) => event.symbol))];
+    const sent = await deliver(recipient, message, { kind: "earnings", title: `Earnings in the next week: ${symbolList(symbols)}`, symbols });
+    report.lines.push(`${recipient.userId}: ${outcome(sent)}.`);
     if (sent.ok) report.sent += 1;
   }
   return report;
@@ -150,7 +187,7 @@ export async function runEarningsAlerts(today = new Date().toISOString().slice(0
 export async function runTranscriptSummaries(today = new Date().toISOString().slice(0, 10)): Promise<RunReport> {
   const report: RunReport = { sent: 0, lines: [] };
   const recipients = await notificationRecipients("transcripts");
-  if (recipients.length === 0) return { sent: 0, lines: ["No one has transcript summaries on with Telegram connected."] };
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has transcript summaries on."] };
 
   const favorites = await favoritesOf(recipients);
   const symbols = [...new Set([...favorites.values()].flat())].sort();
@@ -178,13 +215,14 @@ export async function runTranscriptSummaries(today = new Date().toISOString().sl
       continue;
     }
     const message = transcriptMessage(symbol, quarter, summary.summary);
+    const title = `${symbol} ${quarterLabel(quarter)} earnings call: ${summary.summary.tone} tone`;
     for (const recipient of waiting) {
-      const sent = await deliver(recipient.chatId, message);
+      const sent = await deliver(recipient, message, { kind: "transcripts", title, symbols: [symbol] });
       if (sent.ok) {
         await record(recipient.userId, "transcript", item);
         report.sent += 1;
       }
-      report.lines.push(`${symbol} ${quarter} → ${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
+      report.lines.push(`${symbol} ${quarter} → ${recipient.userId}: ${outcome(sent)}.`);
     }
   }
   return report;
@@ -239,7 +277,7 @@ export function filingMessage(symbol: string, filing: Filing, analysis: FilingAn
 export async function runNewsDigest(now = new Date()): Promise<RunReport> {
   const report: RunReport = { sent: 0, lines: [] };
   const recipients = await notificationRecipients("news");
-  if (recipients.length === 0) return { sent: 0, lines: ["No one has news alerts on with Telegram connected."] };
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has news alerts on."] };
 
   const since = new Date(now.getTime() - NEWS_HOURS * 3_600_000).toISOString();
   const favorites = await favoritesOf(recipients);
@@ -273,12 +311,14 @@ export async function runNewsDigest(now = new Date()): Promise<RunReport> {
       report.lines.push(`${recipient.userId}: nothing relevant among ${candidates.length} new headlines.`);
       continue;
     }
-    const sent = await deliver(recipient.chatId, message);
+    const symbols = [...new Set(picks.map((pick) => pick.symbol))];
+    const title = `${picks.length} headline${picks.length === 1 ? "" : "s"} on ${symbolList(symbols)}`;
+    const sent = await deliver(recipient, message, { kind: "news", title, symbols });
     if (sent.ok) {
       for (const pick of picks) await record(recipient.userId, "news", pick.id);
       report.sent += 1;
     }
-    report.lines.push(`${recipient.userId}: ${sent.ok ? `sent ${picks.length} of ${candidates.length} headlines` : `failed (${sent.error})`}.`);
+    report.lines.push(`${recipient.userId}: ${sent.ok ? `${picks.length} of ${candidates.length} headlines, ${outcome(sent)}` : outcome(sent)}.`);
   }
   return report;
 }
@@ -287,7 +327,7 @@ export async function runNewsDigest(now = new Date()): Promise<RunReport> {
 export async function runFilingAlerts(today = new Date().toISOString().slice(0, 10)): Promise<RunReport> {
   const report: RunReport = { sent: 0, lines: [] };
   const recipients = await notificationRecipients("filings");
-  if (recipients.length === 0) return { sent: 0, lines: ["No one has filing alerts on with Telegram connected."] };
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has filing alerts on."] };
 
   const favorites = await favoritesOf(recipients);
   const oldest = addDays(today, -FILING_DAYS);
@@ -316,13 +356,14 @@ export async function runFilingAlerts(today = new Date().toISOString().slice(0, 
       }
       const release = isEarningsRelease(filing) ? await pressReleaseUrl(filing) : null;
       const message = filingMessage(symbol, filing, analysis.analysis, release ?? filing.documentUrl);
+      const title = `${symbol} filed ${/^8/.test(filing.form) ? "an" : "a"} ${filing.form}: ${analysis.analysis.headline}`;
       for (const recipient of waiting) {
-        const sent = await deliver(recipient.chatId, message);
+        const sent = await deliver(recipient, message, { kind: "filings", title, symbols: [symbol] });
         if (sent.ok) {
           await record(recipient.userId, "filing", filing.accession);
           report.sent += 1;
         }
-        report.lines.push(`${symbol} ${filing.form} ${filing.filed} → ${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
+        report.lines.push(`${symbol} ${filing.form} ${filing.filed} → ${recipient.userId}: ${outcome(sent)}.`);
       }
     }
   }
@@ -384,7 +425,7 @@ export function reviewsMessage(summaries: ReviewSummary[], today: string): strin
 export async function runReviewSummaries(today = new Date().toISOString().slice(0, 10)): Promise<RunReport> {
   const report: RunReport = { sent: 0, lines: [] };
   const recipients = await notificationRecipients("reviews");
-  if (recipients.length === 0) return { sent: 0, lines: ["No one has the weekly AI reviews on with Telegram connected."] };
+  if (recipients.length === 0) return { sent: 0, lines: ["No one has the weekly AI reviews on."] };
 
   const week = weekStart(today);
   for (const recipient of recipients) {
@@ -396,17 +437,22 @@ export async function runReviewSummaries(today = new Date().toISOString().slice(
       report.lines.push(`${recipient.userId}: the Portfolio's AI reviews are off.`);
       continue;
     }
-    const message = reviewsMessage(summarizeReviews(await listRecentReviews(recipient.userId), today), today);
+    const summaries = summarizeReviews(await listRecentReviews(recipient.userId), today);
+    const message = reviewsMessage(summaries, today);
     if (!message) {
       report.lines.push(`${recipient.userId}: no reviews yet.`);
       continue;
     }
-    const sent = await deliver(recipient.chatId, message);
+    const sent = await deliver(recipient, message, {
+      kind: "reviews",
+      title: `Weekly AI reviews of your portfolio: ${summaries.length} holding${summaries.length === 1 ? "" : "s"}`,
+      symbols: summaries.map((review) => review.symbol),
+    });
     if (sent.ok) {
       await record(recipient.userId, "reviews", week);
       report.sent += 1;
     }
-    report.lines.push(`${recipient.userId}: ${sent.ok ? "sent" : `failed (${sent.error})`}.`);
+    report.lines.push(`${recipient.userId}: ${outcome(sent)}.`);
   }
   return report;
 }

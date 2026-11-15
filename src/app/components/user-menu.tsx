@@ -45,7 +45,8 @@ export async function UserMenu() {
       <div className="user-menu-panel">
         {user.name && <strong>{user.name}</strong>}
         {user.email && <span>{user.email}</span>}
-        <Link className="user-menu-link" href="/settings">Settings</Link>
+        <Link className="user-menu-link" href="/notifications">Notifications</Link>
+        <Link className="user-menu-link" href="/settings">Data sources</Link>
         <form
           action={async () => {
             "use server";

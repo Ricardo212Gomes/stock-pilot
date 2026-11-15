@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { VALUATION_TOOLS, type ValuationTool } from "../valuation/tools";
+import { NotificationBell } from "./notification-bell";
 import { SidebarToggle } from "./sidebar-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { TickerSearch } from "./ticker-search";
@@ -10,7 +11,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "ai-portfolio" | "favorites" | "saved-projections" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "ai-portfolio" | "favorites" | "saved-projections" | "notifications" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -24,6 +25,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "portfolio") return "Portfolio";
   if (section === "ai-portfolio") return "AI portfolio";
   if (section === "favorites") return "Favorites";
+  if (section === "notifications") return "Notifications";
   if (section === "saved-projections") return "Saved projections";
   if (section === "maps") return "Market maps";
   if (section === "vix") return "VIX fear gauge";
@@ -238,6 +240,7 @@ export function AppShell({
                 action={valuationPath ?? (activeSection === "news" ? "/news" : "/stock")}
               />
               <ThemeToggle />
+              <NotificationBell />
               <UserMenu />
             </div>
           </header>

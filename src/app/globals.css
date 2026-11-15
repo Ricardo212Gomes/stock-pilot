@@ -9550,3 +9550,338 @@ a.earnings-round:focus-visible {
     flex-wrap: wrap;
   }
 }
+
+/* Notifications (docs/notifications.md): the bell in the top bar with its unread badge and panel, and the
+   Notifications page's message cards. */
+.notification-bell {
+  position: relative;
+}
+
+.notification-bell summary {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  cursor: pointer;
+  list-style: none;
+  box-shadow: var(--shadow-subtle);
+}
+
+.notification-bell summary::-webkit-details-marker {
+  display: none;
+}
+
+.notification-bell summary:hover,
+.notification-bell[open] summary {
+  border-color: var(--ring);
+}
+
+.notification-bell summary svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The unread count: a small primary pill on the bell's top right, ringed in the page colour. */
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--background);
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 380px;
+  max-width: calc(100vw - 24px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.notification-bell[open] .notification-panel {
+  transform-origin: top right;
+  animation: popover-in 180ms var(--ease-out);
+}
+
+.notification-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notification-panel-heading strong {
+  font-size: 15px;
+}
+
+.notification-empty {
+  margin: 0;
+  padding: 16px 14px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.notification-list {
+  max-height: min(440px, calc(100vh - 160px));
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 8px;
+  align-items: start;
+  gap: 10px;
+  padding: 8px 14px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.notification-item > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+}
+
+.notification-title {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.notification-unread .notification-title {
+  font-weight: 700;
+}
+
+.notification-item small {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.notification-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Unread: an accent dot, so bold isn't the only signal. */
+.notification-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 9999px;
+  background: var(--accent);
+}
+
+.notification-see-all {
+  display: block;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notification-item:hover {
+    background: var(--highlight);
+  }
+
+  .notification-see-all:hover {
+    text-decoration: underline;
+  }
+}
+
+/* The Notifications page. */
+.notification-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.notification-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+}
+
+.notification-filters label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.notification-filters select {
+  min-width: 160px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 16px;
+}
+
+.notification-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.notification-card {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.notification-card-unread {
+  border-left: 3px solid var(--accent);
+}
+
+.notification-card-heading {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.notification-card-heading h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.notification-card-heading h2 .notification-dot {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+.notification-card-heading p {
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.notification-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 12px;
+  white-space: nowrap;
+}
+
+.notification-card-actions a {
+  font-size: 14px;
+}
+
+/* A message as it was sent: its line breaks kept, links in accent. */
+.notification-message {
+  margin: 10px 0 0 30px;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.notification-message a {
+  color: var(--accent);
+}
+
+.notification-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.notification-pager a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.settings-intro {
+  margin: 0 0 12px;
+  color: var(--muted-foreground);
+}
+
+/* On phones the bell's panel spans the top bar, under it, as the search suggestions do. */
+@media (max-width: 640px) {
+  .notification-bell {
+    position: static;
+  }
+
+  .notification-bell summary {
+    width: 36px;
+    height: 36px;
+  }
+
+  .notification-panel {
+    top: 100%;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-width: none;
+  }
+
+  .notification-message {
+    margin-left: 0;
+  }
+
+  .notification-card-heading {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+
+  .notification-card-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-bell[open] .notification-panel {
+    animation: none;
+  }
+}
