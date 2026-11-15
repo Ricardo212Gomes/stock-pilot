@@ -9,16 +9,19 @@ import {
   sendTestMessageAction,
   startTelegramLinkAction,
   type SettingsActionResult,
-} from "./actions";
+} from "./settings-actions";
 
 type Props = {
-  botUsername: string;
+  // Null when the server has no Telegram bot: the alerts still come to the bell.
+  botUsername: string | null;
   telegramName: string | null;
   pendingLink: string | null;
   initialPreferences: NotificationPreferences;
 };
 
-const ALERTS: { key: keyof NotificationPreferences; title: string; detail: string }[] = [
+type AlertKey = Exclude<keyof NotificationPreferences, "telegramAlerts">;
+
+const ALERTS: { key: AlertKey; title: string; detail: string }[] = [
   { key: "earningsAlerts", title: "Upcoming earnings", detail: "Every Monday: which favorites report in the next 7 days, with the time and estimates." },
   { key: "transcriptSummaries", title: "Earnings call summaries", detail: "An AI summary of each favorite's new earnings call, once its transcript is out." },
   { key: "newsAlerts", title: "Relevant news", detail: "Each weekday evening: the headlines about your favorites that matter, picked by AI with a line on why." },
@@ -26,7 +29,8 @@ const ALERTS: { key: keyof NotificationPreferences; title: string; detail: strin
   { key: "reviewSummaries", title: "Weekly AI reviews of your portfolio", detail: "Every Sunday: your holdings' latest AI ratings from the Portfolio's AI reviews, what changed this week, Underweight and Sell first. Needs the reviews turned on in the Portfolio." },
 ];
 
-export function TelegramSettings({ botUsername, telegramName, pendingLink, initialPreferences }: Props) {
+// The Notifications page's Settings tab: what to get, and Telegram as a second channel.
+export function NotificationSettings({ botUsername, telegramName, pendingLink, initialPreferences }: Props) {
   const [link, setLink] = useState(pendingLink);
   // Each card shows its own result.
   const [status, setStatus] = useState<{ card: "telegram" | "alerts"; ok: boolean; text: string } | null>(null);
@@ -62,46 +66,14 @@ export function TelegramSettings({ botUsername, telegramName, pendingLink, initi
   function togglePreference(key: keyof typeof preferences) {
     const next = { ...preferences, [key]: !preferences[key] };
     setPreferences(next);
-    run("alerts", () => savePreferencesAction(next));
+    run(key === "telegramAlerts" ? "telegram" : "alerts", () => savePreferencesAction(next));
   }
 
   return (
     <>
-      <section className="settings-card" aria-labelledby="telegram-heading">
-        <h2 id="telegram-heading">Telegram</h2>
-        {telegramName ? (
-          <>
-            <p className="settings-connected"><span aria-hidden="true">●</span> Connected to <strong>{telegramName}</strong></p>
-            <div className="settings-actions">
-              <button type="button" className="settings-button" disabled={pending} onClick={() => run("telegram", sendTestMessageAction)}>Send a test message</button>
-              <button type="button" className="settings-button settings-button-quiet" disabled={pending} onClick={() => run("telegram", disconnectTelegramAction, () => setLink(null))}>Disconnect</button>
-            </div>
-          </>
-        ) : link ? (
-          <ol className="settings-steps">
-            <li>
-              <a className="settings-button" href={link} target="_blank" rel="noreferrer">Open @{botUsername} in Telegram</a>
-            </li>
-            <li>Press <strong>Start</strong> in the chat with the bot.</li>
-            <li>
-              <button type="button" className="settings-button" disabled={pending} onClick={() => run("telegram", confirmTelegramLinkAction)}>
-                {pending ? "Checking…" : "I've pressed Start"}
-              </button>
-            </li>
-          </ol>
-        ) : (
-          <>
-            <p>Get your favorites&apos; upcoming earnings, earnings call summaries, relevant news and SEC filing analyses in Telegram.</p>
-            <button type="button" className="settings-button" disabled={pending} onClick={() => run("telegram", startTelegramLinkAction, (result) => setLink(result.link ?? null))}>
-              Connect Telegram
-            </button>
-          </>
-        )}
-        {statusFor("telegram")}
-      </section>
-
       <section className="settings-card" aria-labelledby="alerts-heading">
-        <h2 id="alerts-heading">What to send</h2>
+        <h2 id="alerts-heading">What to get</h2>
+        <p className="settings-intro">Each one shows up in the bell and on the History tab{botUsername ? ", and in Telegram too when it's connected" : ""}.</p>
         {ALERTS.map((alert) => (
           <label className="settings-toggle" key={alert.key}>
             <input type="checkbox" checked={preferences[alert.key]} disabled={pending} onChange={() => togglePreference(alert.key)} />
@@ -113,6 +85,50 @@ export function TelegramSettings({ botUsername, telegramName, pendingLink, initi
         ))}
         {statusFor("alerts")}
       </section>
+
+      {botUsername && (
+        <section className="settings-card" aria-labelledby="telegram-heading">
+          <h2 id="telegram-heading">Telegram</h2>
+          {telegramName ? (
+            <>
+              <p className="settings-connected"><span aria-hidden="true">●</span> Connected to <strong>{telegramName}</strong></p>
+              <div className="settings-actions">
+                <button type="button" className="settings-button" disabled={pending} onClick={() => run("telegram", sendTestMessageAction)}>Send a test message</button>
+                <button type="button" className="settings-button settings-button-quiet" disabled={pending} onClick={() => run("telegram", disconnectTelegramAction, () => setLink(null))}>Disconnect</button>
+              </div>
+            </>
+          ) : link ? (
+            <ol className="settings-steps">
+              <li>
+                <a className="settings-button" href={link} target="_blank" rel="noreferrer">Open @{botUsername} in Telegram</a>
+              </li>
+              <li>Press <strong>Start</strong> in the chat with the bot.</li>
+              <li>
+                <button type="button" className="settings-button" disabled={pending} onClick={() => run("telegram", confirmTelegramLinkAction)}>
+                  {pending ? "Checking…" : "I've pressed Start"}
+                </button>
+              </li>
+            </ol>
+          ) : (
+            <>
+              <p>Also get your notifications in Telegram, as messages from @{botUsername}.</p>
+              <button type="button" className="settings-button" disabled={pending} onClick={() => run("telegram", startTelegramLinkAction, (result) => setLink(result.link ?? null))}>
+                Connect Telegram
+              </button>
+            </>
+          )}
+          {telegramName && (
+            <label className="settings-toggle">
+              <input type="checkbox" checked={preferences.telegramAlerts} disabled={pending} onChange={() => togglePreference("telegramAlerts")} />
+              <span>
+                <strong>Also send to Telegram</strong>
+                <small>Off: notifications only come to the bell, and the chat stays connected.</small>
+              </span>
+            </label>
+          )}
+          {statusFor("telegram")}
+        </section>
+      )}
     </>
   );
 }

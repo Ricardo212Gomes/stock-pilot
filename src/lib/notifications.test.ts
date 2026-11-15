@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EarningsEvent } from "./earnings-calendar";
 
 const state = {
-  recipients: [] as { userId: string; chatId: string }[],
+  recipients: [] as { userId: string; chatId: string | null; telegramLinked: boolean }[],
+  kept: [] as { userId: string; kind: string; title: string; body: string; symbols: string[]; telegramStatus: string }[],
+  telegramFails: false,
   favorites: {} as Record<string, string[]>,
   sent: new Set<string>(),
   messages: [] as { chatId: string; text: string }[],
@@ -19,10 +21,18 @@ vi.mock("./notification-settings", () => ({
   wasSent: async (userId: string, kind: string, item: string) => state.sent.has(`${userId}|${kind}|${item}`),
   markSent: async (userId: string, kind: string, item: string) => void state.sent.add(`${userId}|${kind}|${item}`),
 }));
+vi.mock("./notification-inbox", () => ({
+  recordNotification: async (input: (typeof state.kept)[number]) => {
+    state.kept.push(input);
+    return String(state.kept.length);
+  },
+}));
 vi.mock("./favorites", () => ({ listFavorites: async (userId: string) => (state.favorites[userId] ?? []).map((symbol) => ({ symbol, createdAt: "" })) }));
 vi.mock("./telegram", async (original) => ({
   ...(await original<typeof import("./telegram")>()),
+  isTelegramConfigured: () => true,
   sendTelegramMessage: async (chatId: string, text: string) => {
+    if (state.telegramFails) return { ok: false, error: "Telegram didn't respond. Try again in a moment." };
     state.messages.push({ chatId, text });
     return { ok: true, result: null };
   },
@@ -58,7 +68,10 @@ function event(symbol: string, date: string): EarningsEvent {
 }
 
 beforeEach(() => {
-  state.recipients = [{ userId: "u1", chatId: "100" }, { userId: "u2", chatId: "200" }];
+  state.recipients = [{ userId: "u1", chatId: "100", telegramLinked: true }, { userId: "u2", chatId: "200", telegramLinked: true }];
+  state.kept = [];
+  state.telegramFails = false;
+  delete process.env.NOTIFY_DRY_RUN;
   state.favorites = { u1: ["CRWD", "AAPL"], u2: ["MSFT"] };
   state.sent.clear();
   state.messages = [];
@@ -149,5 +162,57 @@ describe("runFilingAlerts", () => {
 
     await runFilingAlerts("2026-10-28");
     expect(state.analyzed).toBe(1);
+  });
+});
+
+describe("keeping notifications in the app", () => {
+  // An earlier test leaves the summary "not ready".
+  beforeEach(() => {
+    state.summary = { ok: true, summary: { overview: "Strong quarter.", highlights: [], outlook: [], analystQuestions: [], tone: "positive", toneReason: "" } };
+  });
+
+  it("keeps each message with its title, tickers and Telegram outcome", async () => {
+    state.recipients = [
+      { userId: "u1", chatId: "100", telegramLinked: true },
+      // Linked but with "Also send to Telegram" off, and never linked.
+      { userId: "u2", chatId: null, telegramLinked: true },
+      { userId: "u3", chatId: null, telegramLinked: false },
+    ];
+    state.favorites = { u1: ["CRWD"], u2: ["CRWD"], u3: ["CRWD"] };
+    const report = await runEarningsAlerts("2026-10-26");
+    expect(report.sent).toBe(3);
+    expect(state.messages.map((message) => message.chatId)).toEqual(["100"]);
+    expect(state.kept.map(({ userId, kind, telegramStatus }) => `${userId} ${kind} ${telegramStatus}`)).toEqual([
+      "u1 earnings sent",
+      "u2 earnings off",
+      "u3 earnings not-linked",
+    ]);
+    expect(state.kept[0]).toMatchObject({ title: "Earnings in the next week: CRWD", symbols: ["CRWD"] });
+    expect(state.kept[0].body).toContain("📅 <b>Earnings from your favorites</b>");
+    expect(report.lines).toContain("u3: saved; Telegram not-linked.");
+  });
+
+  it("counts a message as delivered once kept, even when Telegram fails, so it isn't sent twice", async () => {
+    state.favorites = { u1: ["CRWD"], u2: [] };
+    state.telegramFails = true;
+    const first = await runTranscriptSummaries("2026-10-26");
+    expect(first.sent).toBe(1);
+    expect(state.kept[0]).toMatchObject({ kind: "transcripts", telegramStatus: "failed", symbols: ["CRWD"], title: "CRWD FY2026 Q4 earnings call: positive tone" });
+    expect(first.lines.at(-1)).toMatch(/saved; Telegram failed \(Telegram didn't respond/);
+    expect((await runTranscriptSummaries("2026-10-26")).sent).toBe(0);
+    expect(state.kept).toHaveLength(1);
+  });
+
+  it("keeps nothing and sends nothing on a dry run", async () => {
+    process.env.NOTIFY_DRY_RUN = "1";
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    state.favorites = { u1: ["CRWD"], u2: [] };
+    const report = await runTranscriptSummaries("2026-10-26");
+    expect(report.sent).toBe(1);
+    expect(state.kept).toEqual([]);
+    expect(state.messages).toEqual([]);
+    expect(state.sent.size).toBe(0);
+    expect(log.mock.calls[0][0]).toContain("transcripts for u1 (chat 100…)");
+    log.mockRestore();
   });
 });

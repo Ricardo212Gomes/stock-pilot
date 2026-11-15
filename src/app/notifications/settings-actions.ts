@@ -16,9 +16,11 @@ import { isTelegramConfigured, sendTelegramMessage } from "@/lib/telegram";
 
 export type SettingsActionResult = { ok: true; message?: string; link?: string } | { ok: false; error: string };
 
-// Every action works on the signed-in user from the session cookie, never on ids from the browser.
-async function signedIn(): Promise<string | SettingsActionResult> {
-  if (!isTelegramConfigured() || !isDatabaseConfigured()) return { ok: false, error: "Telegram notifications aren't set up on this server." };
+// Every action works on the signed-in user from the session cookie, never on ids from the browser. The alert
+// switches need only the database; linking a chat needs Telegram set up too.
+async function signedIn(telegram = true): Promise<string | SettingsActionResult> {
+  if (!isDatabaseConfigured()) return { ok: false, error: "Notifications need a database. Set DATABASE_URL." };
+  if (telegram && !isTelegramConfigured()) return { ok: false, error: "Telegram isn't set up on this server." };
   const userId = await currentUserId();
   return userId ?? { ok: false, error: "Sign in to change your notifications." };
 }
@@ -45,7 +47,7 @@ export async function sendTestMessageAction(): Promise<SettingsActionResult> {
   if (typeof userId !== "string") return userId;
   const settings = await getNotificationSettings(userId);
   if (!settings.telegramChatId) return { ok: false, error: "Connect Telegram first." };
-  const sent = await sendTelegramMessage(settings.telegramChatId, "🔔 <b>Test from StockPilot</b>\n\nNotifications for your favorites will arrive here.");
+  const sent = await sendTelegramMessage(settings.telegramChatId, "🔔 <b>Test from StockPilot</b>\n\nNotifications for your favorites will arrive here, and in the app's bell.");
   return sent.ok ? { ok: true, message: "Test message sent. Check Telegram." } : { ok: false, error: sent.error };
 }
 
@@ -58,7 +60,7 @@ export async function disconnectTelegramAction(): Promise<SettingsActionResult> 
 }
 
 export async function savePreferencesAction(raw: unknown): Promise<SettingsActionResult> {
-  const userId = await signedIn();
+  const userId = await signedIn(false);
   if (typeof userId !== "string") return userId;
   // Only true counts as on; anything else from the browser is off.
   const value = (raw ?? {}) as Record<string, unknown>;
@@ -68,6 +70,7 @@ export async function savePreferencesAction(raw: unknown): Promise<SettingsActio
     newsAlerts: value.newsAlerts === true,
     filingAlerts: value.filingAlerts === true,
     reviewSummaries: value.reviewSummaries === true,
+    telegramAlerts: value.telegramAlerts === true,
   };
   await setNotificationPreferences(userId, preferences);
   refresh();

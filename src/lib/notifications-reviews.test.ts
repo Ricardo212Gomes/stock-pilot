@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Review } from "./portfolio-reviews";
 
 const state = {
-  recipients: [] as { userId: string; chatId: string }[],
+  recipients: [] as { userId: string; chatId: string | null; telegramLinked: boolean }[],
+  kept: [] as { userId: string; kind: string; title: string; symbols: string[] }[],
   sent: new Set<string>(),
   messages: [] as { chatId: string; text: string }[],
   enabled: {} as Record<string, boolean>,
@@ -14,8 +15,15 @@ vi.mock("./notification-settings", () => ({
   wasSent: async (userId: string, kind: string, item: string) => state.sent.has(`${userId}:${kind}:${item}`),
   markSent: async (userId: string, kind: string, item: string) => void state.sent.add(`${userId}:${kind}:${item}`),
 }));
+vi.mock("./notification-inbox", () => ({
+  recordNotification: async (input: (typeof state.kept)[number]) => {
+    state.kept.push(input);
+    return String(state.kept.length);
+  },
+}));
 vi.mock("./telegram", async (original) => ({
   ...(await original<typeof import("./telegram")>()),
+  isTelegramConfigured: () => true,
   sendTelegramMessage: async (chatId: string, text: string) => {
     state.messages.push({ chatId, text });
     return { ok: true, result: null };
@@ -44,7 +52,8 @@ const REVIEWS = [
 
 beforeEach(() => {
   vi.unstubAllEnvs();
-  state.recipients = [{ userId: "u1", chatId: "c1" }];
+  state.recipients = [{ userId: "u1", chatId: "c1", telegramLinked: true }];
+  state.kept = [];
   state.sent = new Set();
   state.messages = [];
   state.enabled = { u1: true };
@@ -82,12 +91,13 @@ describe("reviewsMessage", () => {
 
 describe("runReviewSummaries", () => {
   it("sends once a week, and only with the Portfolio's reviews on", async () => {
-    state.recipients.push({ userId: "u2", chatId: "c2" }, { userId: "u3", chatId: "c3" });
+    state.recipients.push({ userId: "u2", chatId: "c2", telegramLinked: true }, { userId: "u3", chatId: "c3", telegramLinked: true });
     state.enabled.u3 = true;
     const first = await runReviewSummaries("2026-11-15");
     expect(first.sent).toBe(1);
     expect(state.messages.map((message) => message.chatId)).toEqual(["c1"]);
-    expect(first.lines).toEqual(["u1: sent.", "u2: the Portfolio's AI reviews are off.", "u3: no reviews yet."]);
+    expect(first.lines).toEqual(["u1: saved; Telegram sent.", "u2: the Portfolio's AI reviews are off.", "u3: no reviews yet."]);
+    expect(state.kept).toEqual([expect.objectContaining({ userId: "u1", kind: "reviews", title: "Weekly AI reviews of your portfolio: 3 holdings", symbols: expect.arrayContaining(["NVDA", "MSFT", "AAPL"]) })]);
     expect(state.sent.has("u1:reviews:2026-11-09")).toBe(true);
 
     const again = await runReviewSummaries("2026-11-15");

@@ -1,0 +1,33 @@
+# Removes notifications older than 90 days and sent-log rows older than 180 (see docs/notifications.md).
+# Scheduled workflows only run from the repository's default branch.
+name: Prune notifications
+
+on:
+  schedule:
+    # Every day at 04:00 UTC, away from the notification runs.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Count the rows without deleting them
+        type: boolean
+        default: false
+
+concurrency:
+  group: notifications-prune
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prune
+        run: npm run notifications:prune -- ${{ inputs.dry-run && '--dry-run' || '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

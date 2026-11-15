@@ -14,7 +14,7 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
 7. Optionally set `TIINGO_API_KEY` to a free [Tiingo](https://www.tiingo.com) key, so price charts and the price signals work for companies FMP's free plan doesn't cover, and when it hits its daily limit, and the Portfolio gets its chart, splits and dividends; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
 8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**, **Saved projections** and the **Portfolio**; see [`docs/favorites.md`](./docs/favorites.md) and [`docs/portfolio.md`](./docs/portfolio.md).
-9. Optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send favorites' upcoming earnings, earnings call summaries, relevant news and SEC filing analyses to Telegram; see [`docs/notifications.md`](./docs/notifications.md).
+9. Notifications about favorites (upcoming earnings, earnings call summaries, relevant news and SEC filing analyses) come to the bell in the top bar and the Notifications page with just the database; optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send them to Telegram too. See [`docs/notifications.md`](./docs/notifications.md).
 10. Optionally set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to a free [Alpaca](https://alpaca.markets) paper trading account's keys for the **AI portfolio**; see [`docs/ai-portfolio.md`](./docs/ai-portfolio.md).
 11. Restart the Next.js development server after changing the environment file.
 
@@ -88,7 +88,7 @@ The **AI chat** is the round spark button at the bottom right of every page. Ask
 | [`docs/insiders.md`](./docs/insiders.md) | The Insiders tab: Finnhub's Form 4 trades, roles and 10b5-1 plans from the SEC filings, and what each figure counts |
 | [`docs/filings.md`](./docs/filings.md) | The Filings tab: SEC EDGAR filings, filters, 8-K descriptions and press releases |
 | [`docs/transcripts.md`](./docs/transcripts.md) | Earnings call transcripts: Alpha Vantage, fiscal quarters, saving them in Postgres and the free-key limits |
-| [`docs/notifications.md`](./docs/notifications.md) | Telegram notifications: the bot, linking a chat, the four commands and the GitHub Actions schedule |
+| [`docs/notifications.md`](./docs/notifications.md) | Notifications: the bell and the Notifications page, Telegram (the bot and linking a chat), the commands, the schedule and pruning old notifications |
 | [`docs/portfolio.md`](./docs/portfolio.md) | The Portfolio: recording trades and importing statements, the profit, dollars or euros, how splits, average cost, dividends and returns are worked out, its data and limits |
 | [`docs/portfolio-reviews.md`](./docs/portfolio-reviews.md) | The Portfolio's AI reviews: TradingAgents on your holdings, the daily job and the command line, setup, the page and the Gemini limits |
 | [`docs/ai-portfolio.md`](./docs/ai-portfolio.md) | The AI portfolio: the weekly run, its rules, the Alpaca paper account and MCP server, the page and its requests |
