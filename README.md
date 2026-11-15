@@ -1,6 +1,17 @@
 # StockPilot
 
-StockPilot is a free US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts with AI summaries, SEC filings and news, then estimate its value with four calculators. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites and a portfolio. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Tiingo, Alpha Vantage and FINVIZ, on their free plans, with the ECB's euro rates from Frankfurter.
+StockPilot is a free, AI-powered US stock research app. Search a company by name or ticker for its quote, financial statements and ratios, earnings call transcripts, SEC filings and news, then estimate its value with three valuation tools. Market maps, news and earnings and dividend calendars cover the wider market, and signed-in users can keep favorites, saved projections and a portfolio.
+
+AI, with Google Gemini, works from the app's own data throughout:
+
+- **AI chat** on every page, which looks up quotes, financials, filings and news as it answers.
+- **AI summaries** of earnings calls, **AI analyses** of SEC filings and **AI reviews** of each financial statement.
+- **AI autofill** of Intrinsic Value's and the Plumas Projection's assumptions, with a reason for each value.
+- **AI-picked news** and filing analyses about your favorites, in the notifications bell and on Telegram.
+- **Multi-agent reviews** of your holdings by TradingAgents' analyst, researcher, trader and risk agents.
+- An **AI-managed paper portfolio** that Gemini rebalances weekly on an Alpaca paper account, from the screen's figures, SEC filings and the week's macro data, within fixed rules.
+
+The AI only reads the data it's given and never invents figures; none of it is investment advice. Data comes from Financial Modeling Prep (FMP), SEC EDGAR, Finnhub, Tiingo, Alpha Vantage, FRED, Cboe and FINVIZ, on their free plans, with the ECB's euro rates from Frankfurter.
 
 ## Configure FMP
 

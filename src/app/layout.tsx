@@ -11,9 +11,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StockPilot — Stock research",
+  title: "StockPilot — AI stock research",
   description:
-    "Research US stocks: financials, earnings call transcripts, SEC filings, valuation calculators and market calendars.",
+    "AI-powered US stock research: financials, AI summaries of earnings calls and SEC filings, an AI chat, valuation tools, AI portfolio reviews and market calendars.",
 };
 
 // Applies a collapsed sidebar before the first paint, so the page doesn't jump when the
