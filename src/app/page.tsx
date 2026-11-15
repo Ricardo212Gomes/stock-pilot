@@ -6,6 +6,7 @@ import { currentUserId } from "@/auth";
 import { isDatabaseConfigured } from "@/lib/db";
 import { listFavorites } from "@/lib/favorites";
 import { listedName } from "@/lib/listed-companies";
+import { sp500Snapshot } from "@/lib/market-valuation";
 
 const POPULAR = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "JPM"];
 // Company pages link to a real example, so each card opens something useful.
@@ -33,6 +34,7 @@ const VALUATION_CARDS: Card[] = [
 
 const MARKET_CARDS: Card[] = [
   { title: "Market maps", detail: "Heat maps of the S&P 500, the Nasdaq 100 and crypto.", href: "/maps", cta: "Open the maps" },
+  { title: "Market valuation", detail: "The S&P 500's and the Nasdaq-100's P/E, CAPE and yields against a century and a half of history.", href: "/market-valuation", cta: "Is the market expensive?" },
   { title: "Fear gauge", detail: "The VIX as a fear and greed gauge, against last week, month and year.", href: "/vix", cta: "Check the market's mood" },
   { title: "Market events", detail: "Fed decisions, CPI and jobs reports, elections and deadlines in the news, on one timeline.", href: "/events", cta: "See what's coming" },
   { title: "Market news", detail: "Markets, deals, currencies and crypto headlines.", href: "/news", cta: "Read the news" },
@@ -87,8 +89,27 @@ async function favoriteSymbols(): Promise<string[]> {
   }
 }
 
+// The Market valuation card's detail with today's S&P 500 P/E, when the data is stored.
+async function marketCards(): Promise<Card[]> {
+  if (!isDatabaseConfigured()) return MARKET_CARDS;
+  try {
+    const snapshot = await sp500Snapshot();
+    if (!snapshot) return MARKET_CARDS;
+    const reading = snapshot.zone && snapshot.percentile !== null
+      ? `${snapshot.zone.label}: higher than ${Math.round(snapshot.percentile)}% of months since 1871.`
+      : "";
+    return MARKET_CARDS.map((card) =>
+      card.href === "/market-valuation"
+        ? { ...card, detail: `The S&P 500 trades at about ${snapshot.value.toFixed(1)} times its earnings. ${reading}`.trim() }
+        : card,
+    );
+  } catch {
+    return MARKET_CARDS;
+  }
+}
+
 export default async function Home() {
-  const favorites = await favoriteSymbols();
+  const [favorites, markets] = await Promise.all([favoriteSymbols(), marketCards()]);
 
   return (
     <AppShell contentClassName="dashboard-content home" activeSection="home" dataSource="Data from FMP, SEC EDGAR, Finnhub, Alpha Vantage and FINVIZ">
@@ -119,8 +140,8 @@ export default async function Home() {
       <CardGrid
         label="MARKETS"
         title="Follow the market"
-        description="What's moving, who reports and who pays dividends."
-        cards={MARKET_CARDS}
+        description="What's moving, how expensive it is, who reports and who pays dividends."
+        cards={markets}
       />
 
       <p className="news-footnote">

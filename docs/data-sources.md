@@ -14,9 +14,11 @@ StockPilot runs on free plans, and each provider's free plan is tight in a diffe
 | [Alpha Vantage](https://www.alphavantage.co) | 25 requests a day | `ALPHAVANTAGE_API_KEY` (optional) | Earnings call transcripts, each fetched once and saved | Anything else: its company overview with analyst targets is now paid |
 | [Alpaca](https://alpaca.markets) | Free paper trading account; rate limits per account | `ALPACA_API_KEY`, `ALPACA_SECRET_KEY` (optional) | The AI portfolio's paper account: its balance, positions, history and orders | Prices or data for the other pages |
 | Google Gemini | The free tier's per-minute and daily limits | `GEMINI_API_KEY` | AI reviews and summaries, valuation autofill, the events news scan, notification digests, the AI chat and the AI portfolio's weekly review, always on request or once per item | Facts: it only reads data the app gives it |
-| Official calendars: Federal Reserve, FRED, BLS, BEA, Census Bureau, Wikipedia | Free, no key | — | The events timeline; for the AI portfolio, FRED's Fed funds target range, 10-year yield and CPI | — |
+| Official calendars: Federal Reserve, FRED, BLS, BEA, Census Bureau, Wikipedia | Free, no key | — | The events timeline; for the AI portfolio, FRED's Fed funds target range, 10-year yield and CPI; for Market valuation, the S&P 500 and Nasdaq-100 closes, the 10-year yield and the Buffett indicator | — |
 | [FRED API](https://fred.stlouisfed.org/docs/api/fred/) | Free key, 120 requests a minute | `FRED_API_KEY` (optional) | The AI portfolio's 10-year yield and CPI from the API instead of the public CSV. TradingAgents needs it | — |
 | Cboe | Free, no key | — | The VIX's daily history since 1990 | — |
+| [Robert Shiller's dataset](https://shillerdata.com) | Free, no key; an old-format `.xls`, updated about monthly | — | Market valuation: the S&P 500's price, earnings, dividends, 10-year rate and CAPE every month since 1871 | Today's price: its months are averages, and the latest earnings are estimates |
+| [Siblis Research](https://siblisresearch.com) free API | Free, no key; month-end snapshots only (9 for the Nasdaq-100 since Dec 2023), no S&P 500 | — | Market valuation: the Nasdaq-100's trailing and forward P/E and CAPE | A long history: it grows as the job keeps each snapshot |
 | Google News RSS | Free, for personal use | — | Headlines for the events news scan | — |
 | FINVIZ | Free embed | — | Market maps | — |
 
