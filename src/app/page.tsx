@@ -28,7 +28,7 @@ const VALUATION_CARDS: Card[] = [
   { title: "Intrinsic Value", detail: "Six valuation models picked for the type of company, with every assumption explained.", href: `/valuation/intrinsic-value?symbol=${EXAMPLE}`, cta: "Value Apple" },
   { title: "Jeremy's Projection", detail: "Best for growth stocks: bull, base and bear cases from this year's analyst consensus, with revenue and net income growth and a P/E range.", href: `/valuation/jeremy-projection?symbol=${EXAMPLE}`, cta: "Project Apple" },
   { title: "Plumas Projection", detail: "Best for mature, dividend, cyclical and loss-making companies: five years from the last report, down to costs, interest and buybacks.", href: `/valuation/plumas-projection?symbol=${EXAMPLE}`, cta: "Project Apple in detail" },
-  { title: "DCF Calculator", detail: "Ten years of free cash flow and a terminal value, discounted to a value per share.", href: `/valuation/dcf-calculator?symbol=${EXAMPLE}`, cta: "Discount Apple's cash flows" },
+  { title: "Detailed DCF", detail: "Ten years of free cash flow, fading growth and a terminal value, with the checks and a sensitivity grid.", href: `/valuation/intrinsic-value?symbol=${EXAMPLE}&model=dcf#detailed-dcf`, cta: "Discount Apple's cash flows" },
 ];
 
 const MARKET_CARDS: Card[] = [

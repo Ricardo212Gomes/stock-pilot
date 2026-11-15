@@ -7,8 +7,7 @@ import {
   type FmpFailureReason,
 } from "@/lib/fmp";
 import { getStatementTable, type StatementTable } from "@/lib/financial-statements";
-import { getAnalystEstimates, getOutstandingShares, getHeaderQuote } from "@/lib/stock-overview";
-import { buildDcfDefaults, type DcfDefaults } from "@/lib/simple-dcf";
+import { getAnalystEstimates, getHeaderQuote, getOutstandingShares } from "@/lib/stock-overview";
 import { buildJeremyDefaults, type JeremyDefaults } from "@/lib/jeremy-projection";
 import { buildProjectionDefaults, type ProjectionDefaults } from "@/lib/plumas-projection";
 import { recommendProjection, type ProjectionFit } from "@/lib/projection-fit";
@@ -30,10 +29,12 @@ export type ProjectionDataResult =
 
 // FMP responses are cached, so the page and the AI autofill share one set of requests.
 export async function loadProjectionData(symbol: string): Promise<ProjectionDataResult> {
-  const [fundamentals, profileResult, riskFreeRate] = await Promise.all([
+  const [fundamentals, profileResult, riskFreeRate, estimates] = await Promise.all([
     getCompanyFundamentals(symbol),
     getCompanyProfile(symbol),
     getRiskFreeRate(),
+    // The same cached request as the Forecast tab; empty when FMP's plan doesn't cover the company.
+    getAnalystEstimates(symbol),
   ]);
   if (!fundamentals.ok) return fundamentals;
 
@@ -44,6 +45,7 @@ export async function loadProjectionData(symbol: string): Promise<ProjectionData
     profile,
     riskFreeRate,
     type: classification.type,
+    estimates,
   });
 
   return {
@@ -128,42 +130,6 @@ export async function loadPriceProjectionData(symbol: string): Promise<PriceProj
       fit: recommendProjection(classification, {
         buybackYield: buybacks.length ? buybacks.reduce((sum, value) => sum + value, 0) / buybacks.length : null,
         dividendYield: years[0]?.dividendYield ?? null,
-      }),
-    },
-  };
-}
-
-export type DcfData = {
-  income: StatementTable;
-  cashFlow: StatementTable | null;
-  defaults: DcfDefaults;
-};
-
-export type DcfDataResult =
-  | { ok: true; data: DcfData }
-  | { ok: false; reason: FmpFailureReason };
-
-// TTM free cash flow, the latest balance sheet and share count, from the cached Financials tables.
-export async function loadDcfData(symbol: string): Promise<DcfDataResult> {
-  const [income, cashFlow, balance, quote] = await Promise.all([
-    getStatementTable(symbol, "income", "annual"),
-    getStatementTable(symbol, "cash-flow", "annual"),
-    getStatementTable(symbol, "balance", "annual"),
-    getHeaderQuote(symbol),
-  ]);
-  if (!income.ok) return income;
-
-  const cashFlowTable = cashFlow.ok ? cashFlow.data : null;
-  return {
-    ok: true,
-    data: {
-      income: income.data,
-      cashFlow: cashFlowTable,
-      defaults: buildDcfDefaults({
-        income: income.data,
-        cashFlow: cashFlowTable,
-        balance: balance.ok ? balance.data : null,
-        price: quote.ok ? quote.data.price : null,
       }),
     },
   };

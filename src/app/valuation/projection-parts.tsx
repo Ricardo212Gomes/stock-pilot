@@ -14,6 +14,7 @@ import {
 import { ASSUMPTION_SPEC_BY_KEY, type AssumptionSpec } from "@/lib/valuation/assumptions";
 import {
   formatMoney,
+  formatMultiple,
   formatPercent,
   formatSignedPercent,
   formatStep,
@@ -29,7 +30,7 @@ import type {
   Verdict,
 } from "@/lib/valuation/models";
 
-export type ValueSource = "data" | "ai" | "edited";
+export type ValueSource = "data" | "analysts" | "ai" | "edited";
 export type ModelRole = "primary" | "secondary" | "other";
 
 const UNIT_SUFFIX: Record<AssumptionSpec["unit"], string> = {
@@ -41,6 +42,7 @@ const UNIT_SUFFIX: Record<AssumptionSpec["unit"], string> = {
 
 const SOURCE_LABEL: Record<ValueSource, string> = {
   data: "From filings",
+  analysts: "Analysts",
   ai: "AI suggestion",
   edited: "Your value",
 };
@@ -117,6 +119,7 @@ export function ModelCard({
   verdict,
   role,
   currency,
+  detail,
 }: {
   info: ModelInfo;
   result: ModelResult;
@@ -124,6 +127,8 @@ export function ModelCard({
   verdict: Verdict | null;
   role: ModelRole;
   currency: string;
+  // A link to more on this model further down the page (the DCF's panel).
+  detail?: { href: string; label: string };
 }) {
   return (
     <article className={`model-card model-card-${role}${result.ok ? "" : " model-card-unavailable"}`}>
@@ -164,6 +169,20 @@ export function ModelCard({
         </dl>
       ) : (
         <p className="model-card-reason">{result.reason}</p>
+      )}
+
+      {detail && (
+        <a
+          className="model-card-detail"
+          href={detail.href}
+          // The target is a folded <details>: open it, then let the link scroll to it.
+          onClick={() => {
+            const target = document.getElementById(detail.href.slice(1));
+            if (target instanceof HTMLDetailsElement) target.open = true;
+          }}
+        >
+          {detail.label} ↓
+        </a>
       )}
 
       <details className="model-explainer">
@@ -333,14 +352,15 @@ export function SensitivityTable({
   price: number | null;
   currency: string;
 }) {
+  const formatColumn = (value: number) => (grid.columnKind === "multiple" ? formatMultiple(value) : formatPercent(value));
   return (
     <div className="table-scroll">
       <table className="financial-table sensitivity-table">
-        <caption className="visually-hidden">DCF value per share by discount rate and terminal growth</caption>
+        <caption className="visually-hidden">DCF value per share by discount rate and {grid.columnLabel.toLowerCase()}</caption>
         <thead>
           <tr>
-            <th scope="col">Discount rate ↓ / Terminal growth →</th>
-            {grid.terminalGrowths.map((growth) => <th scope="col" key={growth}>{formatPercent(growth)}</th>)}
+            <th scope="col">Discount rate ↓ / {grid.columnLabel} →</th>
+            {grid.columns.map((column) => <th scope="col" key={column}>{formatColumn(column)}</th>)}
           </tr>
         </thead>
         <tbody>

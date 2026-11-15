@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ASSUMPTION_SPECS } from "./assumptions";
-import { buildDefaults, EQUITY_RISK_PREMIUM, FALLBACK_RISK_FREE_RATE, sharesOutstanding } from "./defaults";
+import { buildDefaults, EQUITY_RISK_PREMIUM, FALLBACK_RISK_FREE_RATE, forwardGrowth, sharesOutstanding } from "./defaults";
 import { annual, history, profile } from "./test-fixtures";
 
 describe("sharesOutstanding", () => {
@@ -89,5 +89,45 @@ describe("buildDefaults", () => {
       expect(value, spec.key).toBeGreaterThanOrEqual(spec.min);
       expect(value, spec.key).toBeLessThanOrEqual(spec.max);
     }
+  });
+});
+
+describe("the DCF's starting cash flow and analysts' growth", () => {
+  const estimate = (date: string, revenue: number, eps: number) => ({
+    date,
+    revenue: { low: null, avg: revenue, high: null },
+    netIncome: { low: null, avg: null, high: null },
+    eps: { low: null, avg: eps, high: null },
+    analysts: 20,
+  });
+
+  it("counts stock-based pay as a cost by default, and says how much it is", () => {
+    const financials = history(0.05, { freeCashFlow: 120, stockBasedCompensation: 30 });
+    const { assumptions, notes, fcf } = buildDefaults({ financials, profile: profile(), riskFreeRate: 0.04, type: "stable" });
+    // (120 − 30) ÷ 100 shares.
+    expect(assumptions.fcfPerShare).toBeCloseTo(0.9, 10);
+    expect(notes.fcfPerShare).toContain("less stock-based compensation (25.0% of free cash flow), counted as a cost");
+    expect(fcf.history[0]).toMatchObject({ reported: 1.2, stockComp: 0.3 });
+    expect(assumptions.terminalMultiple).toBe(15);
+  });
+
+  it("takes early growth from analysts' consensus up to three years ahead, and marks it", () => {
+    const financials = history(0.02);
+    // Revenue 1000 in fiscal 2024 to 1331 in 2027 (10% a year); EPS 1 to 1.4641 by 2028 is past three years.
+    const estimates = [estimate("2023-12-31", 900, 0.9), estimate("2025-12-31", 1100, 1.1), estimate("2026-12-31", 1210, 1.21), estimate("2027-12-31", 1331, 1.331), estimate("2028-12-31", 1464.1, 1.4641)];
+    const { assumptions, notes, sources } = buildDefaults({ financials, profile: profile(), riskFreeRate: 0.04, type: "stable", estimates });
+    expect(assumptions.revenueGrowth).toBeCloseTo(0.1, 6);
+    expect(assumptions.growthRate).toBeCloseTo(0.1, 6);
+    expect(sources).toEqual({ revenueGrowth: "analysts", growthRate: "analysts" });
+    expect(notes.revenueGrowth).toBe("Analysts' consensus revenue to fiscal 2027 (10.0% a year), kept between −10% and 25%.");
+
+    const historical = buildDefaults({ financials, profile: profile(), riskFreeRate: 0.04, type: "stable" });
+    expect(historical.sources).toEqual({});
+    expect(historical.assumptions.revenueGrowth).toBeCloseTo(0.02, 6);
+  });
+
+  it("needs a positive value at both ends", () => {
+    expect(forwardGrowth({ date: "2024-12-31", value: -5 }, [estimate("2025-12-31", 10, 1)], (row) => row.revenue.avg)).toBeNull();
+    expect(forwardGrowth({ date: "2024-12-31", value: 5 }, [], (row) => row.revenue.avg)).toBeNull();
   });
 });
