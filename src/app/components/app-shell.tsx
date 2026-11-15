@@ -11,7 +11,7 @@ type AppShellProps = {
   children: ReactNode;
   contentClassName: string;
   tickerValue?: string;
-  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "ai-portfolio" | "favorites" | "saved-projections" | "notifications" | "settings" | ValuationTool | "maps" | "vix" | "events" | "news" | "earnings" | "dividends";
+  activeSection?: "home" | "research" | "compare" | "recommendations" | "portfolio" | "ai-portfolio" | "favorites" | "saved-projections" | "notifications" | "settings" | ValuationTool | "maps" | "market-valuation" | "vix" | "events" | "news" | "earnings" | "dividends";
   // Overrides the top bar label, e.g. "AAPL · Overview".
   headerLabel?: string;
   // Overrides the footer's data credit, for pages with their own source.
@@ -28,6 +28,7 @@ function headerContext(section: AppShellProps["activeSection"], ticker: string):
   if (section === "notifications") return "Notifications";
   if (section === "saved-projections") return "Saved projections";
   if (section === "maps") return "Market maps";
+  if (section === "market-valuation") return "Market valuation";
   if (section === "vix") return "VIX fear gauge";
   if (section === "events") return "Market events";
   if (section === "news") return ticker ? `${ticker} news` : "Market news";
@@ -163,6 +164,17 @@ export function AppShell({
                 <path d="M3 3.5h6v6H3zM11 3.5h6v4h-6zM11 9.5h6v7h-6zM3 11.5h6v5H3z" />
               </svg>
               <span>Maps</span>
+            </Link>
+            <Link
+              className={`sidebar-link${activeSection === "market-valuation" ? " sidebar-link-active" : ""}`}
+              href="/market-valuation"
+              title="Market valuation"
+              aria-current={activeSection === "market-valuation" ? "page" : undefined}
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 3.5v13M4 6.5h12M4 6.5l-2 5a2.5 2.5 0 0 0 4 0l-2-5ZM16 6.5l-2 5a2.5 2.5 0 0 0 4 0l-2-5ZM6.5 16.5h7" />
+              </svg>
+              <span>Market valuation</span>
             </Link>
             <Link
               className={`sidebar-link${activeSection === "vix" ? " sidebar-link-active" : ""}`}
