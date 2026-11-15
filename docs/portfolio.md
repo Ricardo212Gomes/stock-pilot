@@ -29,7 +29,7 @@ The server action (`addTradeAction`) checks the trade against the market and the
 - A sale dated before others can't leave a later sale short.
 - A portfolio follows up to 30 tickers with prices, closed ones included, and holds up to 10,000 trades and 10,000 dividend and interest payments. Each ticker with prices costs a Tiingo request a day (50 an hour on the free plan) and two Finnhub requests. Imported instruments without prices (see below) cost none and don't count.
 
-Each trade in the list has a delete button, which asks for confirmation. Deleting a buy that a later sale depends on is allowed: that sale is then flagged "More than you held then" and only counts the shares that were held. "Delete all trades", beside the Trades heading, empties the portfolio after a confirmation, imported dividends and interest included, to start over or import again. The list shows the latest 100 trades, with a link to all of them.
+Each trade in the list has a delete button, which asks again in its row ("Delete? Delete · Keep", see `InlineConfirm` in DESIGN.md). Deleting a buy that a later sale depends on is allowed: that sale is then flagged "More than you held then" and only counts the shares that were held. "Delete all trades", beside the Trades heading, empties the portfolio after asking again in place, imported dividends and interest included, to start over or import again. The list shows the latest 100 trades, with a link to all of them.
 
 ## Importing a broker statement
 

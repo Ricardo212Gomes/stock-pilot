@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MAX_NAME_LENGTH } from "@/lib/saved-projection-limits";
+import { InlineConfirm } from "../components/inline-confirm";
 import { deleteProjectionAction, renameProjectionAction } from "./saved-actions";
 
-// Rename and delete for one saved projection. Deleting asks once more in place (no browser dialog), and deleting the
+// Rename and delete for one saved projection. Deleting asks once more in place (InlineConfirm), and deleting the
 // projection that's open goes back to the browser draft.
 export function SavedRowActions({ id, name, closeHref }: { id: string; name: string; closeHref: string | null }) {
   const router = useRouter();
@@ -49,19 +50,15 @@ export function SavedRowActions({ id, name, closeHref }: { id: string; name: str
             onChange={(event) => setValue(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Escape") setMode("idle"); }}
           />
-          <button className="assumptions-reset" type="submit" disabled={pending}>{pending ? "Saving…" : "Rename"}</button>
-          <button className="saved-link-button" type="button" onClick={() => setMode("idle")}>Cancel</button>
+          <button className="settings-button" type="submit" disabled={pending}>{pending ? "Saving…" : "Rename"}</button>
+          <button className="text-button" type="button" onClick={() => setMode("idle")}>Cancel</button>
         </form>
       ) : mode === "delete" ? (
-        <span className="saved-confirm">
-          <span>Delete it?</span>
-          <button className="saved-danger" type="button" onClick={remove} disabled={pending}>{pending ? "Deleting…" : "Delete"}</button>
-          <button className="saved-link-button" type="button" onClick={() => setMode("idle")}>Keep</button>
-        </span>
+        <InlineConfirm question="Delete it?" pending={pending} onConfirm={remove} onCancel={() => setMode("idle")} />
       ) : (
         <>
-          <button className="saved-link-button" type="button" onClick={() => { setValue(name); setMode("rename"); }} aria-label={`Rename ${name}`}>Rename</button>
-          <button className="saved-link-button saved-link-danger" type="button" onClick={() => setMode("delete")} aria-label={`Delete ${name}`}>Delete</button>
+          <button className="text-button" type="button" onClick={() => { setValue(name); setMode("rename"); }} aria-label={`Rename ${name}`}>Rename</button>
+          <button className="text-button text-button-danger" type="button" onClick={() => setMode("delete")} aria-label={`Delete ${name}`}>Delete</button>
         </>
       )}
       {error && <span className="favorite-error" role="alert">{error}</span>}
