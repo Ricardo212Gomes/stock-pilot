@@ -16,7 +16,8 @@ export type AssumptionKey =
   | "returnOnEquity"
   | "targetNetMargin"
   | "bondYield"
-  | "marginOfSafety";
+  | "marginOfSafety"
+  | "terminalMultiple";
 
 // Starting values may be missing from the data; every other assumption always has a number.
 export type Assumptions = Record<AssumptionKey, number | null>;
@@ -34,6 +35,8 @@ export type AssumptionSpec = {
   step: number;
   // Starting values come from the filings; only the forward-looking assumptions are AI-filled.
   aiFillable: boolean;
+  // Shown in the Detailed DCF panel instead of the assumptions list: it only changes the DCF.
+  panel?: "dcf";
   short: string;
   help: string;
 };
@@ -144,7 +147,7 @@ export const ASSUMPTION_SPECS: AssumptionSpec[] = [
     step: 0.005,
     aiFillable: true,
     short: "Yearly growth of EPS and free cash flow during the projection.",
-    help: "How fast earnings and free cash flow grow each year of the projection. Historical growth is a starting point, but high rates rarely last: very few companies sustain more than 15–20% a year for a decade.",
+    help: "How fast earnings and free cash flow grow each year of the projection. Historical growth, or analysts' estimates where they exist, is a starting point, but high rates rarely last: very few companies sustain more than 15–20% a year for a decade. In the DCF, growth then fades towards terminal growth over the rest of the ten years.",
   },
   {
     key: "growthYears",
@@ -156,7 +159,7 @@ export const ASSUMPTION_SPECS: AssumptionSpec[] = [
     step: 1,
     aiFillable: true,
     short: "How many years of above-normal growth to model.",
-    help: "The number of years the growth rates above apply before the business settles into terminal growth. Use 5 years for most companies and up to 10 for businesses with long, visible growth runways.",
+    help: "The number of years the growth rates above apply. The earnings, revenue, dividend and residual income models then move to their exit or terminal value. The DCF always projects ten years: after these years, the growth above terminal growth shrinks by 30% a year until year 10. Use 5 years for most companies and up to 10 for businesses with long, visible growth runways.",
   },
   {
     key: "terminalGrowth",
@@ -277,6 +280,19 @@ export const ASSUMPTION_SPECS: AssumptionSpec[] = [
     aiFillable: true,
     short: "Profit margin once the business matures.",
     help: "The share of revenue the company keeps as profit at the end of the projection. For unprofitable companies, compare with mature peers in the same industry.",
+  },
+  {
+    key: "terminalMultiple",
+    label: "Exit multiple",
+    group: "exit",
+    unit: "multiple",
+    min: 3,
+    max: 40,
+    step: 0.5,
+    aiFillable: true,
+    panel: "dcf",
+    short: "Free cash flow multiple at the end of year 10, for the exit-multiple terminal value.",
+    help: "Instead of growing forever at the terminal rate, the DCF can value the business in year 10 at a multiple of that year's free cash flow, as a buyer would. Mature, steadily growing companies trade at about 12–20 times free cash flow. The panel shows the perpetual growth a multiple implies, and the multiple a growth rate implies, so the two methods can check each other.",
   },
 ];
 

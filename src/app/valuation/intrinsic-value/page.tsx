@@ -5,10 +5,12 @@ import { loadProjectionData } from "../data";
 import { ProjectionWorkbench } from "../projection-workbench";
 import { LoadError, SecSourceNote, ToolStart, ValuationHeader, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
-export const generateMetadata = companyMetadata("Intrinsic Value", "Estimate a company's intrinsic value with DCF, dividend, earnings and residual income models.");
+export const generateMetadata = companyMetadata("Intrinsic Value", "Estimate a company's intrinsic value with a detailed DCF, and dividend, earnings and residual income models.");
 
 export default async function IntrinsicValuePage({ searchParams }: { searchParams: ValuationSearchParams }) {
   const symbol = await readSymbol(searchParams);
+  // ?model=dcf opens the Detailed DCF, where the DCF Calculator's links now lead.
+  const openDcf = (await searchParams).model === "dcf";
   const loaded = symbol ? await loadProjectionData(symbol) : null;
 
   return (
@@ -32,6 +34,7 @@ export default async function IntrinsicValuePage({ searchParams }: { searchParam
           currency={loaded.data.fundamentals.annualFinancials[0]?.currency ?? loaded.data.profile?.currency ?? "USD"}
           classification={loaded.data.classification}
           defaults={loaded.data.defaults}
+          openDcf={openDcf}
           priceNotice={
             loaded.data.profileFailure
               ? providerFailureMessage(loaded.data.profileFailure, "the latest quote")

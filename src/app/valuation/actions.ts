@@ -17,14 +17,7 @@ import {
   parseProjectionResponse,
   type ProjectionSuggestions,
 } from "@/lib/plumas-projection-autofill";
-import {
-  DCF_AI_INSTRUCTIONS,
-  DCF_AI_SCHEMA,
-  buildDcfPrompt,
-  parseDcfResponse,
-  type DcfSuggestions,
-} from "@/lib/simple-dcf-autofill";
-import { loadDcfData, loadPriceProjectionData, loadProjectionData } from "./data";
+import { loadPriceProjectionData, loadProjectionData } from "./data";
 
 export type AutofillResult =
   | ({ ok: true } & AutofillSuggestions)
@@ -97,43 +90,6 @@ export async function autofillPlumasProjection(rawSymbol: unknown): Promise<Proj
   if (!result.ok) return result;
 
   const parsed = parseProjectionResponse(result.text);
-  if (!parsed) return { ok: false, error: "Gemini's suggestions could not be read. Please try again." };
-  return { ok: true, ...parsed };
-}
-
-export type DcfAutofillResult =
-  | ({ ok: true } & DcfSuggestions)
-  | { ok: false; error: string };
-
-// Same safeguard: only the ticker comes from the browser.
-export async function autofillDcf(rawSymbol: unknown): Promise<DcfAutofillResult> {
-  const symbol = normalizeTicker(rawSymbol);
-  if (!symbol) return { ok: false, error: "Enter a valid ticker symbol first." };
-
-  const loaded = await loadDcfData(symbol);
-  if (!loaded.ok) {
-    return { ok: false, error: providerFailureMessage(loaded.reason, "the financial statements") };
-  }
-
-  const result = await generateGeminiText({
-    instructions: DCF_AI_INSTRUCTIONS,
-    prompt: buildDcfPrompt({
-      symbol,
-      income: loaded.data.income,
-      cashFlow: loaded.data.cashFlow,
-      defaults: loaded.data.defaults.inputs,
-    }),
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 1500,
-      responseMimeType: "application/json",
-      responseSchema: DCF_AI_SCHEMA,
-    },
-    subject: "autofill",
-  });
-  if (!result.ok) return result;
-
-  const parsed = parseDcfResponse(result.text);
   if (!parsed) return { ok: false, error: "Gemini's suggestions could not be read. Please try again." };
   return { ok: true, ...parsed };
 }
