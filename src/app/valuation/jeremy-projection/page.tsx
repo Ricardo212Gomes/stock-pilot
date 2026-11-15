@@ -1,6 +1,8 @@
 import { AppShell } from "../../components/app-shell";
 import { companyMetadata } from "../../components/company-metadata";
 import { loadPriceProjectionData } from "../data";
+import { loadSaving } from "../saved-data";
+import { SavedSection } from "../saved-section";
 import { JeremyProjection } from "../jeremy-projection";
 import { LoadError, ProjectionFitCard, SecSourceNote, ToolStart, ValuationHeader, readSymbol, type ValuationSearchParams } from "../valuation-parts";
 
@@ -8,7 +10,9 @@ export const generateMetadata = companyMetadata("Jeremy's Projection", "Bull, ba
 
 export default async function JeremyProjectionPage({ searchParams }: { searchParams: ValuationSearchParams }) {
   const symbol = await readSymbol(searchParams);
-  const loaded = symbol ? await loadPriceProjectionData(symbol) : null;
+  const [loaded, saving] = symbol
+    ? await Promise.all([loadPriceProjectionData(symbol), loadSaving(symbol, "jeremy-projection", (await searchParams).saved)])
+    : [null, null];
 
   return (
     <AppShell contentClassName="dashboard-content" tickerValue={symbol ?? ""} activeSection="jeremy-projection">
@@ -28,7 +32,13 @@ export default async function JeremyProjectionPage({ searchParams }: { searchPar
           ) : (
             <>
               <ProjectionFitCard symbol={symbol} current="jeremy-projection" fit={loaded.data.fit} classification={loaded.data.classification} />
-              <JeremyProjection symbol={symbol} defaults={loaded.data.jeremy} />
+              {saving && <SavedSection symbol={symbol} tool="jeremy-projection" saving={saving} />}
+              <JeremyProjection
+                key={saving?.opened?.id ?? "draft"}
+                symbol={symbol}
+                defaults={loaded.data.jeremy}
+                saving={{ status: saving?.status ?? "unavailable", opened: saving?.opened ?? null }}
+              />
               <SecSourceNote source={loaded.data.income.source} />
             </>
           )}

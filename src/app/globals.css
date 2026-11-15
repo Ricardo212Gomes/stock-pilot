@@ -9196,3 +9196,339 @@ a.earnings-round:focus-visible {
 }
 
 .dcf-panel-subheading { margin-bottom: 8px; }
+
+/* Saved projections (see docs/valuation.md): the Save button and dialog on each tool, the Saved list above it,
+   the banner while one is open, and the All saved page. */
+.assumptions-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.saved-confirmation {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.saved-dialog-form {
+  display: grid;
+  gap: 12px;
+}
+
+.saved-dialog-form .earnings-dialog-heading {
+  justify-content: space-between;
+}
+
+.saved-dialog-help {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+}
+
+.saved-field {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.saved-field small {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.saved-field input,
+.saved-field textarea,
+.saved-rename input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.saved-field textarea {
+  resize: vertical;
+}
+
+.saved-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saved-primary {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.saved-primary:disabled,
+.saved-dialog-actions .assumptions-reset:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.saved-banner {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--muted);
+  font-size: 15px;
+}
+
+.saved-banner p {
+  margin: 0;
+}
+
+.saved-banner p + p {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+}
+
+.saved-banner a,
+.saved-open-error a,
+.saved-section .table-footnote a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.saved-open-error {
+  margin: 0 0 16px;
+}
+
+.saved-section {
+  margin: 0 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.saved-section > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.saved-section[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.saved-section-title {
+  font-weight: 600;
+}
+
+.saved-section-title small {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.saved-section .table-scroll,
+.saved-section .table-footnote {
+  margin: 0;
+  padding: 0 14px;
+}
+
+.saved-section .table-footnote {
+  padding-bottom: 12px;
+}
+
+.saved-table {
+  min-width: 0;
+}
+
+/* Names and companies read left to right; the figures stay right-aligned under their headings. */
+.saved-table thead th,
+.saved-table td {
+  text-align: right;
+}
+
+.saved-table .saved-left,
+.saved-table tbody th {
+  text-align: left;
+}
+
+.saved-table tbody th {
+  font-weight: 400;
+}
+
+.saved-table small {
+  display: block;
+}
+
+.saved-name a,
+.saved-name strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.saved-name strong {
+  color: var(--foreground);
+}
+
+.saved-note {
+  max-width: 320px;
+  color: var(--foreground);
+  font-size: 14px;
+  white-space: normal;
+}
+
+.saved-meta {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+/* The other scenarios' values wrap, so the table fits next to the sidebar. */
+.saved-table td .saved-meta {
+  max-width: 220px;
+  margin-left: auto;
+  white-space: normal;
+}
+
+.saved-open-badge {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: var(--radius);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.saved-row-open {
+  background: var(--highlight);
+}
+
+.saved-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 10px;
+  white-space: nowrap;
+}
+
+.saved-rename,
+.saved-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.saved-rename input {
+  width: 200px;
+  padding: 3px 6px;
+  font-size: 15px;
+}
+
+.saved-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.saved-link-danger {
+  color: var(--negative);
+}
+
+.saved-danger {
+  padding: 3px 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--destructive);
+  /* White on the light red, charcoal on the dark mode's pale red. */
+  color: var(--background);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.saved-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.saved-toolbar .earnings-summary {
+  margin: 0;
+}
+
+.saved-toolbar .chart-view-switch a {
+  padding: 4px 10px;
+  color: var(--accent);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.saved-toolbar .chart-view-switch a:hover,
+.saved-toolbar .chart-view-switch .chart-view-active {
+  background: var(--selected);
+  color: var(--selected-foreground);
+  font-weight: 600;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .saved-link-button:hover {
+    text-decoration: underline;
+  }
+
+  .saved-primary:hover {
+    background: color-mix(in srgb, var(--primary) 86%, #000000);
+  }
+
+  .saved-danger:hover {
+    background: color-mix(in srgb, var(--destructive) 86%, #000000);
+  }
+}
+
+/* Phones keep the name, value then, price now, gap and the actions. */
+@media (max-width: 640px) {
+  .saved-table .saved-optional {
+    display: none;
+  }
+
+  .saved-table th,
+  .saved-table td {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .saved-table .favorites-company .earnings-logo-box {
+    display: none;
+  }
+
+  .saved-row-actions {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .saved-rename input {
+    width: 140px;
+  }
+
+  .saved-toolbar .chart-view-switch {
+    flex-wrap: wrap;
+  }
+}
