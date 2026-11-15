@@ -1,0 +1,35 @@
+# Stores the market valuation series and writes the AI summaries (see docs/market-valuation.md).
+# Scheduled workflows only run from the repository's default branch.
+name: Market valuation
+
+on:
+  schedule:
+    # Weekdays at 22:30 UTC, after the US close, so FRED has the day's index closes by the next run at the latest.
+    - cron: "30 22 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Fetch and print what would be stored, without the database
+        type: boolean
+        default: false
+
+concurrency:
+  group: market-valuation
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Update
+        run: npm run market-valuation:update -- ${{ inputs.dry-run && '--dry-run' || '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Optional: without it the numbers are stored and the AI summaries skipped.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

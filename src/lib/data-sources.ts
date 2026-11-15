@@ -74,9 +74,15 @@ export function dataSourceStatuses(now = Date.now(), env: Record<string, string 
       limits: "Free, no key: 10 requests a second.",
     },
     {
+      name: "Shiller, Siblis and FRED",
+      configured: true,
+      usedFor: "Market valuation: the S&P 500's P/E, CAPE and yields since 1871, the Nasdaq-100's P/E snapshots, index levels and the Buffett indicator, stored by a daily job.",
+      limits: "Free, no key. Siblis's free tier has only month-end snapshots since Dec 2023.",
+    },
+    {
       name: "Gemini",
       configured: Boolean(env.GEMINI_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY),
-      usedFor: "AI reviews, call summaries, valuation autofill, the events news scan, notification digests.",
+      usedFor: "AI reviews, call summaries, valuation autofill, the events news scan, notification digests, the market valuation summary.",
       limits: "Free tier: limited requests a minute and a day.",
     },
     {
@@ -88,7 +94,7 @@ export function dataSourceStatuses(now = Date.now(), env: Record<string, string 
     {
       name: "Postgres",
       configured: Boolean(env.DATABASE_URL),
-      usedFor: "Favorites, portfolio trades, saved transcripts and summaries, notification settings.",
+      usedFor: "Favorites, portfolio trades, saved transcripts and summaries, notification settings, market valuation history.",
       limits: "Your database's plan.",
     },
   ];
