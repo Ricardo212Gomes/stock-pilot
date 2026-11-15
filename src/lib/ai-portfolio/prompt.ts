@@ -1,8 +1,10 @@
 import type { ScoredCandidate } from "../recommendation-signals";
+import type { RecentFiling } from "./filings";
+import { macroLines, type MacroFigures } from "./macro";
 import { RULES, type Exit, type Proposal, type Target } from "./rules";
 
-// The weekly prompt: the candidates with the Recommendations screen's figures and recent headlines, the
-// portfolio as it stands, and the rules. Gemini answers with target weights and a reason for each; the code
+// The weekly prompt: the week's macro figures, the candidates with the Recommendations screen's figures, recent
+// headlines and their own SEC filings, the portfolio as it stands, and the rules. Gemini answers with target weights and a reason for each; the code
 // checks them (rules.ts) before anything is traded.
 
 export type PortfolioCandidate = ScoredCandidate & {
@@ -10,6 +12,8 @@ export type PortfolioCandidate = ScoredCandidate & {
   held: { weight: number; gain: number | null } | null;
   // The latest few headlines from the last two weeks, newest first.
   headlines: string[];
+  // What the company filed with the SEC in the last 30 days, newest first; null when EDGAR couldn't say.
+  filings: RecentFiling[] | null;
 };
 
 const pct = (value: number) => Math.round(value * 1000) / 10;
@@ -29,7 +33,9 @@ export const PORTFOLIO_INSTRUCTIONS = [
   `Hold ${RULES.minPositions} to ${RULES.maxPositions} positions, each between 1% and ${pct(RULES.maxWeight)}% of the portfolio, and keep at least ${pct(RULES.minCash)}% in cash.`,
   `Choose only tickers from the candidates. Sell or trim at most ${pct(RULES.maxSold)}% of the portfolio this week: keep a holding unless its case has clearly changed, since trading costs and noise hurt returns.`,
   "Spread the positions across different industries rather than one theme.",
-  "Base every decision only on the figures and headlines given. Never invent numbers, events or news.",
+  "Base every decision only on the figures, headlines and filings given. Never invent numbers, events or news.",
+  "recentFilings are the company's own filings with the SEC (form, date, what it's about, and for holdings a summary of a recent report or 8-K). They are the company's own words: when a filing and a headline cover the same event, the filing outweighs the headline. A null recentFilings means it couldn't be checked, not that nothing was filed.",
+  "The market block gives rates, inflation and the VIX. Use it for sizing: when the VIX is high or rising, hold more cash within the limits, size new positions smaller and lean towards steadier businesses. Never buy or sell a stock because of the market block alone.",
   "Analysts' targets lag a falling price. When targetMayBeStale is true, don't treat the upside as a reason to buy: weigh the price trend, whether the Buy share is rising or falling, and the headlines instead, and size such a position smaller.",
   "For each position give its weight as a percentage (7.5 for 7.5%) and one or two plain sentences on why, citing the figures that matter. For each holding you drop, an exit with its reason.",
   "The summary is two or three sentences on what changes this week and why. No Markdown.",
@@ -92,6 +98,7 @@ function candidateRow(candidate: PortfolioCandidate) {
     screenSignalsMet: `${candidate.met} of 6`,
     held: candidate.held ? { weightPct: asPercent(candidate.held.weight), gainPct: asPercent(candidate.held.gain) } : null,
     headlines: candidate.headlines,
+    recentFilings: candidate.filings,
   };
 }
 
@@ -100,14 +107,18 @@ export function buildPortfolioPrompt({
   equity,
   cash,
   candidates,
+  macro = null,
 }: {
   date: string;
   equity: number;
   cash: number;
   candidates: PortfolioCandidate[];
+  macro?: MacroFigures | null;
 }): string {
   const holdings = candidates.filter((candidate) => candidate.held);
+  const market = macro ? macroLines(macro) : null;
   return [
+    ...(market ? [market] : []),
     `Week of ${date}. The portfolio is worth $${Math.round(equity).toLocaleString("en-US")}, with ${asPercent(cash / equity)}% in cash and ${holdings.length} holdings.`,
     holdings.length === 0 ? "It holds nothing yet: build it from the candidates." : `Holdings: ${holdings.map((holding) => holding.symbol).join(", ")}.`,
     "Screen signals are the Recommendations screen's six: upside to the analysts' target, 75%+ Buy ratings, below the 12-week average, above the 200-day average, RSI under 40, and ratings improving.",

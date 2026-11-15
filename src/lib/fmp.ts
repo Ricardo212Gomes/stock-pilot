@@ -572,6 +572,28 @@ export async function getCompanyProfile(symbol: string): Promise<CompanyProfileR
 }
 
 // Latest 10-year US Treasury yield as a decimal (0.0425 = 4.25%), or null when unavailable.
+// The 10-year Treasury yield each day since `from` (YYYY-MM-DD), oldest first, as fractions. For the AI portfolio's
+// macro figures when there's no FRED key; empty when FMP fails.
+export async function getTenYearYields(from: string): Promise<{ date: string; value: number }[]> {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return [];
+  const url = new URL(`${FMP_BASE_URL}/treasury-rates`);
+  url.searchParams.set("from", from);
+  url.searchParams.set("apikey", apiKey);
+  try {
+    const payload = await fetchFmp(url, STATEMENTS_REVALIDATE_SECONDS);
+    if (!Array.isArray(payload)) return [];
+    return payload
+      .flatMap((row: { date?: unknown; year10?: unknown }) =>
+        typeof row?.date === "string" && typeof row.year10 === "number" && row.year10 > 0 && row.date >= from
+          ? [{ date: row.date, value: row.year10 / 100 }]
+          : [])
+      .sort((left, right) => left.date.localeCompare(right.date));
+  } catch {
+    return [];
+  }
+}
+
 export async function getRiskFreeRate(): Promise<number | null> {
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) return null;
