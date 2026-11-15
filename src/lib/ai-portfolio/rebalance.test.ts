@@ -46,6 +46,8 @@ function setup(overrides: Partial<RebalanceDeps> = {}) {
     screen: async () => ({ ok: true, data: { candidates: UNIVERSE.map((symbol) => candidate(symbol)), universe: 100, covered: 100, asOf: "2026-11-13" } }),
     candidate: async (symbol) => candidate(symbol),
     headlines: async () => [],
+    filings: async () => [],
+    macro: async () => ({ fedFunds: { lower: 3.75, upper: 4, since: "2026-10-29" }, tenYear: null, cpi: null, vix: null, missing: [] }),
     propose: async () => reply(UNIVERSE.slice(0, 12).map((symbol) => ({ symbol, weight: 7.5 }))),
     model: () => "gemini-test",
     store: {
@@ -158,6 +160,39 @@ describe("runRebalance", () => {
     expect(propose).toHaveBeenCalledTimes(2);
     expect(report.status).toBe("failed");
     expect(runs).toEqual([{ id: 1, status: "failed", problems: ["Gemini is busy right now. Please try again in a moment."] }]);
+  });
+
+  it("gives Gemini the filings and the market block, with a stored analysis only for holdings", async () => {
+    const prompts: string[] = [];
+    const filings = vi.fn(async (symbol: string, held: boolean) => [{ form: "8-K", filed: "2026-11-10", description: "Earnings results", ...(held ? { analysis: `${symbol} raised guidance.` } : {}) }]);
+    const { deps } = setup({
+      positions: async () => [position("S00", 8_000)],
+      filings,
+      propose: async (prompt) => (prompts.push(prompt), reply(UNIVERSE.slice(0, 12).map((symbol) => ({ symbol, weight: 7.5 })))),
+    });
+    await runRebalance({ dryRun: true }, deps);
+    expect(filings).toHaveBeenCalledWith("S00", true, "2026-11-16");
+    expect(filings).toHaveBeenCalledWith("S01", false, "2026-11-16");
+    expect(prompts[0]).toMatch(/^Market this week:/);
+    expect(prompts[0]).toContain('"analysis":"S00 raised guidance."');
+    expect(prompts[0]).not.toContain("S01 raised guidance.");
+  });
+
+  it("goes on without filings or macro figures that fail, and says so", async () => {
+    const prompts: string[] = [];
+    const { deps } = setup({
+      filings: async (symbol) => {
+        if (symbol === "S02") throw new Error("SEC is down");
+        return symbol === "S03" ? null : [];
+      },
+      macro: async () => { throw new Error("FRED is down"); },
+      propose: async (prompt) => (prompts.push(prompt), reply(UNIVERSE.slice(0, 12).map((symbol) => ({ symbol, weight: 7.5 })))),
+    });
+    const report = await runRebalance({ dryRun: true }, deps);
+    expect(report.status).toBe("printed");
+    expect(report.lines).toContain("SEC filings couldn't load for 2 of 14 candidates (S02, S03); they go without.");
+    expect(report.lines).toContain("Macro figures missing this week: every macro figure.");
+    expect(prompts[0]).not.toContain("Market this week");
   });
 
   it("prints a dry run without storing anything", async () => {

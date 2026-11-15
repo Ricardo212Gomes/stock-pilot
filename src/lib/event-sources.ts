@@ -141,6 +141,25 @@ export async function getFedTarget(): Promise<FedTarget | null> {
   return csv ? parseFedTarget(csv) : null;
 }
 
+// One FRED series from its public CSV (no key), since `from` (YYYY-MM-DD), oldest first. Days without a value
+// (holidays) are left out. The AI portfolio reads the 10-year yield and CPI this way when there's no FRED API key.
+export function parseFredCsv(csv: string, seriesId: string): { date: string; value: number }[] | null {
+  const [header, ...lines] = csv.trim().split(/\r?\n/);
+  const column = header?.split(",").indexOf(seriesId) ?? -1;
+  if (column < 1) return null;
+  return lines.flatMap((line) => {
+    const cells = line.split(",");
+    const value = Number(cells[column]);
+    return /^\d{4}-\d{2}-\d{2}$/.test(cells[0]) && cells[column] !== "" && Number.isFinite(value) ? [{ date: cells[0], value }] : [];
+  });
+}
+
+export async function getFredCsvSeries(seriesId: string, from: string): Promise<{ date: string; value: number }[] | null> {
+  const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(seriesId)}&cosd=${from}`;
+  const csv = await fetchText(url, TARGET_REVALIDATE_SECONDS);
+  return csv ? parseFredCsv(csv, seriesId) : null;
+}
+
 export type DecisionOutcome = { action: "raised" | "lowered" | "held"; lower: number; upper: number; change: number };
 
 export function addDays(isoDay: string, days: number): string {

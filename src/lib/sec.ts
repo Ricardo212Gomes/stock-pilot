@@ -304,13 +304,27 @@ export function statementsFromFacts(document: unknown): SecStatements | null {
   };
 }
 
-// Ticker to CIK (10 digits), from the SEC's list of about 10,000 companies (~800 KB, cached for a day).
+// The SEC's list of about 10,000 companies (~800 KB), as ticker to CIK. Cached for a day by Next.js, and in memory
+// too: scripts have no data cache, and the AI portfolio looks up some 30 companies in one run.
+let tickerList: { at: number; map: Promise<Map<string, string>> } | null = null;
+
+function tickerMap(): Promise<Map<string, string>> {
+  if (tickerList && Date.now() - tickerList.at < CACHE_MS) return tickerList.map;
+  const map = (async () => {
+    const response = await fetch(TICKERS_URL, { headers: secHeaders(), next: { revalidate: 60 * 60 * 24 } });
+    if (!response.ok) throw new Error(`SEC ticker list returned ${response.status}`);
+    const list = Object.values((await response.json()) as Record<string, { cik_str: number; ticker: string }>);
+    return new Map(list.map((item) => [item.ticker.toUpperCase(), String(item.cik_str).padStart(10, "0")]));
+  })();
+  tickerList = { at: Date.now(), map };
+  // A failed download is tried again next time rather than remembered.
+  map.catch(() => { tickerList = null; });
+  return map;
+}
+
+// Ticker to CIK (10 digits).
 export async function lookupCik(symbol: string): Promise<string | null> {
-  const response = await fetch(TICKERS_URL, { headers: secHeaders(), next: { revalidate: 60 * 60 * 24 } });
-  if (!response.ok) throw new Error(`SEC ticker list returned ${response.status}`);
-  const list = Object.values((await response.json()) as Record<string, { cik_str: number; ticker: string }>);
-  const match = list.find((item) => item.ticker.toUpperCase() === symbol.toUpperCase());
-  return match ? String(match.cik_str).padStart(10, "0") : null;
+  return (await tickerMap()).get(symbol.toUpperCase()) ?? null;
 }
 
 // Company-facts files run 2–10 MB, over the Next.js data cache's 2 MB limit, so the converted
@@ -338,5 +352,6 @@ export async function getSecStatements(symbol: string, now = Date.now()): Promis
 
 // For tests: forget the cached statements.
 export function resetSecCache(): void {
+  tickerList = null;
   statementsCache.clear();
 }

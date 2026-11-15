@@ -22,6 +22,8 @@ import { listedName } from "../listed-companies";
 import { easternToday } from "../market-events";
 import { scoreCandidates, type Candidate, type ScoredCandidate } from "../recommendation-signals";
 import { getRecommendationScreen, loadCandidate, type RecommendationResult } from "../recommendations";
+import { defaultFilingsDeps, loadRecentFilings, type RecentFiling } from "./filings";
+import { getMacroFigures, type MacroFigures } from "./macro";
 import { buildPortfolioPrompt, parseProposal, PORTFOLIO_INSTRUCTIONS, PORTFOLIO_SCHEMA, type PortfolioCandidate } from "./prompt";
 import { checkMoves, checkProposal, fitBuys, isBuy, planMoves, RULES, weekOf, type Holding, type Move, type Proposal } from "./rules";
 import * as store from "./store";
@@ -51,6 +53,9 @@ export type RebalanceDeps = {
   screen: () => Promise<RecommendationResult>;
   candidate: (symbol: string) => Promise<Candidate | null>;
   headlines: (symbol: string) => Promise<string[]>;
+  // The company's SEC filings of the last 30 days (with stored analyses for holdings); null when EDGAR fails.
+  filings: (symbol: string, held: boolean, today: string) => Promise<RecentFiling[] | null>;
+  macro: () => Promise<MacroFigures>;
   propose: (prompt: string) => Promise<GeminiResult>;
   model: () => string;
   store: Pick<typeof store, "isWeekDone" | "createRun" | "setRunStatus" | "insertMoves" | "updateMoveOrder" | "listOpenOrders">;
@@ -72,6 +77,15 @@ export const defaultDeps: RebalanceDeps = {
     const news = await getCompanyNews(symbol);
     return news.ok ? news.items.slice(0, HEADLINES_PER_CANDIDATE).map((item) => item.title) : [];
   },
+  filings: (() => {
+    // One spacing for the whole run, so the parallel loads share SEC's per-second limit.
+    let filingsDeps: ReturnType<typeof defaultFilingsDeps> | null = null;
+    return (symbol: string, held: boolean, today: string) => {
+      filingsDeps ??= defaultFilingsDeps();
+      return loadRecentFilings(symbol, held, today, filingsDeps);
+    };
+  })(),
+  macro: () => getMacroFigures(),
   propose: (prompt) =>
     generateGeminiText({
       instructions: PORTFOLIO_INSTRUCTIONS,
@@ -142,9 +156,9 @@ async function waitForFills(deps: RebalanceDeps, orders: AlpacaOrder[]): Promise
   return latest;
 }
 
-// The candidates: the screen's best and every holding, with their headlines. Holdings whose figures can't load
-// are left as they are this week.
-async function gatherCandidates(deps: RebalanceDeps, screen: ScoredCandidate[], holdings: Holding[], equity: number) {
+// The candidates: the screen's best and every holding, with their headlines and recent filings. Holdings whose
+// figures can't load are left as they are this week.
+async function gatherCandidates(deps: RebalanceDeps, screen: ScoredCandidate[], holdings: Holding[], equity: number, today: string) {
   const scored = new Map(screen.map((candidate) => [candidate.symbol, candidate]));
   const pool = new Map(screen.slice(0, SCREEN_CANDIDATES).map((candidate) => [candidate.symbol, candidate]));
   const kept: Holding[] = [];
@@ -158,11 +172,15 @@ async function gatherCandidates(deps: RebalanceDeps, screen: ScoredCandidate[], 
   const bySymbol = new Map(holdings.map((holding) => [holding.symbol, holding]));
   const candidates = await mapLimit([...pool.values()], 4, async (candidate): Promise<PortfolioCandidate> => {
     const holding = bySymbol.get(candidate.symbol);
-    const headlines = await deps.headlines(candidate.symbol).catch(() => []);
+    const [headlines, filings] = await Promise.all([
+      deps.headlines(candidate.symbol).catch(() => []),
+      deps.filings(candidate.symbol, Boolean(holding), today).catch(() => null),
+    ]);
     return {
       ...candidate,
       held: holding ? { weight: holding.value / equity, gain: holding.gain ?? null } : null,
       headlines,
+      filings,
     };
   });
   return { candidates, kept };
@@ -208,12 +226,19 @@ export async function runRebalance(options: RebalanceOptions = {}, deps: Rebalan
     return { status: dryRun ? "printed" : "failed", lines: [problem] };
   }
 
-  const { candidates, kept } = await gatherCandidates(deps, scoreCandidates(screen.data.candidates), holdings, equity);
+  const [{ candidates, kept }, macro] = await Promise.all([
+    gatherCandidates(deps, scoreCandidates(screen.data.candidates), holdings, equity, today),
+    deps.macro().catch((): MacroFigures => ({ fedFunds: null, tenYear: null, cpi: null, vix: null, missing: ["every macro figure"] })),
+  ]);
   const keptWeight = kept.reduce((total, holding) => total + holding.value, 0) / equity;
   for (const holding of kept) lines.push(`${holding.symbol}: no figures this week, so it's kept as it is.`);
+  // Sources that failed are left out of the prompt, and the run says so.
+  const noFilings = candidates.filter((candidate) => candidate.filings === null).map((candidate) => candidate.symbol);
+  if (noFilings.length > 0) lines.push(`SEC filings couldn't load for ${noFilings.length} of ${candidates.length} candidates (${noFilings.join(", ")}); they go without.`);
+  if (macro.missing.length > 0) lines.push(`Macro figures missing this week: ${macro.missing.join(", ")}.`);
   const allowed = new Set(candidates.map((candidate) => candidate.symbol));
 
-  const prompt = buildPortfolioPrompt({ date: week, equity, cash: account.cash, candidates });
+  const prompt = buildPortfolioPrompt({ date: week, equity, cash: account.cash, candidates, macro });
   let proposal: Proposal | null = null;
   let lastError: string | null = null;
   // One retry: a long reply occasionally times out or comes back cut short.
