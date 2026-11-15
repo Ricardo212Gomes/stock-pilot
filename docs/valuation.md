@@ -1,19 +1,18 @@
 # Valuation tools
 
-A company's **Valuation** tab, the last of its tabs, holds four separate calculators as sub-tabs:
+A company's **Valuation** tab, the last of its tabs, holds three separate calculators as sub-tabs:
 
 | Tool | Route |
 | --- | --- |
 | Intrinsic Value | `/valuation/intrinsic-value?symbol=AAPL` |
 | Jeremy's Projection | `/valuation/jeremy-projection?symbol=AAPL` |
 | Plumas Projection | `/valuation/plumas-projection?symbol=AAPL` |
-| DCF Calculator | `/valuation/dcf-calculator?symbol=AAPL` |
 
-Each page has the company header and tabs with Valuation open, then the tools as sub-tabs for the same ticker (`ValuationHeader`); the Valuation tab opens Intrinsic Value. The sidebar has no valuation section: Stocks stays highlighted on these pages, and the top bar's search keeps you on the same tool for the new ticker. Without a ticker, each page shows a short start screen. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (the header with the sub-tabs, start screen and load error); `tools.ts` lists the tools for the sub-tabs. The old `/projections` page redirects to these (`?view=3y` to Jeremy's Projection and `?view=dcf` to the DCF Calculator), as do the old `/valuation/three-year-projection` (to Jeremy's Projection, whose template it followed) and `/valuation/financial-projections` (to the Plumas Projection).
+Each page has the company header and tabs with Valuation open, then the tools as sub-tabs for the same ticker (`ValuationHeader`); the Valuation tab opens Intrinsic Value. The sidebar has no valuation section: Stocks stays highlighted on these pages, and the top bar's search keeps you on the same tool for the new ticker. Without a ticker, each page shows a short start screen. They share `src/app/valuation/data.ts`, `actions.ts`, `calculator-input.tsx` and `valuation-parts.tsx` (the header with the sub-tabs, start screen and load error); `tools.ts` lists the tools for the sub-tabs. The old `/projections` page redirects to these (`?view=3y` to Jeremy's Projection and `?view=dcf` to the Detailed DCF), as do the old `/valuation/three-year-projection` (to Jeremy's Projection, whose template it followed), `/valuation/financial-projections` (to the Plumas Projection) and `/valuation/dcf-calculator` (to the Detailed DCF on Intrinsic Value, `?model=dcf#detailed-dcf`, which opens it).
 
 ## Intrinsic Value
 
-The Intrinsic Value tool estimates a company's intrinsic value with six valuation models. It first works out what kind of stock it is, then recommends the models that fit. It fills every assumption from the filings, and an optional AI autofill can suggest forward-looking values instead. Everything recalculates in the browser as the user edits.
+The Intrinsic Value tool estimates a company's intrinsic value with six valuation models. It first works out what kind of stock it is, then recommends the models that fit. It fills every assumption from the filings, or from analysts' estimates where FMP has them, and an optional AI autofill can suggest forward-looking values instead. Everything recalculates in the browser as the user edits. The DCF has a **Detailed DCF** panel under the model cards (see [Detailed DCF](#detailed-dcf)).
 
 ## Files
 
@@ -23,9 +22,11 @@ The Intrinsic Value tool estimates a company's intrinsic value with six valuatio
 | `src/app/valuation/data.ts` | `loadProjectionData`: fundamentals, profile and Treasury yield, then classification and defaults |
 | `src/app/valuation/actions.ts` | `autofillAssumptions` server action (Gemini) |
 | `src/app/valuation/projection-workbench.tsx` | Client state, layout and derived results |
+| `src/app/valuation/dcf-panel.tsx` | The Detailed DCF: the DCF's own inputs, checks, the ten years, the breakdown, history and the sensitivity grid |
 | `src/app/valuation/projection-parts.tsx` | Assumption field, model card, football field, projection chart and tables |
 | `src/lib/valuation/assumptions.ts` | Every assumption: label, unit, allowed range, short and long explanations |
 | `src/lib/valuation/models.ts` | The models, scenarios, reverse DCF, sensitivity grid, verdict and blended value |
+| `src/lib/valuation/dcf.ts` | The DCF: the growth path with its fade, the terminal value both ways, the cross-checks, and the starting free cash flow (reported or smoothed, with stock-based compensation or not) |
 | `src/lib/valuation/classify.ts` | Stock type detection and which models suit each type |
 | `src/lib/valuation/defaults.ts` | Data-derived starting values and assumptions, each with a note on its source |
 | `src/lib/valuation/autofill.ts` | Autofill prompt, response schema and parsing |
@@ -56,7 +57,7 @@ All values are per share. r is the discount rate, g the terminal growth, and n t
 
 | Model | Formula | Best for |
 | --- | --- | --- |
-| DCF | Σ FCFₜ/(1+r)ᵗ + [FCFₙ(1+g)/(r−g)]/(1+r)ⁿ | Steady cash generators |
+| DCF | Σ FCFₜ/(1+r)ᵗ for t = 1…10 + [FCF₁₀(1+g)/(r−g)]/(1+r)¹⁰, or FCF₁₀ × exit multiple | Steady cash generators |
 | Earnings and exit multiple | Σ EPSₜ·payout/(1+r)ᵗ + EPSₙ·exit P/E/(1+r)ⁿ | Profitable growth companies |
 | Revenue and target margin | Revenueₙ · target margin · exit P/E/(1+r)ⁿ | Unprofitable or early-stage companies |
 | Dividend discount (two-stage) | Σ Dₜ/(1+r)ᵗ + [Dₙ(1+g)/(r−g)]/(1+r)ⁿ | Mature dividend payers, REITs, utilities |
@@ -65,7 +66,7 @@ All values are per share. r is the discount rate, g the terminal growth, and n t
 
 Implementation notes:
 
-- **DCF** discounts free cash flow after interest (operating cash flow minus capex) at the cost of equity, so it does not subtract net debt. It is a simplified FCFE model.
+- **DCF** discounts free cash flow after interest (operating cash flow minus capex) at the cost of equity, so it does not subtract net debt. It is a simplified FCFE model, as Simply Wall St's two-stage model is. It always projects ten years: growth holds for the projection length (at most 10), then the part above terminal growth shrinks by 30% a year until year 10 (Simply Wall St's growth curve; a fall in free cash flow fades up towards the terminal rate the same way). The terminal value is a perpetuity at terminal growth, or an exit multiple of year 10's free cash flow. Stock-based compensation counts as a cost by default; see [Detailed DCF](#detailed-dcf).
 - **Residual income** retains earnings each year (book value grows by ROE × book × (1 − payout)). Excess returns continue after the projection, growing at the terminal rate. With constant ROE and growth it reduces to the justified price-to-book formula: Book × (ROE − g)/(r − g).
 - **Graham** uses Graham's revised 1974 formula. g is in percent and capped at 15%, because the formula overstates fast growers. Y is the AAA corporate bond yield in percent.
 - Models that need positive inputs (FCF, EPS, dividends, book value, revenue) say why they can't run instead of showing a number. Perpetuity models refuse a discount rate at or below terminal growth.
@@ -79,25 +80,38 @@ Starting values come from the latest annual filing, divided by diluted weighted-
 | Discount rate | CAPM: 10-year Treasury yield + beta × 4.25% equity risk premium. Beta is clamped to 0.6–2.5 and the result to 6–16%. |
 | Equity risk premium | 4.25%, after Damodaran's mature-market implied premium of 4.23% (January 2026) |
 | Risk-free rate | Latest 10-year Treasury yield from FMP; 4.25% if unavailable |
-| Earnings growth | Average of revenue and EPS growth, capped at 15% (25% for high growth) |
-| Revenue growth | Historical growth, capped between −10% and 25% |
+| Free cash flow | The latest year's free cash flow less stock-based compensation, per diluted share; the average across the years for cyclicals |
+| Earnings growth | Average of revenue and EPS growth, capped at 15% (25% for high growth): analysts' consensus to up to three fiscal years ahead where FMP has estimates (marked **Analysts**), otherwise history |
+| Revenue growth | Analysts' consensus to up to three fiscal years ahead (marked **Analysts**), otherwise historical growth; between −10% and 25% |
 | Dividend growth | Historical dividend growth, or earnings growth, capped at 10% |
 | Projection length | 5 years; 10 for high-growth and unprofitable companies |
 | Terminal growth | 2.5%, never above the risk-free rate |
+| Exit multiple | 15× free cash flow (the DCF's exit-multiple terminal value) |
 | Exit P/E | Last year's P/E, clamped to 8–25×; 15× if unavailable |
 | ROE | Average net income ÷ equity across the years shown |
 | Target net margin | Latest net margin; 10% if not profitable |
 | AAA bond yield | 10-year Treasury + 0.75% |
 | Margin of safety | 25%; 35% for unprofitable and cyclical companies |
-| FCF for cyclicals | Average across all years shown, instead of the latest year |
 
 ## Scenarios, reverse DCF and sensitivity
 
-- **Bear and bull cases** move every forward-looking assumption against or in favour of the stock. Growth rates shift by 30% of their value (at least 2 percentage points), the discount rate by 1 point, and the exit P/E and target margin by 20%. ROE shifts by 15%.
+- **Bear and bull cases** move every forward-looking assumption against or in favour of the stock. Growth rates shift by 30% of their value (at least 2 percentage points), the discount rate by 1 point, and the exit P/E, the DCF's exit multiple and the target margin by 20%. ROE shifts by 15%.
 - **Blended value** averages the recommended models (weight 2) and cross-checks (weight 1) that produce a positive value.
 - **Verdict:** "Below buy price" when the price is under value × (1 − margin of safety), "Undervalued, thin margin" when it's under value but above the buy price, and "Above estimate" otherwise.
-- **Reverse DCF** uses bisection to find the FCF growth rate that makes the DCF equal today's price.
-- **Sensitivity** shows the DCF value for the discount rate ±2 points and terminal growth ±1 point.
+- **Reverse DCF** uses bisection to find the high-growth rate that makes the DCF equal today's price, with the fade, the terminal value and any year 1 forecast as they are.
+- **Sensitivity**, in the Detailed DCF, shows the DCF value for the discount rate ±2 points against terminal growth ±1 point (or the exit multiple ±4×, with that method), or against the high-growth rate ±4 points.
+
+## Detailed DCF
+
+The DCF model card links to a **Detailed DCF** panel under the model cards (`src/app/valuation/dcf-panel.tsx`). It works on the page's assumptions, so it moves the DCF card, the blended value, the reverse DCF and the projections too. `?model=dcf` opens it, and so do the old DCF Calculator's links. It replaced the separate DCF Calculator, which discounted the same after-interest cash flow and then subtracted debt as well, counting it twice, and could value a stock differently from this page.
+
+- **Starting free cash flow** (`startingFcf` in `src/lib/valuation/dcf.ts`): **As reported** (operating cash flow less capital spending) or **Smoothed** (less the three-year average capital spending, so one heavy investment year doesn't move the value: Simply Wall St's adjusted free cash flow), and **Count stock-based pay as a cost**, on by default. Operating cash flow adds stock-based compensation back as if it were free, but it dilutes shareholders; the note under the switch gives it as a share of free cash flow. Choosing either sets the starting free cash flow per share, marked From filings, with a note on how it was worked out. Cyclicals start from the average across the years shown.
+- **Year 1 free cash flow per share:** optional, a forecast (guidance or an analyst estimate) when next year will differ a lot from the last; years 2–10 grow from it. Blank grows today's.
+- **Terminal value:** perpetual growth at the terminal rate, or an **exit multiple** of year 10's free cash flow (15× by default, AI-fillable, in the bear and bull cases).
+- **Checks:** the terminal value's share of the total, flagged above 85% (60–75% is ordinary); the multiple a perpetual growth implies, or the perpetual growth an exit multiple implies (g = (M × r − 1) ÷ (M + 1)); and the reinvestment that growth needs, growth ÷ ROE (after Damodaran), flagged above 100%. Terminal growth is kept at or below the risk-free rate by its default.
+- **The ten years:** each year's stage (your forecast, high growth or fading), growth, free cash flow, discount factor and present value, and the terminal value; then present value of the years + present value of the terminal value = value per share, against the price.
+- **Sensitivity**, with the axis switch above.
+- **Free cash flow so far, per share:** each fiscal year as reported, smoothed, its stock-based compensation, and reported less stock-based compensation.
 
 ## AI autofill
 
@@ -117,12 +131,13 @@ The UI marks each field as **From filings**, **AI suggestion** or **Your value**
 
 ## FMP requests
 
-A first visit to a ticker's page makes 6 requests: 4 statements, the profile and Treasury rates. Statements and Treasury rates are cached for 24 hours and the profile for 1 hour. On the free plan, some tickers' statements return 402 or 403, and the page shows the plan-restricted message.
+A first visit to a ticker's page makes 7 requests: 4 statements, the profile, Treasury rates and analysts' estimates (the same request as the Forecast tab). Statements, Treasury rates and estimates are cached for 24 hours and the profile for 1 hour. On the free plan, some tickers' statements return 402 or 403, and the page shows the plan-restricted message.
 
 ## Known limits
 
 - REITs are valued with dividends and FCF. FFO and AFFO multiples, which analysts also use, need real estate depreciation and gains on sales, and aren't implemented yet.
-- Growth is constant during the projection rather than fading year by year. Shorten the projection or lower growth for companies whose growth will slow quickly.
+- Growth is constant during the projection in the earnings, revenue, dividend and residual income models; only the DCF fades it.
+- The DCF discounts cash flow after interest at the cost of equity (FCFE). Firm cash flow at WACC less net debt (FCFF), better for heavily indebted companies, and mid-year discounting aren't implemented.
 - Annual data only. One unusual year (a one-off tax payment, an acquisition) moves the starting values; edit them in the starting point section.
 
 ## Sources
@@ -130,6 +145,8 @@ A first visit to a ticker's page makes 6 requests: 4 statements, the profile and
 - Aswath Damodaran, [Country default spreads and risk premiums](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html), January 2026 (mature-market ERP 4.23%)
 - CFA Institute, *Equity Asset Valuation*: free cash flow, dividend discount and residual income models
 - Benjamin Graham, *The Intelligent Investor* (revised 1974 formula)
+- Simply Wall St, [DCF model update](https://github.com/SimplyWallSt/Company-Analysis-Model/blob/master/dcf-update-q1-2019.markdown): the ten-year two-stage FCFE model, its growth curve and adjusted free cash flow
+- Aswath Damodaran, [growth and terminal value](https://pages.stern.nyu.edu/~adamodar/pdfiles/valonlineslides/session9.pdf): reinvestment as growth ÷ return on capital
 
 ## Price projections: Jeremy's or Plumas?
 
@@ -276,46 +293,3 @@ The "Where the starting values come from" list under the table gives each one fo
 - **Autofill with AI** (`autofillPlumasProjection`) sends Gemini the reported history (growth, margins, interest & other, shares, buyback yield, EPS and P/E), today's price and share count, and how much of the first fiscal year is still ahead. The data defaults are left out, so it forms its own view instead of copying them. It returns all five scenarios, one value per year for every input, with a reason for each scenario and a summary. `parseProjectionResponse` clamps each value, rescales whole-number percentages, pads short lists and keeps each year's P/E in order.
 
 Files: `src/lib/plumas-projection.ts` (math, history and defaults, also used by Jeremy's Projection), `src/lib/plumas-projection-autofill.ts` (prompt and parsing), `src/app/valuation/plumas-projection.tsx` (the page's state), `src/app/valuation/plumas-projection-parts.tsx` (table, cards, chart and comparison), `src/app/valuation/projection-cells.tsx` (cell formats and inputs shared with Jeremy's Projection) and `src/app/valuation/saved-projection.ts` (browser storage).
-
-## DCF Calculator
-
-`/valuation/dcf-calculator?symbol=AAPL` is a hands-on two-stage discounted cash flow calculator in the style used by investor YouTube channels such as Parkev Tatevosian's and by quote-site DCF tools. His exact spreadsheet is for paying channel members and isn't public, so this follows the standard structure rather than his file.
-
-| Step | Formula |
-| --- | --- |
-| Free cash flow, years 1–5 | FCF today × (1 + early growth)^year; with a year 1 forecast, year 1 is the forecast and years 2–5 grow from it |
-| Free cash flow, years 6–10 | year-5 FCF × (1 + late growth)^(year − 5) |
-| Present value | FCF ÷ (1 + discount rate)^year |
-| Terminal value (perpetual growth) | year-10 FCF × (1 + g) ÷ (discount rate − g) |
-| Terminal value (exit multiple) | year-10 FCF × multiple |
-| Enterprise value | sum of the present values, including the terminal value discounted like year 10 |
-| Equity value | enterprise value + cash and short-term investments − total debt |
-| Intrinsic value per share | equity value ÷ diluted shares |
-
-It also shows the upside against the price, a buy-below price after the margin of safety, the growth the price implies (the reverse DCF), free cash flow history, the terminal value's share of the total, the ten projected years, and a sensitivity grid (discount rate ±2 points against early growth ±4 points).
-
-**Reverse DCF.** `impliedDcfGrowth` finds the one growth rate for every projected year (years 2–10 after a year 1 forecast) that makes the value per share equal today's price, keeping the discount rate, terminal value, cash, debt and shares, by halving the range from −50% to +100% a year until they match; beyond it, the page says which side. The summary shows it, and its own section compares it with your two growth rates and the history: a price that needs much more growth than the business has delivered leaves little room for disappointment.
-
-**History.** Free cash flow and its yearly growth for the fiscal years available (five on the free FMP plan and from SEC filings), then the trailing twelve months, with the compound growth between the oldest and the latest fiscal year (four years, rather than a five- or ten-year CAGR).
-
-These three came from comparing the calculator with a reference spreadsheet that values a company from a year 1 forecast ($48,000 million against $26,900 million in the last year) growing 20% a year, a 9% discount rate and 3% perpetual growth. `src/lib/simple-dcf.test.ts` reproduces its cash flows, present values, terminal value, $516.43 a share and low and high cases. Its reverse DCF reads 12.20%, where its goal seek stopped (that rate gives $303.46, not the $306 price); the exact answer is 12.32%. Its low, medium and high growth table isn't repeated: the sensitivity grid already shows the value at growth ±2 and ±4 points, for five discount rates.
-
-| Input | Default |
-| --- | --- |
-| Free cash flow | TTM operating cash flow minus capital expenditures |
-| Year 1 free cash flow | Blank: year 1 grows today's free cash flow. Type a forecast (guidance or an analyst estimate) when next year will differ a lot from the last twelve months; it can be positive even when today's isn't |
-| Cash, debt | The latest quarter's balance sheet |
-| Shares | Latest diluted share count |
-| Growth, years 1–5 | Fiscal-year revenue growth, between 0% and 25% (revenue is steadier than free cash flow) |
-| Growth, years 6–10 | Half of the early growth, at least 2% |
-| Discount rate | 10% |
-| Terminal value | Perpetual growth at 2.5%, or a 15× free cash flow exit multiple |
-| Margin of safety | 25% |
-
-Companies with negative free cash flow, including banks and insurers whose lending runs through cash flow, get an explanation instead of a value, pointing to the residual income model in the Intrinsic Value tool.
-
-**Autofill with AI** (`autofillDcf`) suggests both growth rates, the discount rate, terminal growth and the exit multiple from revenue, margin and free cash flow history, with a reason for each. `parseDcfResponse` clamps each value; the ranges also keep terminal growth (at most 4%) below the discount rate (at least 5%).
-
-All three AI autofills only rescale a percentage written as a whole number (for example 9 for 9%) when it is above 1: an out-of-range decimal like 0.6 is capped at the field's maximum, not read as 0.6%.
-
-Files: `src/lib/simple-dcf.ts` (math and defaults), `src/lib/simple-dcf-autofill.ts` (prompt and parsing), `src/app/valuation/dcf-calculator.tsx` (the calculator) and `src/app/valuation/calculator-input.tsx` (the number input shared with both projections).

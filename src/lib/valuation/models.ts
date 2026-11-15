@@ -1,4 +1,5 @@
 import { clampAssumption, type AssumptionKey, type Assumptions } from "./assumptions";
+import { computeDcf, DEFAULT_DCF_OPTIONS, PROJECTION_YEARS, type DcfOptions } from "./dcf";
 
 export type ModelId = "dcf" | "earnings" | "revenue" | "ddm" | "residualIncome" | "graham";
 
@@ -29,9 +30,9 @@ export const MODEL_INFO: Record<ModelId, ModelInfo> = {
     id: "dcf",
     name: "Discounted cash flow (DCF)",
     bestFor: "Established companies with steady, positive free cash flow.",
-    idea: "A share is worth the cash the business will generate for it, brought back to today's money. Free cash flow grows for the projection years, then at the terminal rate forever.",
-    formula: "Value = Σ FCFₜ ÷ (1 + r)ᵗ + [FCFₙ × (1 + g) ÷ (r − g)] ÷ (1 + r)ⁿ",
-    caveat: "Very sensitive to the discount rate and terminal growth. Most of the value usually sits in the terminal value, so check the sensitivity table.",
+    idea: "A share is worth the cash the business will generate for it, brought back to today's money. Free cash flow grows for the high-growth years, slows towards terminal growth by year 10, then grows at the terminal rate forever.",
+    formula: "Value = Σ FCFₜ ÷ (1 + r)ᵗ for t = 1…10 + [FCF₁₀ × (1 + g) ÷ (r − g)] ÷ (1 + r)¹⁰",
+    caveat: "Very sensitive to the discount rate and terminal growth. Most of the value usually sits in the terminal value: the Detailed DCF warns above 85% and has the sensitivity grid.",
     inputs: ["fcfPerShare", "growthRate", "growthYears", "terminalGrowth", "discountRate"],
   },
   earnings: {
@@ -137,20 +138,22 @@ function growingPerpetuity(
   };
 }
 
-export function discountedCashFlow(assumptions: Assumptions): ModelResult {
-  const fcf = assumptions.fcfPerShare;
-  if (fcf === null || fcf <= 0) {
-    return missing("dcf", "Needs positive free cash flow per share.");
-  }
-  return growingPerpetuity(
-    "dcf",
-    fcf,
-    rate(assumptions, "growthRate"),
-    rate(assumptions, "terminalGrowth"),
-    rate(assumptions, "discountRate"),
-    years(assumptions),
-    "Free cash flow per share",
-  );
+export function discountedCashFlow(assumptions: Assumptions, options: DcfOptions = DEFAULT_DCF_OPTIONS): ModelResult {
+  const result = computeDcf(assumptions, options);
+  if (!result.ok) return missing("dcf", result.reason);
+  const { dcf } = result;
+  return {
+    id: "dcf",
+    ok: true,
+    value: dcf.value,
+    steps: [
+      { label: `Free cash flow per share in year ${PROJECTION_YEARS}`, value: dcf.years[dcf.years.length - 1].fcf, kind: "money" },
+      { label: `Present value of years 1–${PROJECTION_YEARS}`, value: dcf.presentValueOfYears, kind: "money" },
+      { label: `Terminal value in year ${PROJECTION_YEARS}`, value: dcf.terminalValue, kind: "money" },
+      { label: "Present value of terminal value", value: dcf.presentValueOfTerminal, kind: "money" },
+      { label: "Terminal value share of total", value: dcf.terminalShare, kind: "percent" },
+    ],
+  };
 }
 
 export function dividendDiscount(assumptions: Assumptions): ModelResult {
@@ -297,7 +300,7 @@ export function grahamFormula(assumptions: Assumptions): ModelResult {
   };
 }
 
-const MODEL_FUNCTIONS: Record<ModelId, (assumptions: Assumptions) => ModelResult> = {
+const MODEL_FUNCTIONS: Record<ModelId, (assumptions: Assumptions, options: DcfOptions) => ModelResult> = {
   dcf: discountedCashFlow,
   earnings: earningsMultiple,
   revenue: revenueMargin,
@@ -306,13 +309,14 @@ const MODEL_FUNCTIONS: Record<ModelId, (assumptions: Assumptions) => ModelResult
   graham: grahamFormula,
 };
 
-export function runModel(id: ModelId, assumptions: Assumptions): ModelResult {
-  return MODEL_FUNCTIONS[id](assumptions);
+// `options` are the DCF's own (a year 1 forecast, the terminal method); the other models ignore them.
+export function runModel(id: ModelId, assumptions: Assumptions, options: DcfOptions = DEFAULT_DCF_OPTIONS): ModelResult {
+  return MODEL_FUNCTIONS[id](assumptions, options);
 }
 
-export function runAllModels(assumptions: Assumptions): Record<ModelId, ModelResult> {
+export function runAllModels(assumptions: Assumptions, options: DcfOptions = DEFAULT_DCF_OPTIONS): Record<ModelId, ModelResult> {
   return Object.fromEntries(
-    MODEL_ORDER.map((id) => [id, runModel(id, assumptions)]),
+    MODEL_ORDER.map((id) => [id, runModel(id, assumptions, options)]),
   ) as Record<ModelId, ModelResult>;
 }
 
@@ -335,6 +339,7 @@ export function applyScenario(assumptions: Assumptions, scenario: Scenario): Ass
   }
   adjust("discountRate", (value) => value - direction * 0.01);
   adjust("exitPe", (value) => value * (1 + direction * 0.2));
+  adjust("terminalMultiple", (value) => value * (1 + direction * 0.2));
   adjust("targetNetMargin", (value) => value * (1 + direction * 0.2));
   adjust("returnOnEquity", (value) => value * (1 + direction * 0.15));
   return next;
@@ -342,21 +347,22 @@ export function applyScenario(assumptions: Assumptions, scenario: Scenario): Ass
 
 export type ScenarioRange = Record<Scenario, number | null>;
 
-export function scenarioRange(id: ModelId, assumptions: Assumptions): ScenarioRange {
+export function scenarioRange(id: ModelId, assumptions: Assumptions, options: DcfOptions = DEFAULT_DCF_OPTIONS): ScenarioRange {
   const valueFor = (scenario: Scenario) => {
-    const result = runModel(id, applyScenario(assumptions, scenario));
+    const result = runModel(id, applyScenario(assumptions, scenario), options);
     return result.ok ? result.value : null;
   };
   return { bear: valueFor("bear"), base: valueFor("base"), bull: valueFor("bull") };
 }
 
-// The FCF growth rate that makes the DCF equal today's price, found by bisection.
-export function impliedGrowth(assumptions: Assumptions): number | null {
+// The high-growth rate that makes the DCF equal today's price, found by bisection; the fade, terminal value and a
+// year 1 forecast stay as they are.
+export function impliedGrowth(assumptions: Assumptions, options: DcfOptions = DEFAULT_DCF_OPTIONS): number | null {
   const price = assumptions.currentPrice;
   if (price === null || price <= 0) return null;
 
   const valueAt = (growthRate: number) => {
-    const result = discountedCashFlow({ ...assumptions, growthRate });
+    const result = discountedCashFlow({ ...assumptions, growthRate }, options);
     return result.ok ? result.value : null;
   };
 
@@ -376,24 +382,37 @@ export function impliedGrowth(assumptions: Assumptions): number | null {
   return (low + high) / 2;
 }
 
+// The grid's columns: the terminal assumption (terminal growth, or the exit multiple with that method), or the
+// high-growth rate. Rows are always the discount rate.
+export type SensitivityAxis = "terminal" | "growth";
+
 export type SensitivityGrid = {
+  axis: SensitivityAxis;
+  columnLabel: string;
+  columnKind: "percent" | "multiple";
   discountRates: number[];
-  terminalGrowths: number[];
+  columns: number[];
   values: (number | null)[][];
 };
 
-export function dcfSensitivity(assumptions: Assumptions): SensitivityGrid {
+export function dcfSensitivity(assumptions: Assumptions, options: DcfOptions = DEFAULT_DCF_OPTIONS, axis: SensitivityAxis = "terminal"): SensitivityGrid {
   const r = rate(assumptions, "discountRate");
-  const g = rate(assumptions, "terminalGrowth");
   const discountRates = [-0.02, -0.01, 0, 0.01, 0.02].map((step) => r + step);
-  const terminalGrowths = [-0.01, -0.005, 0, 0.005, 0.01].map((step) => g + step);
+  const byMultiple = axis === "terminal" && options.terminalMethod === "multiple";
+  const key: AssumptionKey = axis === "growth" ? "growthRate" : byMultiple ? "terminalMultiple" : "terminalGrowth";
+  const center = rate(assumptions, key);
+  const steps = axis === "growth" ? [-0.04, -0.02, 0, 0.02, 0.04] : byMultiple ? [-4, -2, 0, 2, 4] : [-0.01, -0.005, 0, 0.005, 0.01];
+  const columns = steps.map((step) => center + step);
 
   return {
+    axis,
+    columnLabel: axis === "growth" ? "High growth" : byMultiple ? "Exit multiple" : "Terminal growth",
+    columnKind: byMultiple ? "multiple" : "percent",
     discountRates,
-    terminalGrowths,
+    columns,
     values: discountRates.map((discountRate) =>
-      terminalGrowths.map((terminalGrowth) => {
-        const result = discountedCashFlow({ ...assumptions, discountRate, terminalGrowth });
+      columns.map((column) => {
+        const result = discountedCashFlow({ ...assumptions, discountRate, [key]: column }, options);
         return result.ok ? result.value : null;
       }),
     ),
@@ -408,16 +427,20 @@ export type ProjectionRow = {
   dividendPerShare: number | null;
 };
 
-export function projectionRows(assumptions: Assumptions): ProjectionRow[] {
+// Free cash flow follows the DCF's own path (a year 1 forecast, the fade); the rest grow at their rates.
+export function projectionRows(assumptions: Assumptions, options: DcfOptions = DEFAULT_DCF_OPTIONS): ProjectionRow[] {
   const n = years(assumptions);
   const grow = (base: number | null, growth: number, year: number) =>
     base === null ? null : base * (1 + growth) ** year;
+  const dcf = computeDcf(assumptions, options);
 
   return Array.from({ length: n + 1 }, (_, year) => ({
     year,
     revenuePerShare: grow(assumptions.revenuePerShare, rate(assumptions, "revenueGrowth"), year),
     epsPerShare: grow(assumptions.epsPerShare, rate(assumptions, "growthRate"), year),
-    fcfPerShare: grow(assumptions.fcfPerShare, rate(assumptions, "growthRate"), year),
+    fcfPerShare: year === 0
+      ? assumptions.fcfPerShare
+      : dcf.ok && year <= PROJECTION_YEARS ? dcf.dcf.years[year - 1].fcf : grow(assumptions.fcfPerShare, rate(assumptions, "growthRate"), year),
     dividendPerShare: grow(assumptions.dividendPerShare, rate(assumptions, "dividendGrowth"), year),
   }));
 }

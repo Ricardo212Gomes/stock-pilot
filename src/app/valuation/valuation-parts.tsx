@@ -9,7 +9,7 @@ import { CompanyHeader } from "../components/company-header";
 import { StockNav } from "../components/stock-nav";
 import { VALUATION_TOOLS, valuationTool, type ValuationTool } from "./tools";
 
-export type ValuationSearchParams = Promise<{ symbol?: string | string[] }>;
+export type ValuationSearchParams = Promise<{ symbol?: string | string[]; model?: string | string[] }>;
 
 export async function readSymbol(searchParams: ValuationSearchParams): Promise<string | null> {
   const { symbol } = await searchParams;

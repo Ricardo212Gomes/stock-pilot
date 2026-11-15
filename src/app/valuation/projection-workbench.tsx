@@ -8,13 +8,13 @@ import {
   type Assumptions,
 } from "@/lib/valuation/assumptions";
 import { STOCK_TYPES, type Classification } from "@/lib/valuation/classify";
+import { DEFAULT_DCF_OPTIONS, startingFcf, type DcfOptions, type FcfBasis } from "@/lib/valuation/dcf";
 import type { DefaultAssumptions } from "@/lib/valuation/defaults";
 import { formatMoney, formatPercent, formatSignedPercent } from "@/lib/valuation/format";
 import {
   MODEL_INFO,
   MODEL_ORDER,
   blendedValue,
-  dcfSensitivity,
   impliedGrowth,
   projectionRows,
   runAllModels,
@@ -24,22 +24,28 @@ import {
 } from "@/lib/valuation/models";
 import { SparkIcon } from "../components/spark-icon";
 import { autofillAssumptions } from "./actions";
+import { DcfPanel } from "./dcf-panel";
 import {
   AssumptionField,
   FootballField,
   ModelCard,
   ProjectionChart,
   ProjectionTable,
-  SensitivityTable,
   type ModelRole,
   type ValueSource,
 } from "./projection-parts";
 
 type Sources = Record<AssumptionKey, ValueSource>;
 
-const ALL_DATA_SOURCES = Object.fromEntries(
-  ASSUMPTION_SPECS.map((spec) => [spec.key, "data"]),
-) as Sources;
+// Every value from the filings, except the ones analysts' estimates set.
+function initialSources(defaults: DefaultAssumptions): Sources {
+  return Object.fromEntries(ASSUMPTION_SPECS.map((spec) => [spec.key, defaults.sources[spec.key] ?? "data"])) as Sources;
+}
+
+const BASIS_NOTE: Record<FcfBasis, string> = {
+  reported: "operating cash flow less capital spending",
+  smoothed: "operating cash flow less the 3-year average capital spending",
+};
 
 const VERDICT_HELP = {
   "Below buy price": "The price is below the estimate even after your margin of safety.",
@@ -53,15 +59,21 @@ export function ProjectionWorkbench({
   classification,
   defaults,
   priceNotice,
+  openDcf = false,
 }: {
   symbol: string;
   currency: string;
   classification: Classification;
   defaults: DefaultAssumptions;
   priceNotice: string | null;
+  // Opens the Detailed DCF (?model=dcf, where the old DCF Calculator's links lead).
+  openDcf?: boolean;
 }) {
   const [assumptions, setAssumptions] = useState<Assumptions>(defaults.assumptions);
-  const [sources, setSources] = useState<Sources>(ALL_DATA_SOURCES);
+  const [sources, setSources] = useState<Sources>(() => initialSources(defaults));
+  const [dcfOptions, setDcfOptions] = useState<DcfOptions>(DEFAULT_DCF_OPTIONS);
+  // The starting free cash flow's basis; stock-based pay counts as a cost by default (see defaults.ts).
+  const [fcfBasis, setFcfBasis] = useState<{ basis: FcfBasis; stockCompAsCost: boolean } | null>(null);
   const [aiNotes, setAiNotes] = useState<Partial<Record<AssumptionKey, string>>>({});
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -76,20 +88,31 @@ export function ProjectionWorkbench({
     return rank[roleOf(left)] - rank[roleOf(right)];
   });
 
-  const results = useMemo(() => runAllModels(assumptions), [assumptions]);
+  const results = useMemo(() => runAllModels(assumptions, dcfOptions), [assumptions, dcfOptions]);
   const ranges = useMemo(
-    () => Object.fromEntries(MODEL_ORDER.map((id) => [id, scenarioRange(id, assumptions)])) as Record<ModelId, ReturnType<typeof scenarioRange>>,
-    [assumptions],
+    () => Object.fromEntries(MODEL_ORDER.map((id) => [id, scenarioRange(id, assumptions, dcfOptions)])) as Record<ModelId, ReturnType<typeof scenarioRange>>,
+    [assumptions, dcfOptions],
   );
   const blended = useMemo(
     () => blendedValue(results, typeInfo.primary, typeInfo.secondary),
     [results, typeInfo],
   );
   const blendedVerdict = blended ? verdict(blended.value, assumptions) : null;
-  const marketGrowth = useMemo(() => impliedGrowth(assumptions), [assumptions]);
-  const sensitivity = useMemo(() => dcfSensitivity(assumptions), [assumptions]);
-  const projection = useMemo(() => projectionRows(assumptions), [assumptions]);
+  const marketGrowth = useMemo(() => impliedGrowth(assumptions, dcfOptions), [assumptions, dcfOptions]);
+  const projection = useMemo(() => projectionRows(assumptions, dcfOptions), [assumptions, dcfOptions]);
   const dcfAvailable = results.dcf.ok;
+  const basis = fcfBasis ?? { basis: "reported" as FcfBasis, stockCompAsCost: true };
+  // The note under free cash flow follows the basis chosen in the Detailed DCF.
+  const fcfNote = fcfBasis === null || sources.fcfPerShare !== "data"
+    ? undefined
+    : `${defaults.fcf.averageYears ? "Average " : "Latest "}free cash flow per share: ${BASIS_NOTE[basis.basis]}${basis.stockCompAsCost ? ", less stock-based compensation" : ", stock-based compensation not counted as a cost"}.`;
+
+  function chooseStartingFcf(next: FcfBasis, stockCompAsCost: boolean) {
+    setFcfBasis({ basis: next, stockCompAsCost });
+    setAssumptions((current) => ({ ...current, fcfPerShare: startingFcf(defaults.fcf, next, stockCompAsCost) }));
+    setSources((current) => ({ ...current, fcfPerShare: "data" }));
+    setFieldVersion((version) => version + 1);
+  }
 
   function updateAssumption(key: AssumptionKey, value: number | null) {
     setAssumptions((current) => ({ ...current, [key]: value }));
@@ -98,7 +121,9 @@ export function ProjectionWorkbench({
 
   function resetToData() {
     setAssumptions(defaults.assumptions);
-    setSources(ALL_DATA_SOURCES);
+    setSources(initialSources(defaults));
+    setDcfOptions(DEFAULT_DCF_OPTIONS);
+    setFcfBasis(null);
     setAiNotes({});
     setAiSummary(null);
     setAiError(null);
@@ -238,14 +263,14 @@ export function ProjectionWorkbench({
             <fieldset className="assumption-group" key={group.id}>
               <legend>{group.title}</legend>
               <p className="assumption-group-description">{group.description}</p>
-              {ASSUMPTION_SPECS.filter((spec) => spec.group === group.id).map((spec) => (
+              {ASSUMPTION_SPECS.filter((spec) => spec.group === group.id && !spec.panel).map((spec) => (
                 <AssumptionField
                   key={`${spec.key}-${fieldVersion}`}
                   spec={spec}
                   value={assumptions[spec.key]}
                   currency={currency}
                   source={sources[spec.key]}
-                  note={sources[spec.key] === "ai" ? aiNotes[spec.key] : defaults.notes[spec.key]}
+                  note={sources[spec.key] === "ai" ? aiNotes[spec.key] : (spec.key === "fcfPerShare" ? fcfNote : undefined) ?? defaults.notes[spec.key]}
                   onChange={(value) => updateAssumption(spec.key, value)}
                 />
               ))}
@@ -280,10 +305,27 @@ export function ProjectionWorkbench({
                   })()}
                   role={roleOf(id)}
                   currency={currency}
+                  detail={id === "dcf" ? { href: "#detailed-dcf", label: "Detailed DCF: the ten years, checks and sensitivity" } : undefined}
                 />
               ))}
             </div>
           </section>
+
+          <DcfPanel
+            version={fieldVersion}
+            assumptions={assumptions}
+            currency={currency}
+            options={dcfOptions}
+            onOptions={setDcfOptions}
+            fcf={defaults.fcf}
+            basis={basis.basis}
+            stockCompAsCost={basis.stockCompAsCost}
+            onStartingFcf={chooseStartingFcf}
+            multipleSource={sources.terminalMultiple}
+            multipleNote={sources.terminalMultiple === "ai" ? aiNotes.terminalMultiple : defaults.notes.terminalMultiple}
+            onMultiple={(value) => updateAssumption("terminalMultiple", value)}
+            defaultOpen={openDcf}
+          />
 
           {footballRows.length > 0 && (
             <section className="projection-section" aria-labelledby="football-heading">
@@ -317,8 +359,8 @@ export function ProjectionWorkbench({
                     <>
                       At {formatMoney(assumptions.currentPrice, currency)}, the market is pricing in about{" "}
                       <strong>{formatPercent(marketGrowth)}</strong> free cash flow growth a year for{" "}
-                      {assumptions.growthYears} years, with your discount rate and terminal growth. You assume{" "}
-                      <strong>{formatPercent(assumptions.growthRate)}</strong>.
+                      {Math.min(assumptions.growthYears ?? 5, 10)} years, fading to terminal growth by year 10, with your
+                      discount rate and terminal value. You assume <strong>{formatPercent(assumptions.growthRate)}</strong>.
                     </>
                   )}
               </p>
@@ -343,22 +385,6 @@ export function ProjectionWorkbench({
             <ProjectionChart rows={projection} currency={currency} />
             <ProjectionTable rows={projection} currency={currency} />
           </section>
-
-          {dcfAvailable && (
-            <section className="projection-section" aria-labelledby="sensitivity-heading">
-              <div className="content-section-heading">
-                <div>
-                  <p className="section-label">SENSITIVITY</p>
-                  <h2 id="sensitivity-heading">How the DCF changes with two key inputs</h2>
-                </div>
-              </div>
-              <p className="projection-section-intro">
-                The highlighted cell uses your inputs. Green cells are above the current price, red cells below.
-                If small changes flip the answer, treat the estimate with extra caution.
-              </p>
-              <SensitivityTable grid={sensitivity} price={assumptions.currentPrice} currency={currency} />
-            </section>
-          )}
 
           <p className="projection-disclaimer">
             Intrinsic value estimates depend entirely on the assumptions above and on reported data, which can be

@@ -24,13 +24,21 @@ function valueOf(result: ModelResult): number {
 }
 
 describe("discountedCashFlow", () => {
-  it("matches a hand-calculated two-stage DCF", () => {
-    // FCF 10 → 11 → 12.1, terminal 12.1 × 1.02 ÷ (0.08 − 0.02) = 205.7
-    const expected = 11 / 1.08 + 12.1 / 1.08 ** 2 + 205.7 / 1.08 ** 2;
+  it("matches a hand-calculated ten-year DCF with fading growth", () => {
+    // Two years at 10%, then the 8 points above 2% terminal growth shrink by 30% a year to year 10.
+    const growth = [0.1, 0.1, 0.076, 0.0592, 0.04744, 0.039208, 0.0334456, 0.02941192, 0.026588344, 0.0246118408];
+    let fcf = 10;
+    let expected = 0;
+    growth.forEach((rate, index) => {
+      fcf *= 1 + rate;
+      expected += fcf / 1.08 ** (index + 1);
+    });
+    const terminal = (fcf * 1.02) / 0.06 / 1.08 ** 10;
+    expected += terminal;
     const result = discountedCashFlow(assumptions({ growthYears: 2 }));
 
     expect(valueOf(result)).toBeCloseTo(expected, 6);
-    expect(result.ok && result.steps.at(-1)?.value).toBeCloseTo((205.7 / 1.08 ** 2) / expected, 6);
+    expect(result.ok && result.steps.at(-1)?.value).toBeCloseTo(terminal / expected, 6);
   });
 
   it("refuses non-positive cash flow and a discount rate at or below terminal growth", () => {
@@ -207,5 +215,22 @@ describe("blendedValue", () => {
   it("returns null when nothing can run", () => {
     const results = runAllModels(assumptions({ dividendPerShare: 0 }));
     expect(blendedValue(results, ["ddm"], [])).toBeNull();
+  });
+});
+
+describe("dcfSensitivity's axes", () => {
+  it("varies the discount rate against terminal growth, the exit multiple or high growth", () => {
+    const base = valueOf(discountedCashFlow(assumptions()));
+    const terminal = dcfSensitivity(assumptions());
+    expect(terminal).toMatchObject({ axis: "terminal", columnLabel: "Terminal growth", columnKind: "percent" });
+    expect(terminal.columns.map((value) => Math.round(value * 1000) / 1000)).toEqual([0.01, 0.015, 0.02, 0.025, 0.03]);
+    expect(terminal.values[2][2]).toBeCloseTo(base, 8);
+
+    const multiple = dcfSensitivity(assumptions(), { firstYearFcf: null, terminalMethod: "multiple" });
+    expect(multiple).toMatchObject({ columnLabel: "Exit multiple", columnKind: "multiple", columns: [11, 13, 15, 17, 19] });
+
+    const growth = dcfSensitivity(assumptions(), undefined, "growth");
+    expect(growth.columnLabel).toBe("High growth");
+    expect(growth.values[2][0]).toBeLessThan(growth.values[2][4]!);
   });
 });

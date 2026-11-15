@@ -27,6 +27,7 @@ export function annual(overrides: Partial<AnnualFinancialSummary> = {}): AnnualF
     operatingCashFlow: 150,
     freeCashFlow: 120,
     capitalExpenditure: -30,
+    stockBasedCompensation: 0,
     dividendPerShare: 0.3,
     dividendYield: 0.015,
     peRatio: 18,
@@ -87,6 +88,7 @@ export function assumptions(overrides: Partial<Assumptions> = {}): Assumptions {
     targetNetMargin: 0.1,
     bondYield: 0.05,
     marginOfSafety: 0.25,
+    terminalMultiple: 15,
     ...overrides,
   };
 }

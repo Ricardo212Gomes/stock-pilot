@@ -41,6 +41,7 @@ type BalanceSheet = FmpPeriod & {
 type CashFlowStatement = FmpPeriod & {
   operatingCashFlow?: number | null;
   capitalExpenditure?: number | null;
+  stockBasedCompensation?: number | null;
   freeCashFlow?: number | null;
 };
 
@@ -94,6 +95,8 @@ export type AnnualFinancialSummary = {
   operatingCashFlow: number | null;
   freeCashFlow: number | null;
   capitalExpenditure: number | null;
+  // Paid in shares, so operating cash flow adds it back; the DCF can count it as a cost.
+  stockBasedCompensation: number | null;
   dividendPerShare: number | null;
   dividendYield: number | null;
   peRatio: number | null;
@@ -394,6 +397,7 @@ function summarizeFundamentals(
           ? operatingCashFlow + capitalExpenditure
           : null),
       capitalExpenditure,
+      stockBasedCompensation: numeric(cashFlow?.stockBasedCompensation),
       dividendPerShare: numeric(ratio?.dividendPerShare),
       dividendYield: numeric(ratio?.dividendYield)
         ?? (dividendYieldPercentage !== null

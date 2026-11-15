@@ -63,7 +63,7 @@ FMP requests for a first, uncached view; repeat views within the cache windows c
 | Financials | FMP statements, ratios, estimates and segments; Finnhub TTM ratios; SEC fallback | about 9 |
 | Forecast | FMP target, target summary, estimates, annual income, grades, earnings, closes; Finnhub ratings and surprises | up to 7, about 3 after the Overview and Recommendations |
 | Insiders, Filings, News, Transcripts | Finnhub, SEC, Alpha Vantage | 0 |
-| Valuation tools | FMP statements, ratios, estimates, profile, treasury rates (shared with Financials); Finnhub quote and shares | about 6 |
+| Valuation tools | FMP statements, ratios, estimates, profile, treasury rates (shared with Financials and the Forecast tab); Finnhub quote and shares | about 7 |
 | Compare | Per stock: FMP quarterly and annual income, estimates; Finnhub quote and metrics | 3 per stock |
 | Recommendations | FMP coverage check, then a price target and a year of closes per covered company; Finnhub ratings | about 73 a day |
 | Stocks | FMP leaderboard (the largest list from the snapshot and one market-cap batch on plans without the screener) | 1 per list |
