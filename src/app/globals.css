@@ -6092,6 +6092,242 @@ a.earnings-round:focus-visible {
   }
 }
 
+/* Market valuation: built from the VIX page's cards, with a percentile bar showing where today sits in its history.
+   Zones run blue (cheap) through grey to red (very expensive), the VIX page's diverging scale, each named beside
+   its colour. */
+.mv-zone-cheap {
+  --zone: var(--chart-1);
+}
+
+.mv-zone-fair {
+  --zone: var(--border);
+}
+
+.mv-zone-expensive {
+  --zone: color-mix(in oklab, var(--negative) 55%, var(--card));
+}
+
+.mv-zone-very-expensive {
+  --zone: var(--negative);
+}
+
+.mv-today {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.mv-today p {
+  margin: 0;
+}
+
+.mv-value {
+  font-size: 48px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 52px;
+}
+
+.mv-asof {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.mv-percentile {
+  margin: 16px 0 0;
+}
+
+.mv-percentile-track {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+
+.mv-percentile-track > span:not(.mv-percentile-marker) {
+  height: 100%;
+  background: var(--zone);
+}
+
+.mv-percentile-track > span:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.mv-percentile-track > span:nth-last-child(2) {
+  border-radius: 0 3px 3px 0;
+}
+
+/* A bar taller than the track, with a ring in the card colour so it reads on every zone. */
+.mv-percentile-marker {
+  position: absolute;
+  top: -5px;
+  width: 4px;
+  height: 22px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--foreground);
+  box-shadow: 0 0 0 2px var(--card);
+}
+
+.mv-percentile-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.mv-percentile-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 8px;
+  color: var(--muted-foreground);
+}
+
+.mv-percentile-legend .mv-percentile-current {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.mv-today .vix-percentile {
+  margin-top: 12px;
+}
+
+.mv-text {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.vix-stats dd small {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.mv-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mv-metric {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 6px;
+}
+
+.mv-metric p {
+  margin: 0;
+}
+
+.mv-metric-label {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mv-metric-value {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 32px;
+}
+
+.mv-metric-detail {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.mv-metric-switch {
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.mv-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0 0 8px;
+  padding: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  list-style: none;
+}
+
+.mv-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mv-legend-swatch {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.mv-chart-note {
+  margin: 8px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.mv-summary {
+  margin-bottom: 16px;
+}
+
+.mv-summary p {
+  max-width: 820px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.mv-summary .mv-summary-meta {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.mv-glossary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px 24px;
+  margin: 0 0 16px;
+}
+
+.mv-glossary dt {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.mv-glossary dd {
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.vix-zones .mv-text {
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .mv-value {
+    font-size: 40px;
+    line-height: 44px;
+  }
+}
+
 /* Market events: four "up next" cards, then the filters and a timeline grouped by month. Categories are
    told apart by name and a small outline icon, not colour; a filled dot marks high-impact events. */
 .events-next {

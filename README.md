@@ -24,7 +24,7 @@ FMP authenticates requests with an API key. No separate API secret is needed for
 5. Optionally set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `AUTH_TRUST_HOST=true` to enable **Sign in with Google**; see [`docs/auth.md`](./docs/auth.md) for creating the Google OAuth client.
 6. Optionally set `ALPHAVANTAGE_API_KEY` to an [Alpha Vantage](https://www.alphavantage.co) key to enable earnings call **Transcripts**; see [`docs/transcripts.md`](./docs/transcripts.md).
 7. Optionally set `TIINGO_API_KEY` to a free [Tiingo](https://www.tiingo.com) key, so price charts and the price signals work for companies FMP's free plan doesn't cover, and when it hits its daily limit, and the Portfolio gets its chart, splits and dividends; see [`docs/data-fallbacks.md`](./docs/data-fallbacks.md).
-8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**, **Saved projections** and the **Portfolio**; see [`docs/favorites.md`](./docs/favorites.md) and [`docs/portfolio.md`](./docs/portfolio.md).
+8. Optionally set `DATABASE_URL` to a Postgres database (Neon, Supabase or any other) and run `npm run db:setup` to enable **Favorites**, **Saved projections**, the **Portfolio** and **Market valuation** (filled by `npm run market-valuation:update`); see [`docs/favorites.md`](./docs/favorites.md) and [`docs/portfolio.md`](./docs/portfolio.md).
 9. Notifications about favorites (upcoming earnings, earnings call summaries, relevant news and SEC filing analyses) come to the bell in the top bar and the Notifications page with just the database; optionally set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` to send them to Telegram too. See [`docs/notifications.md`](./docs/notifications.md).
 10. Optionally set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to a free [Alpaca](https://alpaca.markets) paper trading account's keys for the **AI portfolio**; see [`docs/ai-portfolio.md`](./docs/ai-portfolio.md).
 11. Restart the Next.js development server after changing the environment file.
@@ -66,6 +66,8 @@ The **Favorites** page at `/favorites` lists the companies you've starred from t
 
 Each valuation tool can **save** a projection under a name and a note, to open later on any device; **Saved projections** at `/valuation/saved` lists them all with the value then, the price now and the gap, sortable by date or gap. It needs Google sign-in and a Postgres database; see [`docs/valuation.md`](./docs/valuation.md#saved-projections).
 
+The **Market valuation** page at `/market-valuation` shows whether the S&P 500 and the Nasdaq-100 are cheap or expensive against their own history: today's P/E and where it ranks since 1871, CAPE, the earnings yield against the 10-year Treasury, the dividend yield and the Buffett indicator, with an AI summary. It reads Robert Shiller's dataset, Siblis Research's free data and FRED, stored daily by `npm run market-valuation:update`.
+
 The **Fear gauge** page at `/vix` shows the VIX as a fear and greed gauge, compares it with a week, month and year ago, and charts its history, from FMP and Cboe's free daily history.
 
 The **Events** page at `/events` is a timeline of what can move US markets: Fed decisions and their outcomes, the CPI, jobs, PCE and GDP reports, US elections and deadlines, and elections in major economies, from the Fed, FRED, BLS, BEA, Census and Wikipedia. On request, AI adds summits, trade and funding deadlines it finds in the news.
@@ -92,6 +94,7 @@ The **AI chat** is the round spark button at the bottom right of every page. Ask
 | [`docs/dividends.md`](./docs/dividends.md) | The dividend calendar: data, free-plan limits and the two date views |
 | [`docs/news.md`](./docs/news.md) | Finnhub news feeds, categories, and how headlines are cleaned and filtered |
 | [`docs/events.md`](./docs/events.md) | The market events timeline: each source, how events are worked out, the AI news scan and its checks |
+| [`docs/market-valuation.md`](./docs/market-valuation.md) | Market valuation: the sources, the table, the daily job, the zones and today's estimates |
 | [`docs/vix.md`](./docs/vix.md) | The VIX fear gauge: zones, the dial, data sources and fallbacks |
 | [`docs/market-maps.md`](./docs/market-maps.md) | The FINVIZ market map embed and its limits |
 | [`docs/auth.md`](./docs/auth.md) | Google sign-in: setup, session cookie and the top bar menu |

@@ -223,3 +223,29 @@ create index if not exists notifications_user_idx on notifications (user_id, cre
 create index if not exists notifications_unread_idx on notifications (user_id) where read_at is null;
 create index if not exists notifications_created_idx on notifications (created_at);
 create index if not exists notification_log_sent_idx on notification_log (sent_at);
+
+-- Market valuation (see docs/market-valuation.md): the S&P 500's and the Nasdaq-100's P/E, CAPE and yields, monthly,
+-- from Shiller's dataset, Siblis Research and FRED. Filled by npm run market-valuation:update; pages only read it.
+create table if not exists market_valuations (
+  -- sp500, ndx, or us for the whole market (the 10-year yield, the Buffett indicator).
+  market text not null check (market in ('sp500', 'ndx', 'us')),
+  -- pe, pe_forward, cape, earnings_yield, dividend_yield, ten_year, buffett, price, earnings, level.
+  metric text not null,
+  date date not null,
+  value double precision not null,
+  source text not null,
+  -- Shiller's latest months, whose earnings are still estimates.
+  provisional boolean not null default false,
+  updated_at timestamptz not null default now(),
+  primary key (market, metric, date)
+);
+
+-- The AI summary of each index's valuation, written by the same job when a new month's data arrives.
+create table if not exists market_valuation_summaries (
+  market text primary key check (market in ('sp500', 'ndx')),
+  text text not null,
+  model text not null,
+  -- The data it was written from, so it's only rewritten when that changes.
+  basis text not null,
+  created_at timestamptz not null default now()
+);
