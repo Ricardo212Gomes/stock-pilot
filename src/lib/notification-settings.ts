@@ -2,7 +2,9 @@ import { randomBytes } from "node:crypto";
 import { getSql } from "./db";
 import { botUsername, escapeHtml, findStartMessage, sendTelegramMessage } from "./telegram";
 
-// Each user's Telegram chat and notification preferences, plus a log of what was sent.
+// Each user's Telegram chat and notification preferences, plus a log of what was sent. Notifications are kept in
+// the app for everyone who wants them (notification-inbox.ts); Telegram is a second channel, on by default once a
+// chat is linked ("Also send to Telegram").
 
 // Linking codes are short-lived: they only need to survive a trip to Telegram and back.
 const LINK_CODE_MINUTES = 30;
@@ -15,11 +17,15 @@ export type NotificationSettings = {
   newsAlerts: boolean;
   filingAlerts: boolean;
   reviewSummaries: boolean;
+  // Also send to the linked Telegram chat.
+  telegramAlerts: boolean;
   linkCode: string | null;
 };
 
-export type NotificationKind = "earnings" | "transcripts" | "news" | "filings" | "reviews";
-export type NotificationPreferences = Pick<NotificationSettings, "earningsAlerts" | "transcriptSummaries" | "newsAlerts" | "filingAlerts" | "reviewSummaries">;
+import type { NotificationKind } from "./notification-kinds";
+
+export type { NotificationKind };
+export type NotificationPreferences = Pick<NotificationSettings, "earningsAlerts" | "transcriptSummaries" | "newsAlerts" | "filingAlerts" | "reviewSummaries" | "telegramAlerts">;
 
 type SettingsRow = {
   user_id: string;
@@ -30,6 +36,7 @@ type SettingsRow = {
   news_alerts: boolean;
   filing_alerts: boolean;
   review_summaries: boolean;
+  telegram_alerts: boolean;
   link_code: string | null;
   link_code_expires_at: Date | null;
 };
@@ -43,6 +50,7 @@ const DEFAULTS: NotificationSettings = {
   filingAlerts: true,
   // Off by default: it's about the Portfolio's AI reviews, which are off by default too.
   reviewSummaries: false,
+  telegramAlerts: true,
   linkCode: null,
 };
 
@@ -57,6 +65,7 @@ function toSettings(row: SettingsRow | undefined, now = Date.now()): Notificatio
     newsAlerts: row.news_alerts,
     filingAlerts: row.filing_alerts,
     reviewSummaries: row.review_summaries,
+    telegramAlerts: row.telegram_alerts ?? true,
     linkCode: codeValid ? row.link_code : null,
   };
 }
@@ -99,7 +108,7 @@ export async function confirmTelegramLink(userId: string): Promise<LinkResult> {
     set telegram_chat_id = ${chatId}, telegram_name = ${name}, link_code = null, link_code_expires_at = null, updated_at = now()
     where user_id = ${userId}
   `;
-  await sendTelegramMessage(chatId, `✅ <b>StockPilot is connected.</b>\n\nYou'll get alerts here for your favorites, ${escapeHtml(name)}. Change them any time in Settings.`);
+  await sendTelegramMessage(chatId, `✅ <b>StockPilot is connected.</b>\n\nYou'll get alerts here for your favorites, ${escapeHtml(name)}. Change them any time in Notifications › Settings.`);
   return { ok: true, name };
 }
 
@@ -113,36 +122,45 @@ export async function disconnectTelegram(userId: string): Promise<void> {
 
 export async function setNotificationPreferences(userId: string, preferences: NotificationPreferences): Promise<void> {
   await getSql()`
-    insert into notification_settings (user_id, earnings_alerts, transcript_summaries, news_alerts, filing_alerts, review_summaries)
-    values (${userId}, ${preferences.earningsAlerts}, ${preferences.transcriptSummaries}, ${preferences.newsAlerts}, ${preferences.filingAlerts}, ${preferences.reviewSummaries})
+    insert into notification_settings (user_id, earnings_alerts, transcript_summaries, news_alerts, filing_alerts, review_summaries, telegram_alerts)
+    values (${userId}, ${preferences.earningsAlerts}, ${preferences.transcriptSummaries}, ${preferences.newsAlerts}, ${preferences.filingAlerts}, ${preferences.reviewSummaries}, ${preferences.telegramAlerts})
     on conflict (user_id) do update
       set earnings_alerts = excluded.earnings_alerts,
           transcript_summaries = excluded.transcript_summaries,
           news_alerts = excluded.news_alerts,
           filing_alerts = excluded.filing_alerts,
           review_summaries = excluded.review_summaries,
+          telegram_alerts = excluded.telegram_alerts,
           updated_at = now()
   `;
 }
 
-export type Recipient = { userId: string; chatId: string };
+// chatId is the Telegram chat to also send to: null when none is linked or the user turned Telegram off.
+export type Recipient = { userId: string; chatId: string | null; telegramLinked: boolean };
 
-const PREFERENCE_COLUMN: Record<NotificationKind, string> = {
-  earnings: "earnings_alerts",
-  transcripts: "transcript_summaries",
-  news: "news_alerts",
-  filings: "filing_alerts",
-  reviews: "review_summaries",
-};
-
-// Users with a linked chat who want this kind of notification.
+// Everyone who wants this kind of notification: users with favorites or saved settings, with each switch at its
+// default until they change it (on, except the weekly AI reviews). Telegram isn't needed: notifications are kept in
+// the app, and go to Telegram too when a chat is linked and "Also send to Telegram" is on.
 export async function notificationRecipients(kind: NotificationKind): Promise<Recipient[]> {
-  const sql = getSql();
-  const rows = await sql<{ user_id: string; telegram_chat_id: string }[]>`
-    select user_id, telegram_chat_id from notification_settings
-    where telegram_chat_id is not null and ${sql(PREFERENCE_COLUMN[kind])} = true
+  const rows = await getSql()<{ user_id: string; telegram_chat_id: string | null; telegram_alerts: boolean | null }[]>`
+    select users.user_id, settings.telegram_chat_id, settings.telegram_alerts
+    from (select user_id from favorites union select user_id from notification_settings) users
+    left join notification_settings settings on settings.user_id = users.user_id
+    where case ${kind}
+      when 'earnings' then coalesce(settings.earnings_alerts, true)
+      when 'transcripts' then coalesce(settings.transcript_summaries, true)
+      when 'news' then coalesce(settings.news_alerts, true)
+      when 'filings' then coalesce(settings.filing_alerts, true)
+      when 'reviews' then coalesce(settings.review_summaries, false)
+      else false
+    end
+    order by users.user_id
   `;
-  return rows.map((row) => ({ userId: row.user_id, chatId: row.telegram_chat_id }));
+  return rows.map((row) => ({
+    userId: row.user_id,
+    chatId: row.telegram_chat_id && row.telegram_alerts !== false ? row.telegram_chat_id : null,
+    telegramLinked: Boolean(row.telegram_chat_id),
+  }));
 }
 
 export async function wasSent(userId: string, kind: string, item: string): Promise<boolean> {

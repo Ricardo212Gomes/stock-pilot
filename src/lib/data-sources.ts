@@ -1,7 +1,7 @@
 import { rememberedRestrictions } from "./fmp";
 import { providerEvents, type ProviderEvents, type ProviderId } from "./provider-status";
 
-// The Data sources card in Settings: which sources are set up, what each is used for, its free plan's limits,
+// The Data sources card (/settings, "Data sources" in the account menu): which sources are set up, what each is used for, its free plan's limits,
 // and what it has said lately (since the server started): a limit reached, a failure, or a fallback that
 // stood in. The keys themselves are never shown. docs/data-sources.md explains which source is used when.
 
